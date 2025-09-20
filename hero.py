@@ -33,6 +33,13 @@ def generate():
               rag_corpus="projects/439974099982/locations/us-east4/ragCorpora/6838716034162098176"
             )
           ],
+          rag_retrieval_config=types.RagRetrievalConfig(
+            filter=types.RagRetrievalConfigFilter(
+              # Restrict retrieval to chunks/files tagged with this user's id
+              metadata_filter=f"user_id == \"{os.getenv('APP_USER_ID','demo_user')}\""
+            ),
+            top_k=8,
+          ),
         )
       )
     )

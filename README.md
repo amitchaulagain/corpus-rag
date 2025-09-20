@@ -64,3 +64,50 @@ python3 hero.py
 ### Notes
 - The corpus ID is hardcoded in `hero.py`. Update it if you use a different corpus or region.
 
+## Run the HTTP app
+
+```bash
+cd /Users/admin/extratech/ragapp
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# ADC for Vertex
+gcloud auth application-default login --project=439974099982
+
+# Environment
+export VERTEX_PROJECT=439974099982
+export VERTEX_LOCATION=us-east4
+export VERTEX_RAG_CORPUS="projects/439974099982/locations/us-east4/ragCorpora/6838716034162098176"
+
+# Start server
+python3 app.py
+```
+
+### Ingest Google Drive files with user metadata
+- Requires the files to be accessible by your ADC principal (or shared to the service account).
+- Body: user_id and a list of Drive file IDs.
+
+```bash
+curl -sS -X POST http://localhost:8000/ingest \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "user_id": "alice",
+    "drive_file_ids": ["1AbC...", "2XyZ..."]
+  }' | jq .
+```
+
+### Query with per-user filtering
+```bash
+curl -sS -X POST http://localhost:8000/query \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "user_id": "alice",
+    "question": "What does the proposal say about pricing?"
+  }' | jq .
+```
+
+Notes:
+- The ingestion endpoint uses a best-effort REST call to the Vertex RAG import API. If the API surface changes, update `vertex_rag.py` accordingly.
+- Ensure your corpus contains documents tagged with `user_id` metadata, or queries will return no user-specific context.
+
