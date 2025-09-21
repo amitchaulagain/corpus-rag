@@ -28,8 +28,8 @@ A modern TypeScript-based RAG (Retrieval-Augmented Generation) system built with
 
 - **Node.js 18+** and **Bun** runtime
 - **Google Cloud CLI** installed and authenticated
-- Access to Google Cloud project `gen-lang-client-0738357189`
-- **Google Cloud Storage bucket**: `rag-storage-439974099982`
+- Access to Google Cloud project with Vertex AI enabled
+- **Google Cloud Storage bucket** configured
 - **Vertex AI API** enabled for RAG functionality
 
 ## 🚀 Quick Start
@@ -47,15 +47,15 @@ bun install
 ```bash
 # Authenticate with Google Cloud (admin account)
 gcloud auth application-default login
-gcloud config set project gen-lang-client-0738357189
+gcloud config set project your-project-id
 ```
 
 ### 3. Environment Configuration
 Create `.env` file:
 ```bash
-GOOGLE_CLOUD_PROJECT_ID=gen-lang-client-0738357189
-GOOGLE_CLOUD_BUCKET_NAME=rag-storage-439974099982
-GOOGLE_APPLICATION_CREDENTIALS=/home/wagle/.config/gcloud/application_default_credentials.json
+GOOGLE_CLOUD_PROJECT_ID=your-project-id
+GOOGLE_CLOUD_BUCKET_NAME=your-bucket-name
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/credentials.json
 ```
 
 ### 4. Run Development Server
@@ -131,8 +131,8 @@ rag-ui/
 
 ### Environment Variables
 ```bash
-GOOGLE_CLOUD_PROJECT_ID=gen-lang-client-0738357189
-GOOGLE_CLOUD_BUCKET_NAME=rag-storage-439974099982
+GOOGLE_CLOUD_PROJECT_ID=your-project-id
+GOOGLE_CLOUD_BUCKET_NAME=your-bucket-name
 GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
 ```
 
