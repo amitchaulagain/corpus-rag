@@ -1,113 +1,196 @@
-## RAG App (Gemini on Vertex AI)
+# TypeScript RAG System with Google Cloud Storage
 
-Minimal example that streams a response from Gemini with Vertex AI Retrieval-Augmented Generation (RAG) using a specific Vertex RAG Corpus.
+A modern TypeScript-based RAG (Retrieval-Augmented Generation) system built with SvelteKit, Google Cloud Storage, and Vertex AI. Features secure user authentication, single resume management, and intelligent document querying.
 
-### Prerequisites
-- **Python 3.9+** (Python 3.12 recommended)
-- **gcloud CLI** installed and logged in
-- Access to Google Cloud project `439974099982` with Vertex AI API enabled
-- IAM: your user needs at least `roles/aiplatform.user` on the project
+## 🚀 Features
 
-### Setup
+- **🔐 Google OAuth Authentication** - Secure user login with identity-only permissions
+- **📄 Single Resume Management** - Upload, delete, and replace resume with drag-and-drop interface
+- **☁️ Google Cloud Storage** - Secure file storage with user isolation (`users/{email}/`)
+- **🧠 Vertex AI RAG** - Intelligent document querying using Google's RAG technology
+- **⚡ Modern Stack** - SvelteKit 5 + TypeScript + Bun runtime
+- **🛡️ Security First** - Server-side authentication, user folder isolation, file validation
+
+## 🏗️ Architecture
+
+### Authentication Flow
+1. **Users** authenticate via Google OAuth (identity only - no storage permissions)
+2. **Server** uses admin's Google Cloud credentials for storage operations
+3. **Files** stored in isolated folders: `users/{user-email}/resume.{ext}`
+
+### Security Model
+- ✅ Users can't access other users' files
+- ✅ Users can't access Google Cloud resources directly
+- ✅ Server-side validation and file management
+- ✅ Single resume limit prevents storage abuse
+
+## 📋 Prerequisites
+
+- **Node.js 18+** and **Bun** runtime
+- **Google Cloud CLI** installed and authenticated
+- Access to Google Cloud project `gen-lang-client-0738357189`
+- **Google Cloud Storage bucket**: `rag-storage-439974099982`
+- **Vertex AI API** enabled for RAG functionality
+
+## 🚀 Quick Start
+
+### 1. Clone and Setup
 ```bash
-cd /Users/admin/extratech/ragapp
+git clone <repository>
+cd corpus-rag/rag-ui
 
-# (optional) create and activate a virtual environment
-python3 -m venv .venv
-source .venv/bin/activate
-
-# install dependency
-pip install --upgrade pip
-pip install google-genai
+# Install dependencies
+bun install
 ```
 
-### Authenticate (ADC)
+### 2. Authentication Setup
 ```bash
-gcloud auth application-default login --project=439974099982
+# Authenticate with Google Cloud (admin account)
+gcloud auth application-default login
+gcloud config set project gen-lang-client-0738357189
 ```
 
-### Run
+### 3. Environment Configuration
+Create `.env` file:
 ```bash
-python3 hero.py
+GOOGLE_CLOUD_PROJECT_ID=gen-lang-client-0738357189
+GOOGLE_CLOUD_BUCKET_NAME=rag-storage-439974099982
+GOOGLE_APPLICATION_CREDENTIALS=/home/wagle/.config/gcloud/application_default_credentials.json
 ```
 
-### What it does
-- Uses `google-genai` with `vertexai=True`, `project=439974099982`, `location=us-east4`.
-- Queries a RAG Corpus at:
-  - `projects/439974099982/locations/us-east4/ragCorpora/6838716034162098176`
-
-### Troubleshooting
-- **403 PERMISSION_DENIED (aiplatform.ragCorpora.query)**
-  - Grant role to your caller:
-    ```bash
-    gcloud projects add-iam-policy-binding 439974099982 \
-      --member="user:YOUR_EMAIL" \
-      --role="roles/aiplatform.user" --quiet
-    ```
-  - Ensure region is `us-east4` and the corpus ID exists in that project/region.
-
-- **ADC not found / credentials error**
-  - Run:
-    ```bash
-    gcloud auth application-default login --project=439974099982
-    ```
-
-- **`python` not found**
-  - Use `python3` instead:
-    ```bash
-    python3 hero.py
-    ```
-
-- **urllib3 OpenSSL warning on macOS**
-  - Optional: upgrade to Python 3.12 or ignore; it does not block execution.
-
-### Notes
-- The corpus ID is hardcoded in `hero.py`. Update it if you use a different corpus or region.
-
-## Run the HTTP app
-
+### 4. Run Development Server
 ```bash
-cd /Users/admin/extratech/ragapp
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
-# ADC for Vertex
-gcloud auth application-default login --project=439974099982
-
-# Environment
-export VERTEX_PROJECT=439974099982
-export VERTEX_LOCATION=us-east4
-export VERTEX_RAG_CORPUS="projects/439974099982/locations/us-east4/ragCorpora/6838716034162098176"
-
-# Start server
-python3 app.py
+bun run dev
 ```
 
-### Ingest Google Drive files with user metadata
-- Requires the files to be accessible by your ADC principal (or shared to the service account).
-- Body: user_id and a list of Drive file IDs.
+Visit **http://localhost:3000** to access the application.
 
-```bash
-curl -sS -X POST http://localhost:8000/ingest \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "user_id": "alice",
-    "drive_file_ids": ["1AbC...", "2XyZ..."]
-  }' | jq .
+## 📱 Usage
+
+### For Users
+1. **🔐 Login** - Click "Sign in with Google" (identity verification only)
+2. **📤 Upload** - Drag and drop your resume or click to select
+3. **❓ Query** - Ask questions about your uploaded resume
+4. **🗑️ Manage** - Delete or replace your resume anytime
+
+### For Administrators
+- **User Isolation**: Each user gets a secure folder: `users/{email}/`
+- **Storage Management**: Files stored in Google Cloud Storage bucket
+- **Access Control**: Only authenticated users can access their own files
+
+## 🛠️ Development
+
+### Project Structure
+```
+rag-ui/
+├── src/
+│   ├── lib/
+│   │   ├── components/     # Svelte components
+│   │   ├── storage-client.ts  # Cloud Storage client
+│   │   └── rag-client.ts      # Vertex AI RAG client
+│   └── routes/
+│       ├── api/               # API endpoints
+│       │   ├── storage/       # Storage operations
+│       │   └── rag/          # RAG operations
+│       └── +page.svelte      # Main application
+├── .env                      # Environment variables
+└── package.json
 ```
 
-### Query with per-user filtering
+### API Endpoints
+
+#### Storage Operations
+- `POST /api/storage/upload` - Upload resume (1 file limit)
+- `GET /api/storage/list` - List user's files
+- `DELETE /api/storage/delete` - Delete user's resume
+- `POST /api/storage/create-folder` - Create user folder
+
+#### RAG Operations
+- `POST /api/rag/query` - Query uploaded documents
+- `POST /api/rag/import` - Import files to RAG system
+
+### Security Features
+
+#### Authentication
+- ✅ Google OAuth for user identity
+- ✅ Server-side Google Cloud authentication
+- ✅ No storage permissions granted to users
+
+#### File Management
+- ✅ User folder isolation: `users/{email}/`
+- ✅ Single file limit per user
+- ✅ File type validation
+- ✅ Secure server-side operations
+
+## 🔧 Configuration
+
+### Google Cloud Setup
+1. **OAuth Client**: Configure in Google Cloud Console
+2. **Storage Bucket**: `rag-storage-439974099982` in `us-east4`
+3. **Vertex AI**: Enable Vertex AI API for RAG functionality
+
+### Environment Variables
 ```bash
-curl -sS -X POST http://localhost:8000/query \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "user_id": "alice",
-    "question": "What does the proposal say about pricing?"
-  }' | jq .
+GOOGLE_CLOUD_PROJECT_ID=gen-lang-client-0738357189
+GOOGLE_CLOUD_BUCKET_NAME=rag-storage-439974099982
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
 ```
 
-Notes:
-- The ingestion endpoint uses a best-effort REST call to the Vertex RAG import API. If the API surface changes, update `vertex_rag.py` accordingly.
-- Ensure your corpus contains documents tagged with `user_id` metadata, or queries will return no user-specific context.
+## 📚 Migration from Python
+
+The original Python Flask implementation has been moved to the `deprecated/` folder. This TypeScript implementation provides:
+
+- ✅ **Better Performance** - Modern JavaScript runtime with Bun
+- ✅ **Enhanced Security** - Proper authentication separation
+- ✅ **Modern UI** - Svelte 5 with TypeScript
+- ✅ **Maintainability** - Clean architecture and type safety
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**Authentication Errors**
+```bash
+# Re-authenticate
+gcloud auth application-default login
+```
+
+**Storage Permission Denied**
+- Ensure admin account has Storage Admin role
+- Verify bucket exists and is accessible
+
+**File Upload Fails**
+- Check file size limits (10MB default)
+- Verify file type is supported (.pdf, .txt, .docx, .md)
+- Ensure user has single file limit not exceeded
+
+**RAG Queries Fail**
+- Verify Vertex AI API is enabled
+- Check if file was properly imported to RAG system
+- Ensure user has uploaded a resume
+
+### Development Issues
+
+**Dependencies**
+```bash
+# Reinstall dependencies
+rm -rf node_modules
+bun install
+```
+
+**Environment**
+```bash
+# Check environment variables
+cat .env
+```
+
+**Server Errors**
+```bash
+# Check server logs
+bun run dev
+```
+
+## 📄 License
+
+This project is licensed under the MIT License.
 
