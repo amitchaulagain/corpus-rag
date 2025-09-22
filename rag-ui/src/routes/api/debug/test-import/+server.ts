@@ -1,7 +1,7 @@
 // Debug endpoint to test RAG import in us-east4
 import { json } from '@sveltejs/kit';
 import { GoogleAuth } from 'google-auth-library';
-import { GOOGLE_CLOUD_PROJECT_ID } from '$env/static/private';
+import { GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_API_KEY } from '$env/static/private';
 import type { RequestHandler } from './$types.js';
 
 const auth = new GoogleAuth({
@@ -28,7 +28,7 @@ export const POST: RequestHandler = async ({ request }) => {
     };
 
     // Use the exact same format as working web UI
-    const importUrl = `https://us-east4-aiplatform.clients6.google.com/ui/projects/${GOOGLE_CLOUD_PROJECT_ID}/locations/us-east4/ragCorpora/${corpusId}/ragFiles:import?key=AIzaSyCI-zsRP85UVOi0DjtiCwWBwQ1djDy741g`;
+    const importUrl = `https://us-east4-aiplatform.clients6.google.com/ui/projects/${GOOGLE_CLOUD_PROJECT_ID}/locations/us-east4/ragCorpora/${corpusId}/ragFiles:import?key=${GOOGLE_CLOUD_API_KEY}`;
 
     console.log(`🌐 Testing Web UI URL: ${importUrl}`);
 

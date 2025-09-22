@@ -1,7 +1,7 @@
 // API endpoint for listing files in Vertex AI RAG corpus
 import { json } from '@sveltejs/kit';
 import { GoogleAuth } from 'google-auth-library';
-import { GOOGLE_CLOUD_PROJECT_ID } from '$env/static/private';
+import { GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_API_KEY } from '$env/static/private';
 import type { RequestHandler } from './$types.js';
 
 const auth = new GoogleAuth({
@@ -27,7 +27,7 @@ export const GET: RequestHandler = async ({ url }) => {
     };
 
     // Try the clients6 endpoint first, fallback to googleapis if needed
-    const listUrl = `https://us-east4-aiplatform.clients6.google.com/ui/projects/${GOOGLE_CLOUD_PROJECT_ID}/locations/us-east4/ragCorpora/${corpusId}/ragFiles?key=AIzaSyCI-zsRP85UVOi0DjtiCwWBwQ1djDy741g`;
+    const listUrl = `https://us-east4-aiplatform.clients6.google.com/ui/projects/${GOOGLE_CLOUD_PROJECT_ID}/locations/us-east4/ragCorpora/${corpusId}/ragFiles?key=${GOOGLE_CLOUD_API_KEY}`;
 
     const response = await fetch(listUrl, {
       method: 'GET',

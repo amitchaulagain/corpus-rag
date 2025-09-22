@@ -1,11 +1,12 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { VertexRAGClient } from '$lib/rag-client';
-import { GOOGLE_CLOUD_PROJECT_ID } from '$env/static/private';
+import { GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_API_KEY } from '$env/static/private';
 
 const rag = new VertexRAGClient({
   projectId: GOOGLE_CLOUD_PROJECT_ID,
-  location: 'us-east4'
+  location: 'us-east4',
+  apiKey: GOOGLE_CLOUD_API_KEY
   // No ragCorpusId - will be resolved per user
 });
 

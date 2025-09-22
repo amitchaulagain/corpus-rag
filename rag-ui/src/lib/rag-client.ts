@@ -7,6 +7,7 @@ interface RAGConfig {
   location: string;
   ragCorpusId?: string; // Now optional - will be resolved per user
   keyFilename?: string;
+  apiKey?: string; // For clients6 endpoints
 }
 
 interface QueryRequest {
@@ -101,7 +102,7 @@ export class VertexRAGClient {
       console.log(`✅ Using corpus ID: ${corpusResult.corpusId}`);
 
       const headers = await this.getAuthHeaders();
-      const url = `https://${this.config.location}-aiplatform.clients6.google.com/ui/projects/${this.config.projectId}/locations/${this.config.location}/ragCorpora/${corpusResult.corpusId}/ragFiles:import?key=AIzaSyCI-zsRP85UVOi0DjtiCwWBwQ1djDy741g`;
+      const url = `https://${this.config.location}-aiplatform.clients6.google.com/ui/projects/${this.config.projectId}/locations/${this.config.location}/ragCorpora/${corpusResult.corpusId}/ragFiles:import?key=${this.config.apiKey}`;
 
       console.log(`🌐 Import URL: ${url}`);
 
@@ -150,7 +151,7 @@ export class VertexRAGClient {
           console.log(`🔄 Retrying with new corpus ID: ${corpusResult.corpusId}`);
 
           // Retry with new corpus ID
-          const retryUrl = `https://${this.config.location}-aiplatform.clients6.google.com/ui/projects/${this.config.projectId}/locations/${this.config.location}/ragCorpora/${corpusResult.corpusId}/ragFiles:import?key=AIzaSyCI-zsRP85UVOi0DjtiCwWBwQ1djDy741g`;
+          const retryUrl = `https://${this.config.location}-aiplatform.clients6.google.com/ui/projects/${this.config.projectId}/locations/${this.config.location}/ragCorpora/${corpusResult.corpusId}/ragFiles:import?key=${this.config.apiKey}`;
 
           console.log(`🌐 Retry URL: ${retryUrl}`);
 

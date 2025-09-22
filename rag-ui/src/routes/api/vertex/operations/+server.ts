@@ -1,7 +1,7 @@
 // API endpoint for checking Vertex AI operations status
 import { json } from '@sveltejs/kit';
 import { GoogleAuth } from 'google-auth-library';
-import { GOOGLE_CLOUD_PROJECT_ID } from '$env/static/private';
+import { GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_API_KEY } from '$env/static/private';
 import type { RequestHandler } from './$types.js';
 
 const auth = new GoogleAuth({
@@ -28,7 +28,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
     // operationId is already a full resource name like:
     // projects/{project}/locations/{location}/operations/{operation}
-    const operationUrl = `https://us-east4-aiplatform.clients6.google.com/ui/${operationId}?key=AIzaSyCI-zsRP85UVOi0DjtiCwWBwQ1djDy741g`;
+    const operationUrl = `https://us-east4-aiplatform.clients6.google.com/ui/${operationId}?key=${GOOGLE_CLOUD_API_KEY}`;
 
     const response = await fetch(operationUrl, {
       method: 'GET',

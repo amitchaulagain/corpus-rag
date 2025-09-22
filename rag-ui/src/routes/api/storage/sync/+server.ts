@@ -2,7 +2,7 @@
 import { json } from '@sveltejs/kit';
 import { RAGStorageClient } from '$lib/storage-client.js';
 import { VertexRAGClient } from '$lib/rag-client.js';
-import { GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_BUCKET_NAME } from '$env/static/private';
+import { GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_BUCKET_NAME, GOOGLE_CLOUD_API_KEY } from '$env/static/private';
 import type { RequestHandler } from './$types.js';
 
 const storage = new RAGStorageClient({
@@ -12,7 +12,8 @@ const storage = new RAGStorageClient({
 
 const rag = new VertexRAGClient({
   projectId: GOOGLE_CLOUD_PROJECT_ID,
-  location: 'us-east4'
+  location: 'us-east4',
+  apiKey: GOOGLE_CLOUD_API_KEY
 });
 
 export const POST: RequestHandler = async ({ request }) => {
