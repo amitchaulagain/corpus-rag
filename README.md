@@ -1,196 +1,77 @@
-# TypeScript RAG System with Google Cloud Storage
+# 🚀 RAG System - Super Easy Setup
 
-A modern TypeScript-based RAG (Retrieval-Augmented Generation) system built with SvelteKit, Google Cloud Storage, and Vertex AI. Features secure user authentication, single resume management, and intelligent document querying.
+A modern RAG (Retrieval-Augmented Generation) system where users can upload resumes and ask questions about them using AI.
 
-## 🚀 Features
+## ⚡ Quick Start (3 Commands)
 
-- **🔐 Google OAuth Authentication** - Secure user login with identity-only permissions
-- **📄 Single Resume Management** - Upload, delete, and replace resume with drag-and-drop interface
-- **☁️ Google Cloud Storage** - Secure file storage with user isolation (`users/{email}/`)
-- **🧠 Vertex AI RAG** - Intelligent document querying using Google's RAG technology
-- **⚡ Modern Stack** - SvelteKit 5 + TypeScript + Bun runtime
-- **🛡️ Security First** - Server-side authentication, user folder isolation, file validation
-
-## 🏗️ Architecture
-
-### Authentication Flow
-1. **Users** authenticate via Google OAuth (identity only - no storage permissions)
-2. **Server** uses admin's Google Cloud credentials for storage operations
-3. **Files** stored in isolated folders: `users/{user-email}/resume.{ext}`
-
-### Security Model
-- ✅ Users can't access other users' files
-- ✅ Users can't access Google Cloud resources directly
-- ✅ Server-side validation and file management
-- ✅ Single resume limit prevents storage abuse
-
-## 📋 Prerequisites
-
-- **Node.js 18+** and **Bun** runtime
-- **Google Cloud CLI** installed and authenticated
-- Access to Google Cloud project with Vertex AI enabled
-- **Google Cloud Storage bucket** configured
-- **Vertex AI API** enabled for RAG functionality
-
-## 🚀 Quick Start
-
-### 1. Clone and Setup
 ```bash
-git clone <repository>
+git clone https://github.com/amitchaulagain/corpus-rag.git
 cd corpus-rag/rag-ui
-
-# Install dependencies
-bun install
+bun install && bun run setup
 ```
 
-### 2. Authentication Setup
-```bash
-# Authenticate with Google Cloud (admin account)
-gcloud auth application-default login
-gcloud config set project your-project-id
-```
+**Update the `.env` file with your Google Cloud credentials, then:**
 
-### 3. Environment Configuration
-Create `.env` file:
-```bash
-GOOGLE_CLOUD_PROJECT_ID=your-project-id
-GOOGLE_CLOUD_BUCKET_NAME=your-bucket-name
-GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/credentials.json
-```
-
-### 4. Run Development Server
 ```bash
 bun run dev
 ```
 
-Visit **http://localhost:3000** to access the application.
+**That's it!** 🎉 Visit **http://localhost:3000**
 
-## 📱 Usage
+## 🔧 Getting Your Credentials
 
-### For Users
-1. **🔐 Login** - Click "Sign in with Google" (identity verification only)
-2. **📤 Upload** - Drag and drop your resume or click to select
-3. **❓ Query** - Ask questions about your uploaded resume
-4. **🗑️ Manage** - Delete or replace your resume anytime
+### Google Cloud Console Setup (5 minutes)
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. **Enable APIs**: Vertex AI API + Cloud Storage API
+4. **Create OAuth Client**: APIs & Services → Credentials → Create OAuth Client ID
+5. **Create Storage Bucket**: Cloud Storage → Create Bucket
+6. **Authenticate**: Run `gcloud auth application-default login`
 
-### For Administrators
-- **User Isolation**: Each user gets a secure folder: `users/{email}/`
-- **Storage Management**: Files stored in Google Cloud Storage bucket
-- **Access Control**: Only authenticated users can access their own files
+### OAuth Settings
+- **Application type**: Web application
+- **Authorized origins**: `http://localhost:3000`
+- **Authorized redirect URIs**: `http://localhost:3000`
 
-## 🛠️ Development
+## ✨ Features
 
-### Project Structure
-```
-rag-ui/
-├── src/
-│   ├── lib/
-│   │   ├── components/     # Svelte components
-│   │   ├── storage-client.ts  # Cloud Storage client
-│   │   └── rag-client.ts      # Vertex AI RAG client
-│   └── routes/
-│       ├── api/               # API endpoints
-│       │   ├── storage/       # Storage operations
-│       │   └── rag/          # RAG operations
-│       └── +page.svelte      # Main application
-├── .env                      # Environment variables
-└── package.json
-```
+- 🔐 **Google Login** - Secure authentication
+- 📄 **One Resume Per User** - Upload, replace, or delete
+- 🧠 **AI Questions** - Ask anything about uploaded resumes
+- 🛡️ **Private & Secure** - Each user gets isolated storage
+- ⚡ **Modern Tech** - SvelteKit 5 + TypeScript + Bun
 
-### API Endpoints
+## 📱 How to Use
 
-#### Storage Operations
-- `POST /api/storage/upload` - Upload resume (1 file limit)
-- `GET /api/storage/list` - List user's files
-- `DELETE /api/storage/delete` - Delete user's resume
-- `POST /api/storage/create-folder` - Create user folder
-
-#### RAG Operations
-- `POST /api/rag/query` - Query uploaded documents
-- `POST /api/rag/import` - Import files to RAG system
-
-### Security Features
-
-#### Authentication
-- ✅ Google OAuth for user identity
-- ✅ Server-side Google Cloud authentication
-- ✅ No storage permissions granted to users
-
-#### File Management
-- ✅ User folder isolation: `users/{email}/`
-- ✅ Single file limit per user
-- ✅ File type validation
-- ✅ Secure server-side operations
-
-## 🔧 Configuration
-
-### Google Cloud Setup
-1. **OAuth Client**: Configure in Google Cloud Console
-2. **Storage Bucket**: `rag-storage-439974099982` in `us-east4`
-3. **Vertex AI**: Enable Vertex AI API for RAG functionality
-
-### Environment Variables
-```bash
-GOOGLE_CLOUD_PROJECT_ID=your-project-id
-GOOGLE_CLOUD_BUCKET_NAME=your-bucket-name
-GOOGLE_APPLICATION_CREDENTIALS=/path/to/credentials.json
-```
-
-## 📚 Migration from Python
-
-The original Python Flask implementation has been moved to the `deprecated/` folder. This TypeScript implementation provides:
-
-- ✅ **Better Performance** - Modern JavaScript runtime with Bun
-- ✅ **Enhanced Security** - Proper authentication separation
-- ✅ **Modern UI** - Svelte 5 with TypeScript
-- ✅ **Maintainability** - Clean architecture and type safety
+1. **🔐 Sign in** with your Google account
+2. **📤 Upload** your resume (PDF, DOCX, TXT)
+3. **❓ Ask questions** about your resume using AI
+4. **🗑️ Delete/Replace** anytime (1 resume per user)
 
 ## 🚨 Troubleshooting
 
-### Common Issues
-
-**Authentication Errors**
+### Can't Login?
 ```bash
-# Re-authenticate
 gcloud auth application-default login
 ```
 
-**Storage Permission Denied**
-- Ensure admin account has Storage Admin role
-- Verify bucket exists and is accessible
+### Upload Fails?
+- Check file size (max 10MB)
+- Use supported formats: PDF, DOCX, TXT, MD
+- Only 1 resume allowed per user
 
-**File Upload Fails**
-- Check file size limits (10MB default)
-- Verify file type is supported (.pdf, .txt, .docx, .md)
-- Ensure user has single file limit not exceeded
+### AI Not Working?
+- Make sure Vertex AI API is enabled in Google Cloud
+- Check if your file uploaded successfully
 
-**RAG Queries Fail**
-- Verify Vertex AI API is enabled
-- Check if file was properly imported to RAG system
-- Ensure user has uploaded a resume
-
-### Development Issues
-
-**Dependencies**
+### Still Having Issues?
 ```bash
-# Reinstall dependencies
+# Fresh install
 rm -rf node_modules
 bun install
-```
-
-**Environment**
-```bash
-# Check environment variables
-cat .env
-```
-
-**Server Errors**
-```bash
-# Check server logs
 bun run dev
 ```
 
 ## 📄 License
-
-This project is licensed under the MIT License.
+MIT License
 

@@ -1,11 +1,12 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { VertexRAGClient } from '$lib/rag-client';
+import { GOOGLE_CLOUD_PROJECT_ID } from '$env/static/private';
 
 const rag = new VertexRAGClient({
-  projectId: '439974099982',
-  location: 'us-east4',
-  ragCorpusId: '6838716034162098176'
+  projectId: GOOGLE_CLOUD_PROJECT_ID,
+  location: 'us-east4'
+  // No ragCorpusId - will be resolved per user
 });
 
 export const POST: RequestHandler = async ({ request }) => {

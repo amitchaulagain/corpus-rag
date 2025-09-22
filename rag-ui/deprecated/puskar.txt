@@ -1,0 +1,14 @@
+Name: Puskar Wagle  
+Preferred Name: wagle  
+Age: 28  
+Gender: Male  
+Location: Nepal  
+Interests:  
+  - Science (neuroscience, astronomy, chemistry, machinery)  
+  - Music (death metal, fast-paced rock, Melt-Banana fan for 7–8 years)  
+  - Technology (coding, automation bots, CNC machines, Laravel, Tauri, Svelte, FastAPI)  
+  - Politics and social change in Nepal  
+Personality:  
+  - ADHD combined type  
+  - Prefers practical, structured systems  
+  - Enjoys humor, especially sharp/clever commentary  

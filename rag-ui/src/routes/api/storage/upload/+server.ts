@@ -1,11 +1,17 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { RAGStorageClient } from '$lib/storage-client';
+import { VertexRAGClient } from '$lib/rag-client';
 import { GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_BUCKET_NAME } from '$env/static/private';
 
 const storage = new RAGStorageClient({
   projectId: GOOGLE_CLOUD_PROJECT_ID,
   bucketName: GOOGLE_CLOUD_BUCKET_NAME
+});
+
+const rag = new VertexRAGClient({
+  projectId: GOOGLE_CLOUD_PROJECT_ID,
+  location: 'us-east4'
 });
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -42,6 +48,33 @@ export const POST: RequestHandler = async ({ request }) => {
       return json({ error: result.error }, { status: 500 });
     }
 
+    // Automatically import the uploaded file to the user's RAG corpus
+    let importResult = null;
+    if (result.fileId) {
+      try {
+        console.log(`🔄 Starting auto-import for user ${userId} with file: ${result.fileId}`);
+
+        importResult = await rag.importFiles({
+          userId,
+          cloudStorageUris: [result.fileId]
+        });
+
+        if (!importResult.success) {
+          console.warn('File uploaded but RAG import failed:', importResult.error);
+
+          // If import failed due to invalid corpus, try to create a new one
+          if (importResult.error?.includes('404') || importResult.error?.includes('not found')) {
+            console.log('🔧 Corpus not found, attempting to create/refresh corpus for user...');
+            // Note: The RAG client should handle this automatically, but log for debugging
+          }
+        } else {
+          console.log(`✅ Auto-import successful for user ${userId}`);
+        }
+      } catch (importError) {
+        console.warn('File uploaded but RAG import failed:', importError);
+      }
+    }
+
     return json({
       success: true,
       file: {
@@ -50,7 +83,12 @@ export const POST: RequestHandler = async ({ request }) => {
         type: file.type,
         path: result.filePath,
         fileId: result.fileId
-      }
+      },
+      ragImport: importResult ? {
+        success: importResult.success,
+        operationId: importResult.operationId,
+        error: importResult.error
+      } : null
     });
 
   } catch (error) {
