@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { RAGStorageClient } from '$lib/storage-client';
 import { VertexRAGClient } from '$lib/rag-client';
 import { GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_BUCKET_NAME, GOOGLE_CLOUD_API_KEY } from '$env/static/private';
+import { authenticateRequest, handleApiRequest, requireScope, validators, validationError, authzError, handleOptions, addCorsHeaders } from '$lib/api-utils.js';
 
 const storage = new RAGStorageClient({
   projectId: GOOGLE_CLOUD_PROJECT_ID,
@@ -15,9 +16,50 @@ const rag = new VertexRAGClient({
   apiKey: GOOGLE_CLOUD_API_KEY
 });
 
-export const POST: RequestHandler = async ({ request }) => {
+// Handle preflight OPTIONS requests
+export const OPTIONS: RequestHandler = () => {
+  return handleOptions();
+};
+
+export const POST: RequestHandler = async (event) => {
+  // Check for API authentication for external access
+  const authHeader = event.request.headers.get('Authorization');
+  const hasApiKey = authHeader && authHeader.startsWith('Bearer ');
+
+  if (hasApiKey) {
+    // External API access - require authentication
+    const auth = await authenticateRequest(event);
+    if (auth instanceof Response) {
+      return addCorsHeaders(auth);
+    }
+
+    if (!requireScope(auth, 'files:write')) {
+      return addCorsHeaders(new Response(JSON.stringify(authzError()), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      }));
+    }
+
+    // Handle authenticated API request
+    const response = await handleApiRequest(async () => {
+      const formData = await event.request.formData();
+      const file = formData.get('file') as File;
+      const userId = formData.get('userId') as string || auth.user.id;
+      const replaceExisting = formData.get('replaceExisting') === 'true';
+
+      if (!file) {
+        throw new Error('Missing file');
+      }
+
+      return await uploadFileInternal(userId, file, replaceExisting);
+    });
+
+    return addCorsHeaders(response);
+  }
+
+  // Legacy UI access - no authentication required for backward compatibility
   try {
-    const formData = await request.formData();
+    const formData = await event.request.formData();
     const file = formData.get('file') as File;
     const userId = formData.get('userId') as string;
     const replaceExisting = formData.get('replaceExisting') === 'true';
@@ -26,14 +68,25 @@ export const POST: RequestHandler = async ({ request }) => {
       return json({ error: 'Missing file or userId' }, { status: 400 });
     }
 
+    const result = await uploadFileInternal(userId, file, replaceExisting);
+    return json(result);
+  } catch (error) {
+    return json(
+      { error: error instanceof Error ? error.message : 'Upload failed' },
+      { status: 500 }
+    );
+  }
+};
+
+// Internal upload function used by both UI and API
+async function uploadFileInternal(userId: string, file: File, replaceExisting: boolean) {
+  try {
+
     // Check if user already has a resume (unless replacing)
     if (!replaceExisting) {
       const existingFiles = await storage.listUserFiles(userId);
       if (existingFiles.success && existingFiles.files && existingFiles.files.length > 0) {
-        return json({
-          error: 'You already have a resume uploaded. Please delete it first to upload a new one.',
-          hasExistingFile: true
-        }, { status: 400 });
+        throw new Error('You already have a resume uploaded. Please delete it first to upload a new one.');
       }
     }
 
@@ -46,7 +99,7 @@ export const POST: RequestHandler = async ({ request }) => {
     const result = await storage.uploadFile(userId, file, fileName);
 
     if (!result.success) {
-      return json({ error: result.error }, { status: 500 });
+      throw new Error(result.error || 'Upload failed');
     }
 
     // Automatically import the uploaded file to the user's RAG corpus
@@ -76,26 +129,26 @@ export const POST: RequestHandler = async ({ request }) => {
       }
     }
 
-    return json({
+    return {
       success: true,
       file: {
+        id: result.fileId,
         name: file.name,
         size: file.size,
-        type: file.type,
-        path: result.filePath,
-        fileId: result.fileId
+        mimeType: file.type,
+        userId,
+        fileId: result.fileId,
+        fullPath: result.filePath,
+        created: new Date().toISOString()
       },
       ragImport: importResult ? {
         success: importResult.success,
         operationId: importResult.operationId,
         error: importResult.error
       } : null
-    });
+    };
 
   } catch (error) {
-    return json(
-      { error: error instanceof Error ? error.message : 'Upload failed' },
-      { status: 500 }
-    );
+    throw error;
   }
-};
+}

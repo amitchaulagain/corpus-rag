@@ -2,6 +2,9 @@
   import { onDestroy } from 'svelte';
   import FileUpload from '$lib/components/FileUpload.svelte';
   import GoogleAuth from '$lib/components/GoogleAuth.svelte';
+  import ApiTester from '$lib/components/ApiTester.svelte';
+  import ApiHealthMonitor from '$lib/components/ApiHealthMonitor.svelte';
+  import EmbeddedTestRunner from '$lib/components/EmbeddedTestRunner.svelte';
 
   let isAuthenticated = false;
   let user: any = null;
@@ -29,7 +32,7 @@
   let nextLogId = 1;
 
   // UI state
-  let activeTab = 'upload'; // 'upload', 'query', 'corpus', 'logs', 'files'
+  let activeTab = 'upload'; // 'upload', 'query', 'corpus', 'logs', 'files', 'api'
   let showDocumentPreview = false;
   let selectedDocument: any = null;
 
@@ -702,6 +705,9 @@
   <meta name="description" content="Per-user RAG corpus management for job hunting bot" />
 </svelte:head>
 
+<!-- API Health Monitor -->
+<ApiHealthMonitor />
+
 <div class="container">
   <header class="header">
     <h1>🤖 Job Hunting Bot - RAG Dashboard</h1>
@@ -753,6 +759,13 @@
         on:click={() => setActiveTab('logs')}
       >
         📜 System Logs
+      </button>
+      <button
+        class="tab-btn"
+        class:active={activeTab === 'api'}
+        on:click={() => setActiveTab('api')}
+      >
+        🚀 API Tester
       </button>
     </nav>
 
@@ -1158,6 +1171,14 @@
     </section>
     {/if}
 
+    <!-- API Tester Tab -->
+    {#if activeTab === 'api'}
+      <div class="tab-content api-tab">
+        <ApiTester />
+        <EmbeddedTestRunner />
+      </div>
+    {/if}
+
     <!-- Logs Tab -->
     {#if activeTab === 'logs'}
     <section class="section">
@@ -1206,8 +1227,6 @@
 >
   <div
     class="modal-content"
-    on:click|stopPropagation
-    on:keydown={(e) => e.stopPropagation()}
     role="document"
   >
     <div class="modal-header">
@@ -1253,12 +1272,16 @@
   }
 
   .container {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 24px;
+    box-shadow:
+      0 32px 64px rgba(0, 0, 0, 0.12),
+      0 0 0 1px rgba(255, 255, 255, 0.3);
     overflow: hidden;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
   }
 
   .header {
@@ -1280,38 +1303,63 @@
   }
 
   .content {
-    padding: 40px;
+    padding: 32px;
+    background: white;
+    border-radius: 0 0 20px 20px;
+    min-height: 70vh;
   }
 
   .tab-nav {
     display: flex;
-    gap: 5px;
-    margin-bottom: 30px;
-    border-bottom: 2px solid #e1e5e9;
-    padding-bottom: 0;
+    gap: 8px;
+    margin-bottom: 0;
+    border-bottom: none;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 20px 20px 0 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .tab-nav::-webkit-scrollbar {
+    display: none;
   }
 
   .tab-btn {
-    padding: 15px 25px;
+    padding: 12px 20px;
     border: none;
-    background: none;
+    background: transparent;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 600;
-    color: #666;
-    border-bottom: 3px solid transparent;
-    transition: all 0.3s;
+    color: #6c757d;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    white-space: nowrap;
   }
 
   .tab-btn:hover {
-    color: #2c3e50;
-    background: #f8f9fa;
+    color: #495057;
+    background: rgba(255, 255, 255, 0.7);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
   .tab-btn.active {
-    color: #2c3e50;
-    border-bottom-color: #667eea;
-    background: #f8f9fa;
+    color: #667eea;
+    background: white;
+    box-shadow:
+      0 4px 20px rgba(102, 126, 234, 0.15),
+      0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+  }
+
+  .api-tab {
+    background: none !important;
+    padding: 0 !important;
+    border: none !important;
   }
 
   .section {
