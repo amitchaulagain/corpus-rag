@@ -4,18 +4,31 @@
   import { openApiSpec } from '../openapi-spec.js';
   import { ApiAuth } from '../api-auth.js';
 
-  let apiKey = '';
-  let selectedEndpoint = '';
-  let selectedMethod = '';
-  let requestBody = '';
-  let responseData = '';
-  let isLoading = false;
-  let isGeneratingKey = false;
+  interface Props {
+    userId?: string;
+  }
+
+  let { userId = '' }: Props = $props();
+
+  let apiKey = $state('');
+  let selectedEndpoint = $state('');
+  let selectedMethod = $state('');
+  let requestBody = $state('');
+  let responseData = $state('');
+  let isLoading = $state(false);
+  let isGeneratingKey = $state(false);
+  let requestBodyError = $state('');
+  let requestBodyValid = $state(false);
+  let currentEndpoint: EndpointInfo | null = $state(null);
+  let editableUrl = $state('');
+  let selectedFile: File | null = $state(null);
+  let availableFiles: string[] = $state([]);
+  let isLoadingFiles = $state(false);
 
   // API Key Generation
-  let keyName = 'Test API Key';
-  let selectedScopes: string[] = ['files:read', 'files:write', 'rag:query'];
-  let showKeyGenerator = false;
+  let keyName = $state('Test API Key');
+  let selectedScopes: string[] = $state(['files:read', 'files:write', 'rag:query']);
+  let showKeyGenerator = $state(false);
 
   const availableScopes = [
     { id: 'files:read', label: '📖 Read Files' },
@@ -36,10 +49,10 @@
     tags: string[];
   }
 
-  let endpoints: EndpointInfo[] = [];
-  let filteredEndpoints: EndpointInfo[] = [];
-  let searchTerm = '';
-  let selectedTag = 'All';
+  let endpoints: EndpointInfo[] = $state([]);
+  let filteredEndpoints: EndpointInfo[] = $state([]);
+  let searchTerm = $state('');
+  let selectedTag = $state('All');
 
   onMount(async () => {
     // Load test credentials
@@ -59,13 +72,18 @@
   });
 
   async function loadTestCredentials() {
+    if (!userId) {
+      console.warn('No userId provided for test credentials');
+      return;
+    }
+    
     try {
-      const response = await fetch('/api/auth/test-key');
+      const response = await fetch(`/api/auth/test-key?userId=${encodeURIComponent(userId)}`);
       const data = await response.json();
 
       if (data.success) {
         apiKey = data.data.apiKey;
-        console.log('🔑 Auto-loaded test API key for ApiTester');
+        console.log(`🔑 Auto-loaded test API key for user: ${data.data.testUserId}`);
       }
     } catch (error) {
       console.warn('Failed to load test credentials:', error);
@@ -87,42 +105,85 @@
   function selectEndpoint(endpoint: EndpointInfo) {
     selectedEndpoint = endpoint.path;
     selectedMethod = endpoint.method;
+    currentEndpoint = endpoint;
+    editableUrl = `/api${endpoint.path}`;
 
-    // Generate example request body
+    // Load files if this is a delete operation
+    if (endpoint.method === 'DELETE' && endpoint.path.includes('/files/')) {
+      loadAvailableFiles();
+    }
+
+    // Reset file selection
+    selectedFile = null;
+
+    // Generate detailed request body based on OpenAPI spec
     if (endpoint.method !== 'GET') {
-      if (endpoint.path.includes('/query')) {
-        requestBody = JSON.stringify({
-          userId: 'test-user@example.com',
-          question: 'What skills do I have?'
-        }, null, 2);
-      } else if (endpoint.path.includes('/import')) {
-        requestBody = JSON.stringify({
-          userId: 'test-user@example.com',
-          cloudStorageUris: ['gs://bucket/user/file.pdf']
-        }, null, 2);
-      } else if (endpoint.path.includes('/corpus')) {
-        requestBody = JSON.stringify({
-          userId: 'test-user@example.com',
-          action: 'get_or_create'
-        }, null, 2);
-      } else {
-        requestBody = JSON.stringify({
-          userId: 'test-user@example.com'
-        }, null, 2);
-      }
+      requestBody = generateRequestBodyTemplate(endpoint);
+      validateRequestBody();
     } else {
       requestBody = '';
+      requestBodyError = '';
+      requestBodyValid = false;
     }
 
     responseData = '';
   }
 
+  function generateRequestBodyTemplate(endpoint: EndpointInfo): string {
+    const templates: { [key: string]: any } = {
+      '/rag/query': {
+        userId: userId,
+        question: "What are my key skills and experience?",
+        context: null,
+        maxResults: 5
+      },
+      '/rag/import': {
+        userId: userId,
+        cloudStorageUris: [`gs://rag-storage-439974099982/users/${userId}/resume.pdf`],
+        waitForCompletion: false
+      },
+      '/corpus': {
+        userId: userId,
+        action: "get_or_create"
+      },
+      '/files': {
+        // Note: This is for multipart/form-data, shown as reference
+        userId: userId,
+        replaceExisting: false,
+        // file: "Upload via form data"
+      },
+      '/auth/keys': {
+        userId: userId,
+        name: "My Test API Key",
+        scopes: ["files:read", "files:write", "rag:query", "rag:import"]
+      },
+      '/system/stats': {
+        userId: userId
+      }
+    };
+
+    // Find matching template
+    for (const [path, template] of Object.entries(templates)) {
+      if (endpoint.path.includes(path)) {
+        return JSON.stringify(template, null, 2);
+      }
+    }
+
+    // Default template
+    return JSON.stringify({
+      userId: userId,
+      // Add common fields based on endpoint
+      ...(endpoint.path.includes('delete') ? { confirm: true } : {}),
+      ...(endpoint.path.includes('create') ? { name: "Example Name" } : {}),
+    }, null, 2);
+  }
+
   async function generateApiKey() {
-    if (!keyName || selectedScopes.length === 0) return;
+    if (!keyName || selectedScopes.length === 0 || !userId) return;
 
     isGeneratingKey = true;
     try {
-      const generatedKey = ApiAuth.generateApiKey('test-user@example.com', keyName, selectedScopes as any);
+      const generatedKey = await ApiAuth.generateApiKey(userId, keyName, selectedScopes as any);
       apiKey = generatedKey.key;
       showKeyGenerator = false;
     } catch (error) {
@@ -139,7 +200,7 @@
     responseData = '';
 
     try {
-      const url = `/api${selectedEndpoint}`;
+      const url = editableUrl || `/api${selectedEndpoint}`;
       const headers: Record<string, string> = {};
 
       if (apiKey) {
@@ -153,11 +214,31 @@
 
       if (requestBody && selectedMethod !== 'GET') {
         if (selectedEndpoint === '/files' && selectedMethod === 'POST') {
-          // Handle file upload differently
+          // Handle file upload
           const formData = new FormData();
-          formData.append('userId', 'test-user@example.com');
-          const testFile = new File(['Sample test content'], 'test.txt', { type: 'text/plain' });
-          formData.append('file', testFile);
+          
+          if (selectedFile) {
+            formData.append('file', selectedFile);
+          } else {
+            // Create a test file if none selected
+            const testFile = new File(['Sample test content'], 'test.txt', { type: 'text/plain' });
+            formData.append('file', testFile);
+          }
+          
+          if (userId) formData.append('userId', userId);
+          
+          // Parse additional form data from request body
+          try {
+            const bodyData = JSON.parse(requestBody);
+            Object.entries(bodyData).forEach(([key, value]) => {
+              if (key !== 'file' && value !== null && value !== undefined) {
+                formData.append(key, String(value));
+              }
+            });
+          } catch (e) {
+            // Ignore JSON parsing errors for form data
+          }
+          
           config.body = formData;
         } else {
           headers['Content-Type'] = 'application/json';
@@ -185,6 +266,28 @@
     }
   }
 
+  async function loadTestApiKey() {
+    if (!userId) {
+      alert('Please authenticate first to load API key');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/auth/test-key?userId=${encodeURIComponent(userId)}`);
+      const data = await response.json();
+
+      if (data.success) {
+        apiKey = data.data.apiKey;
+        console.log(`🔑 Test API key loaded for user: ${data.data.testUserId}`);
+      } else {
+        alert('Failed to load test API key: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Failed to load test API key:', error);
+      alert('Failed to load test API key');
+    }
+  }
+
   function copyApiKey() {
     navigator.clipboard.writeText(apiKey);
   }
@@ -193,8 +296,136 @@
     navigator.clipboard.writeText(responseData);
   }
 
-  $: tags = ['All', ...new Set(endpoints.flatMap(ep => ep.tags))];
-  $: searchTerm, selectedTag, filterEndpoints();
+  function formatRequestBody() {
+    try {
+      const parsed = JSON.parse(requestBody);
+      requestBody = JSON.stringify(parsed, null, 2);
+      requestBodyError = '';
+      requestBodyValid = true;
+    } catch (error) {
+      requestBodyError = 'Invalid JSON format';
+      requestBodyValid = false;
+    }
+  }
+
+  function validateRequestBody() {
+    if (!requestBody.trim()) {
+      requestBodyError = '';
+      requestBodyValid = false;
+      return;
+    }
+
+    try {
+      JSON.parse(requestBody);
+      requestBodyError = '';
+      requestBodyValid = true;
+    } catch (error) {
+      requestBodyError = 'Invalid JSON: ' + (error as Error).message;
+      requestBodyValid = false;
+    }
+  }
+
+  function resetRequestBody() {
+    if (currentEndpoint) {
+      requestBody = generateRequestBodyTemplate(currentEndpoint);
+      validateRequestBody();
+    }
+  }
+
+  function getExpectedSchema(): string {
+    if (!currentEndpoint) return 'No endpoint selected';
+
+    const schemas: { [key: string]: any } = {
+      '/rag/query': {
+        userId: 'string (required)',
+        question: 'string (required)',
+        context: 'string | null (optional)',
+        maxResults: 'number (optional, default: 5)'
+      },
+      '/rag/import': {
+        userId: 'string (required)',
+        cloudStorageUris: 'string[] (required)',
+        waitForCompletion: 'boolean (optional, default: false)'
+      },
+      '/corpus': {
+        userId: 'string (required)',
+        action: 'string (required): "get_or_create" | "cleanup"'
+      },
+      '/auth/keys': {
+        userId: 'string (required)',
+        name: 'string (required)',
+        scopes: 'string[] (required)'
+      },
+      '/system/stats': {
+        userId: 'string (required)'
+      },
+      '/files': {
+        file: 'File (required for upload)',
+        userId: 'string (optional)',
+        replaceExisting: 'boolean (optional, default: false)'
+      }
+    };
+
+    for (const [path, schema] of Object.entries(schemas)) {
+      if (currentEndpoint.path.includes(path)) {
+        return JSON.stringify(schema, null, 2);
+      }
+    }
+
+    return JSON.stringify({
+      userId: 'string (required)',
+      '...': 'additional fields based on endpoint'
+    }, null, 2);
+  }
+
+  async function loadAvailableFiles() {
+    if (!userId) return;
+    
+    isLoadingFiles = true;
+    try {
+      const response = await fetch(`/api/files?userId=${encodeURIComponent(userId)}`, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data?.files) {
+          availableFiles = data.data.files.map((file: any) => file.name || file.filename);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load files:', error);
+    } finally {
+      isLoadingFiles = false;
+    }
+  }
+
+  function selectFileForDeletion(filename: string) {
+    editableUrl = `/api/files/${encodeURIComponent(filename)}?userId=${encodeURIComponent(userId)}`;
+  }
+
+  function handleFileSelect(event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files.length > 0) {
+      selectedFile = target.files[0];
+    }
+  }
+
+  let tags = $derived(['All', ...new Set(endpoints.flatMap(ep => ep.tags))]);
+  
+  $effect(() => {
+    // Re-run filtering when search term or selected tag changes
+    filterEndpoints();
+  });
+
+  $effect(() => {
+    // Validate request body when it changes
+    if (requestBody) {
+      validateRequestBody();
+    }
+  });
 </script>
 
 <div class="api-tester">
@@ -208,7 +439,7 @@
     <div class="quick-actions">
       <button
         class="btn-secondary"
-        on:click={() => showKeyGenerator = !showKeyGenerator}
+        onclick={() => showKeyGenerator = !showKeyGenerator}
       >
         🔑 {showKeyGenerator ? 'Hide' : 'Generate'} API Key
       </button>
@@ -248,7 +479,7 @@
       <div class="form-actions">
         <button
           class="btn-primary"
-          on:click={generateApiKey}
+          onclick={generateApiKey}
           disabled={isGeneratingKey || !keyName || selectedScopes.length === 0}
         >
           {isGeneratingKey ? '⏳ Generating...' : '🎯 Generate Key'}
@@ -274,8 +505,9 @@
           placeholder="rag_[keyId]_[secret] or generate one above"
           class="input-field key-input"
         />
+        <button class="load-btn" onclick={loadTestApiKey} title="Load Test API Key">🔑 Load</button>
         {#if apiKey}
-          <button class="copy-btn" on:click={copyApiKey} title="Copy API Key">📋</button>
+          <button class="copy-btn" onclick={copyApiKey} title="Copy API Key">📋</button>
         {/if}
       </div>
     </div>
@@ -309,7 +541,7 @@
         <button
           class="endpoint-card"
           class:selected={selectedEndpoint === endpoint.path && selectedMethod === endpoint.method}
-          on:click={() => selectEndpoint(endpoint)}
+          onclick={() => selectEndpoint(endpoint)}
         >
           <div class="endpoint-info">
             <span class="method-badge method-{endpoint.method.toLowerCase()}">{endpoint.method}</span>
@@ -330,25 +562,126 @@
         <h3>📤 Request</h3>
         <div class="request-info">
           <span class="method-badge method-{selectedMethod.toLowerCase()}">{selectedMethod}</span>
-          <span class="endpoint-url">/api{selectedEndpoint}</span>
+          <input 
+            type="text" 
+            bind:value={editableUrl}
+            class="endpoint-url-input"
+            placeholder="/api/endpoint"
+          />
         </div>
 
         {#if requestBody}
           <div class="body-section">
-            <label class="field-label">Request Body:</label>
+            <div class="body-header">
+              <label class="field-label">Request Body:</label>
+              <div class="body-actions">
+                <button 
+                  class="btn-small" 
+                  onclick={() => formatRequestBody()}
+                  title="Format JSON"
+                >
+                  🎨 Format
+                </button>
+                <button 
+                  class="btn-small" 
+                  onclick={() => validateRequestBody()}
+                  title="Validate JSON"
+                >
+                  ✅ Validate
+                </button>
+                <button 
+                  class="btn-small" 
+                  onclick={() => resetRequestBody()}
+                  title="Reset to template"
+                >
+                  🔄 Reset
+                </button>
+              </div>
+            </div>
             <textarea
               bind:value={requestBody}
               class="json-editor"
-              rows="8"
+              rows="12"
               placeholder="Enter JSON request body..."
             ></textarea>
+            {#if requestBodyError}
+              <div class="error-message">
+                ❌ {requestBodyError}
+              </div>
+            {/if}
+            {#if requestBodyValid}
+              <div class="success-message">
+                ✅ Valid JSON
+              </div>
+            {/if}
+            <div class="body-info">
+              <details class="schema-details">
+                <summary>📋 Expected Schema</summary>
+                <pre class="schema-display">{getExpectedSchema()}</pre>
+              </details>
+            </div>
+          </div>
+        {/if}
+
+        {#if selectedMethod === 'POST' && selectedEndpoint.includes('/files')}
+          <div class="file-section">
+            <div class="file-header">
+              <label class="field-label">File Upload:</label>
+            </div>
+            <div class="file-input-container">
+              <input 
+                type="file" 
+                onchange={handleFileSelect}
+                class="file-input"
+                accept="*/*"
+              />
+              {#if selectedFile}
+                <div class="selected-file-info">
+                  <span class="file-name">📄 {selectedFile.name}</span>
+                  <span class="file-size">({Math.round(selectedFile.size / 1024)} KB)</span>
+                  <button class="btn-small" onclick={() => selectedFile = null}>❌ Remove</button>
+                </div>
+              {/if}
+            </div>
+          </div>
+        {/if}
+
+        {#if selectedMethod === 'DELETE' && selectedEndpoint.includes('/files/')}
+          <div class="file-list-section">
+            <div class="file-list-header">
+              <label class="field-label">Select File to Delete:</label>
+              <button 
+                class="btn-small" 
+                onclick={loadAvailableFiles}
+                disabled={isLoadingFiles}
+              >
+                {isLoadingFiles ? '⏳ Loading...' : '🔄 Refresh'}
+              </button>
+            </div>
+            <div class="file-list">
+              {#if isLoadingFiles}
+                <div class="loading-message">Loading files...</div>
+              {:else if availableFiles.length === 0}
+                <div class="empty-message">No files found</div>
+              {:else}
+                {#each availableFiles as filename}
+                  <button 
+                    class="file-item"
+                    onclick={() => selectFileForDeletion(filename)}
+                    class:selected={editableUrl.includes(filename)}
+                  >
+                    📄 {filename}
+                  </button>
+                {/each}
+              {/if}
+            </div>
           </div>
         {/if}
 
         <div class="action-section">
           <button
             class="btn-primary execute-btn"
-            on:click={testEndpoint}
+            onclick={testEndpoint}
             disabled={isLoading || !apiKey}
           >
             {isLoading ? '⏳ Executing...' : '🚀 Execute Request'}
@@ -363,7 +696,7 @@
         <div class="response-header">
           <h3>📥 Response</h3>
           {#if responseData}
-            <button class="copy-btn" on:click={copyResponse} title="Copy Response">📋</button>
+            <button class="copy-btn" onclick={copyResponse} title="Copy Response">📋</button>
           {/if}
         </div>
 
@@ -576,6 +909,23 @@
     opacity: 1;
   }
 
+  .load-btn {
+    position: absolute;
+    right: 60px;
+    padding: 4px 8px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
+  }
+
+  .load-btn:hover {
+    background: #218838;
+  }
+
   .section-header {
     display: flex;
     justify-content: space-between;
@@ -721,6 +1071,199 @@
     outline: none;
     border-color: #667eea;
     background: white;
+  }
+
+  .body-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .body-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-small {
+    padding: 4px 8px;
+    font-size: 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-small:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+  }
+
+  .error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 4px;
+    padding: 8px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+  }
+
+  .success-message {
+    color: #28a745;
+    font-size: 12px;
+    margin-top: 4px;
+    padding: 8px;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 4px;
+  }
+
+  .body-info {
+    margin-top: 12px;
+  }
+
+  .schema-details {
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    background: #f8f9fa;
+  }
+
+  .schema-details summary {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: 500;
+    background: #e9ecef;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .schema-details[open] summary {
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .schema-display {
+    margin: 0;
+    padding: 12px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    background: #ffffff;
+    border: none;
+    white-space: pre-wrap;
+    color: #495057;
+  }
+
+  .endpoint-url-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 13px;
+    background: #f8f9fa;
+    margin-left: 8px;
+  }
+
+  .endpoint-url-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+  }
+
+  .file-section,
+  .file-list-section {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #f8f9fa;
+  }
+
+  .file-header,
+  .file-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .file-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .file-input {
+    padding: 8px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+  }
+
+  .file-input:hover {
+    border-color: #667eea;
+    background: #f0f4ff;
+  }
+
+  .selected-file-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 4px;
+  }
+
+  .file-name {
+    font-weight: 500;
+    color: #0066cc;
+  }
+
+  .file-size {
+    color: #666;
+    font-size: 12px;
+  }
+
+  .file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+  }
+
+  .file-item:hover {
+    background: #f0f4ff;
+    border-color: #667eea;
+  }
+
+  .file-item.selected {
+    background: #667eea;
+    color: white;
+    border-color: #5a6fd8;
+  }
+
+  .loading-message,
+  .empty-message {
+    text-align: center;
+    padding: 16px;
+    color: #666;
+    font-style: italic;
   }
 
   .action-section {

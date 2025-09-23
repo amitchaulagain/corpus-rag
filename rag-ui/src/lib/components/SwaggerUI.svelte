@@ -4,13 +4,19 @@
   import { openApiSpec } from '../openapi-spec.js';
   import ApiKeyGenerator from './ApiKeyGenerator.svelte';
 
-  let apiKey = '';
-  let selectedEndpoint = '';
-  let selectedMethod = '';
-  let requestBody = '';
-  let responseData = '';
-  let isLoading = false;
-  let activeTab = 'docs'; // 'docs' or 'test'
+  interface Props {
+    userId?: string;
+  }
+
+  let { userId = '' }: Props = $props();
+
+  let apiKey = $state('');
+  let selectedEndpoint = $state('');
+  let selectedMethod = $state('');
+  let requestBody = $state('');
+  let responseData = $state('');
+  let isLoading = $state(false);
+  let activeTab = $state('docs'); // 'docs' or 'test'
 
   interface EndpointInfo {
     path: string;
@@ -124,7 +130,7 @@
         if (selectedEndpoint === '/files' && selectedMethod === 'POST') {
           // Special handling for file upload
           const formData = new FormData();
-          formData.append('userId', 'test-user@example.com');
+          formData.append('userId', userId);
 
           // Create a sample file for testing
           const testFile = new File(['Sample file content'], 'test.txt', { type: 'text/plain' });
@@ -174,14 +180,14 @@
     <button
       class="tab-btn"
       class:active={activeTab === 'docs'}
-      on:click={() => activeTab = 'docs'}
+      onclick={() => activeTab = 'docs'}
     >
       📖 Documentation
     </button>
     <button
       class="tab-btn"
       class:active={activeTab === 'test'}
-      on:click={() => activeTab = 'test'}
+      onclick={() => activeTab = 'test'}
     >
       🧪 API Tester
     </button>
@@ -212,7 +218,7 @@
               <div class="endpoint-card">
                 <button
                   class="endpoint-header"
-                  on:click={() => selectEndpoint(endpoint)}
+                  onclick={() => selectEndpoint(endpoint)}
                   type="button"
                   aria-label="Test endpoint {endpoint.method} {endpoint.path}"
                 >
@@ -271,7 +277,7 @@
           <div class="action-section">
             <button
               class="execute-btn"
-              on:click={testEndpoint}
+              onclick={testEndpoint}
               disabled={isLoading}
             >
               {isLoading ? '⏳ Executing...' : '▶️ Execute'}

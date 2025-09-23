@@ -324,4 +324,93 @@ export class VertexRAGClient {
       };
     }
   }
+
+  /**
+   * List all corpora in the project (for health checks)
+   */
+  async listCorpora(): Promise<{
+    success: boolean;
+    corpora?: any[];
+    error?: string;
+  }> {
+    return await this.corpusManager.listCorpora();
+  }
+
+  /**
+   * List files in a specific corpus
+   */
+  async listCorpusFiles(corpusId: string): Promise<{
+    success: boolean;
+    files?: any[];
+    error?: string;
+  }> {
+    try {
+      const headers = await this.getAuthHeaders();
+      const listUrl = `https://${this.config.location}-aiplatform.clients6.google.com/ui/projects/${this.config.projectId}/locations/${this.config.location}/ragCorpora/${corpusId}/ragFiles${this.config.apiKey ? `?key=${this.config.apiKey}` : ''}`;
+
+      const response = await fetch(listUrl, {
+        method: 'GET',
+        headers
+      });
+
+      // If clients6 fails, try the old googleapis endpoint
+      if (!response.ok && response.status === 404) {
+        const fallbackUrl = `https://${this.config.location}-aiplatform.googleapis.com/v1beta1/projects/${this.config.projectId}/locations/${this.config.location}/ragCorpora/${corpusId}/ragFiles`;
+
+        const fallbackResponse = await fetch(fallbackUrl, {
+          method: 'GET',
+          headers
+        });
+
+        if (fallbackResponse.ok) {
+          const result = await fallbackResponse.json();
+          const files = (result.ragFiles || []).map((ragFile: any) => ({
+            name: ragFile.displayName || ragFile.name?.split('/').pop() || 'Unknown',
+            ragFileId: ragFile.name,
+            gcsSource: ragFile.gcsSource,
+            sizeBytes: ragFile.sizeBytes,
+            createTime: ragFile.createTime,
+            updateTime: ragFile.updateTime,
+            ragFileType: ragFile.ragFileType,
+            problemMessage: ragFile.problemMessage,
+            state: ragFile.state
+          }));
+
+          return {
+            success: true,
+            files
+          };
+        }
+      }
+
+      if (!response.ok) {
+        const error = await response.text();
+        return { success: false, error: `Failed to list files: ${response.status} - ${error}` };
+      }
+
+      const result = await response.json();
+      const files = (result.ragFiles || []).map((ragFile: any) => ({
+        name: ragFile.displayName || ragFile.name?.split('/').pop() || 'Unknown',
+        ragFileId: ragFile.name,
+        gcsSource: ragFile.gcsSource,
+        sizeBytes: ragFile.sizeBytes,
+        createTime: ragFile.createTime,
+        updateTime: ragFile.updateTime,
+        ragFileType: ragFile.ragFileType,
+        problemMessage: ragFile.problemMessage,
+        state: ragFile.state
+      }));
+
+      return {
+        success: true,
+        files
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
 }

@@ -2,10 +2,10 @@
 <script lang="ts">
   import { ApiAuth } from '$lib/api-auth.js';
 
-  let keyName = '';
-  let selectedScopes: string[] = [];
-  let generatedKey = '';
-  let showGenerator = false;
+  let keyName = $state('');
+  let selectedScopes: string[] = $state([]);
+  let generatedKey = $state('');
+  let showGenerator = $state(false);
 
   const availableScopes = [
     { id: 'files:read', label: 'Read Files', description: 'List and view user files' },
@@ -27,11 +27,17 @@
     }
   }
 
-  function generateApiKey() {
-    if (!keyName || selectedScopes.length === 0) return;
+  interface Props {
+    userId?: string;
+  }
+
+  let { userId = '' }: Props = $props();
+
+  async function generateApiKey() {
+    if (!keyName || selectedScopes.length === 0 || !userId) return;
 
     try {
-      const apiKey = ApiAuth.generateApiKey('test-user@example.com', keyName, selectedScopes as any);
+      const apiKey = await ApiAuth.generateApiKey(userId, keyName, selectedScopes as any);
       generatedKey = apiKey.key;
     } catch (error) {
       console.error('Failed to generate API key:', error);
@@ -50,7 +56,7 @@
 </script>
 
 <div class="api-key-generator">
-  <button class="toggle-btn" on:click={() => showGenerator = !showGenerator}>
+  <button class="toggle-btn" onclick={() => showGenerator = !showGenerator}>
     {showGenerator ? '🔽' : '▶️'} Generate Test API Key
   </button>
 
@@ -78,7 +84,7 @@
                   type="checkbox"
                   value={scope.id}
                   checked={selectedScopes.includes(scope.id)}
-                  on:change={() => toggleScope(scope.id)}
+                  onchange={() => toggleScope(scope.id)}
                 />
                 <span class="scope-name">{scope.label}</span>
                 <span class="scope-description">{scope.description}</span>
@@ -92,12 +98,12 @@
       <div class="form-actions">
         <button
           class="generate-btn"
-          on:click={generateApiKey}
+          onclick={generateApiKey}
           disabled={!keyName || selectedScopes.length === 0}
         >
           🔑 Generate API Key
         </button>
-        <button class="reset-btn" on:click={reset}>
+        <button class="reset-btn" onclick={reset}>
           🔄 Reset
         </button>
       </div>
@@ -107,7 +113,7 @@
           <h4>🎉 API Key Generated!</h4>
           <div class="key-display">
             <code class="api-key">{generatedKey}</code>
-            <button class="copy-btn" on:click={copyToClipboard}>
+            <button class="copy-btn" onclick={copyToClipboard}>
               📋 Copy
             </button>
           </div>

@@ -9,14 +9,19 @@
     time: number;
     error?: string;
     response?: any;
-  }> = [];
+  }> = $state([]);
 
-  let isRunning = false;
-  let totalTests = 0;
-  let passedTests = 0;
-  let failedTests = 0;
-  let autoApiKey = '';
-  let testUserId = 'test-user@example.com';
+  let isRunning = $state(false);
+  let totalTests = $state(0);
+  let passedTests = $state(0);
+  let failedTests = $state(0);
+  let autoApiKey = $state('');
+  interface Props {
+    userId?: string;
+  }
+
+  let { userId = '' }: Props = $props();
+  let testUserId = userId;
 
   const testSuite = [
     {
@@ -153,14 +158,20 @@
   });
 
   async function loadTestCredentials() {
+    if (!userId) {
+      console.warn('No userId provided for test credentials');
+      return;
+    }
+    
     try {
-      const response = await fetch('/api/auth/test-key');
+      // Pass the actual userId to generate API key for the logged-in user
+      const response = await fetch(`/api/auth/test-key?userId=${encodeURIComponent(userId)}`);
       const data = await response.json();
 
       if (data.success) {
         autoApiKey = data.data.apiKey;
         testUserId = data.data.testUserId;
-        console.log('🔑 Test credentials loaded automatically');
+        console.log(`🔑 Test credentials loaded automatically for user: ${testUserId}`);
       }
     } catch (error) {
       console.warn('Failed to load test credentials:', error);
@@ -181,7 +192,7 @@
   <div class="test-controls">
     <button
       class="run-tests-btn"
-      on:click={() => runAllTests()}
+      onclick={() => runAllTests()}
       disabled={isRunning}
     >
       {isRunning ? '⏳ Running Tests...' : '🚀 Run API Tests'}
@@ -189,7 +200,7 @@
 
     <button
       class="run-auth-tests-btn"
-      on:click={() => {
+      onclick={() => {
         if (autoApiKey) {
           runAllTests(autoApiKey);
         } else {

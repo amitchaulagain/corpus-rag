@@ -48,8 +48,8 @@ export const GET: RequestHandler = async (event) => {
     // Test storage service
     let storageStatus = 'healthy';
     try {
-      // Try to list a dummy folder to test connectivity
-      await storage.listFiles('health-check/', { maxResults: 1 });
+      // Try to list files for a dummy user to test connectivity
+      await storage.listUserFiles('health-check');
     } catch (error) {
       console.warn('Storage health check failed:', error);
       storageStatus = 'degraded';

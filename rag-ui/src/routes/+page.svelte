@@ -20,6 +20,7 @@
   let uploadMessage = '';
   let isDragOver = false;
   let fileInput: HTMLInputElement;
+  let addMoreFilesInput: HTMLInputElement;
 
   // Corpus management
   let corpora: any[] = [];
@@ -268,18 +269,26 @@
 
   async function handleFileSelect(event: Event) {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) {
-      await uploadFile(file);
+    if (input.files && input.files.length > 0) {
+      // Upload all selected files
+      for (let i = 0; i < input.files.length; i++) {
+        const file = input.files[i];
+        await uploadFile(file);
+      }
+      // Reset the input so the same file can be selected again if needed
+      input.value = '';
     }
   }
 
   async function handleDrop(event: DragEvent) {
     event.preventDefault();
     isDragOver = false;
-    const file = event.dataTransfer?.files[0];
-    if (file) {
-      await uploadFile(file);
+    if (event.dataTransfer?.files && event.dataTransfer.files.length > 0) {
+      // Upload all dropped files
+      for (let i = 0; i < event.dataTransfer.files.length; i++) {
+        const file = event.dataTransfer.files[i];
+        await uploadFile(file);
+      }
     }
   }
 
@@ -370,18 +379,12 @@
     }
   }
 
-  async function replaceResume() {
-    fileInput?.click();
-    const originalOnChange = fileInput?.onchange;
-    if (fileInput) {
-      fileInput.onchange = async (event) => {
-        const input = event.target as HTMLInputElement;
-        const file = input.files?.[0];
-        if (file) {
-          await uploadFile(file, true);
-        }
-        fileInput.onchange = originalOnChange;
-      };
+  async function addMoreFiles() {
+    addLog('info', '📁 Add More Files button clicked');
+    if (addMoreFilesInput) {
+      addMoreFilesInput.click();
+    } else {
+      addLog('error', '❌ File input element not found');
     }
   }
 
@@ -710,8 +713,20 @@
 
 <div class="container">
   <header class="header">
-    <h1>🤖 Job Hunting Bot - RAG Dashboard</h1>
-    <p>Per-user corpus management with automatic import and AI analysis</p>
+    <div class="header-content">
+      <div class="header-text">
+        <h1>🤖 Job Hunting Bot - RAG Dashboard</h1>
+        <p>Per-user corpus management with automatic import and AI analysis</p>
+      </div>
+      <div class="header-nav">
+        <a href="/swagger" class="nav-link" target="_blank" rel="noopener noreferrer">
+          📚 API Docs
+        </a>
+        <a href="/api-docs" class="nav-link">
+          🧪 API Tester
+        </a>
+      </div>
+    </div>
   </header>
 
   <main class="content">
@@ -773,7 +788,7 @@
     {#if activeTab === 'upload'}
     <section class="section">
       <h2>📄 Document Management</h2>
-      <p>Upload your documents (up to 2 files) for AI analysis. Each user gets their own isolated corpus.</p>
+      <p>Upload your documents for AI analysis. Each user gets their own isolated corpus.</p>
 
       <!-- User Info -->
       <div class="info-card">
@@ -833,10 +848,11 @@
           <div class="upload-content">
             <div class="upload-icon">📤</div>
             <h3>Upload Your Documents</h3>
-            <p>Drag and drop your documents here, or click to select (up to 2 files)</p>
+            <p>Drag and drop your documents here, or click to select multiple files</p>
             <input
               type="file"
               accept=".pdf,.txt,.docx,.md"
+              multiple
               on:change={handleFileSelect}
               style="display: none;"
               bind:this={fileInput}
@@ -848,11 +864,8 @@
 
       {#if userFiles.length > 0}
         <div class="upload-actions">
-          <button class="btn secondary" on:click={() => replaceResume()}>
-            🔄 Replace Document
-          </button>
-          <button class="btn secondary" on:click={() => fileInput?.click()}>
-            ➕ Add Another File
+          <button class="btn secondary" on:click={addMoreFiles}>
+            ➕ Add More Files
           </button>
           <button class="btn" on:click={syncStorageToVertexAI}>
             🔄 Sync to Vertex AI
@@ -873,6 +886,17 @@
         </div>
       {/if}
     </section>
+
+    <!-- Always available hidden file input for "Add More Files" functionality -->
+    <input
+      type="file"
+      accept=".pdf,.txt,.docx,.md"
+      multiple
+      on:change={handleFileSelect}
+      style="display: none;"
+      bind:this={addMoreFilesInput}
+    />
+
     {/if}
 
     <!-- Query Tab -->
@@ -1174,8 +1198,8 @@
     <!-- API Tester Tab -->
     {#if activeTab === 'api'}
       <div class="tab-content api-tab">
-        <ApiTester />
-        <EmbeddedTestRunner />
+        <ApiTester userId={userId} />
+        <EmbeddedTestRunner userId={userId} />
       </div>
     {/if}
 
@@ -1288,7 +1312,18 @@
     background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
     color: white;
     padding: 40px;
-    text-align: center;
+  }
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .header-text {
+    text-align: left;
   }
 
   .header h1 {
@@ -1300,6 +1335,29 @@
   .header p {
     opacity: 0.9;
     font-size: 1.1rem;
+  }
+
+  .header-nav {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .nav-link {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .nav-link:hover {
+    background: rgba(255,255,255,0.2);
+    border-color: rgba(255,255,255,0.5);
+    transform: translateY(-2px);
   }
 
   .content {
