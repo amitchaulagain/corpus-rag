@@ -15,6 +15,8 @@
   let totalTests = 0;
   let passedTests = 0;
   let failedTests = 0;
+  let autoApiKey = '';
+  let testUserId = 'test-user@example.com';
 
   const testSuite = [
     {
@@ -34,14 +36,14 @@
     {
       id: 'files-list',
       name: 'List Files',
-      endpoint: '/api/files?userId=test-user@example.com',
+      endpoint: '/api/files?userId=' + testUserId,
       method: 'GET',
       requiresAuth: true
     },
     {
       id: 'corpus-get',
       name: 'Get Corpus',
-      endpoint: '/api/corpus?userId=test-user@example.com',
+      endpoint: '/api/corpus?userId=' + testUserId,
       method: 'GET',
       requiresAuth: true
     }
@@ -142,12 +144,28 @@
     }
   }
 
-  // Auto-run basic health check on mount
-  onMount(() => {
+  // Load test API key and run basic health check on mount
+  onMount(async () => {
+    await loadTestCredentials();
     runTest(testSuite[0]).then(result => {
       testResults = [result];
     });
   });
+
+  async function loadTestCredentials() {
+    try {
+      const response = await fetch('/api/auth/test-key');
+      const data = await response.json();
+
+      if (data.success) {
+        autoApiKey = data.data.apiKey;
+        testUserId = data.data.testUserId;
+        console.log('🔑 Test credentials loaded automatically');
+      }
+    } catch (error) {
+      console.warn('Failed to load test credentials:', error);
+    }
+  }
 </script>
 
 <div class="test-runner">
@@ -172,12 +190,16 @@
     <button
       class="run-auth-tests-btn"
       on:click={() => {
-        const apiKey = prompt('Enter API Key for authenticated tests:');
-        if (apiKey) runAllTests(apiKey);
+        if (autoApiKey) {
+          runAllTests(autoApiKey);
+        } else {
+          const apiKey = prompt('Enter API Key for authenticated tests:');
+          if (apiKey) runAllTests(apiKey);
+        }
       }}
       disabled={isRunning}
     >
-      🔐 Run with Auth
+      🔐 Run with Auth {autoApiKey ? '(Auto)' : ''}
     </button>
   </div>
 

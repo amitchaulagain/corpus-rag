@@ -315,7 +315,7 @@
         return;
       }
 
-      uploadMessage = 'Resume uploaded successfully!';
+      uploadMessage = 'Document uploaded successfully!';
       addLog('success', `✅ File uploaded: ${result.file.name}`);
 
       if (result.ragImport) {
@@ -343,7 +343,7 @@
   }
 
   async function deleteResume(fileName: string) {
-    if (!confirm('Are you sure you want to delete your resume?')) return;
+    if (!confirm('Are you sure you want to delete this document?')) return;
 
     addLog('info', `🗑️ Deleting file: ${fileName}`);
 
@@ -357,7 +357,7 @@
       const result = await response.json();
 
       if (result.success) {
-        uploadMessage = 'Resume deleted successfully';
+        uploadMessage = 'Document deleted successfully';
         addLog('success', `✅ File deleted: ${fileName}`);
         await loadUserFiles();
       } else {
@@ -772,8 +772,8 @@
     <!-- Upload Tab -->
     {#if activeTab === 'upload'}
     <section class="section">
-      <h2>📄 Resume Management</h2>
-      <p>Upload your resume for AI analysis. Each user gets their own isolated corpus.</p>
+      <h2>📄 Document Management</h2>
+      <p>Upload your documents (up to 2 files) for AI analysis. Each user gets their own isolated corpus.</p>
 
       <!-- User Info -->
       <div class="info-card">
@@ -832,8 +832,8 @@
         >
           <div class="upload-content">
             <div class="upload-icon">📤</div>
-            <h3>Upload Your Resume</h3>
-            <p>Drag and drop your resume here, or click to select</p>
+            <h3>Upload Your Documents</h3>
+            <p>Drag and drop your documents here, or click to select (up to 2 files)</p>
             <input
               type="file"
               accept=".pdf,.txt,.docx,.md"
@@ -849,7 +849,7 @@
       {#if userFiles.length > 0}
         <div class="upload-actions">
           <button class="btn secondary" on:click={() => replaceResume()}>
-            🔄 Replace Resume
+            🔄 Replace Document
           </button>
           <button class="btn secondary" on:click={() => fileInput?.click()}>
             ➕ Add Another File
@@ -878,15 +878,15 @@
     <!-- Query Tab -->
     {#if activeTab === 'query'}
     <section class="section">
-      <h2>🤔 AI-Powered Resume Analysis</h2>
-      <p>Ask questions about your resume. The AI will analyze your personal documents.</p>
+      <h2>🤔 AI-Powered Document Analysis</h2>
+      <p>Ask questions about your documents. The AI will analyze your personal files.</p>
 
       <div class="form-group">
         <label for="question">Question:</label>
         <textarea
           id="question"
           bind:value={question}
-          placeholder="What skills do I have? What's my experience level? How can I improve my resume for a specific job?"
+          placeholder="What information is in my documents? What skills do I have? What's my experience level?"
           rows="3"
         ></textarea>
       </div>
@@ -896,13 +896,13 @@
         on:click={queryRAG}
         disabled={isQuerying || !userId.trim() || !question.trim()}
       >
-        {isQuerying ? 'Analyzing...' : 'Analyze Resume'}
+        {isQuerying ? 'Analyzing...' : 'Analyze Documents'}
       </button>
 
       {#if isQuerying}
         <div class="loading">
           <div class="spinner"></div>
-          AI is analyzing your resume and generating insights...
+          AI is analyzing your documents and generating insights...
         </div>
       {/if}
 
@@ -985,7 +985,7 @@
           </div>
         {:else}
           <div class="empty-state">
-            <p>No corpora found in project. Upload a resume to create your first corpus!</p>
+            <p>No corpora found in project. Upload documents to create your first corpus!</p>
           </div>
         {/if}
       </div>

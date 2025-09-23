@@ -41,7 +41,10 @@
   let searchTerm = '';
   let selectedTag = 'All';
 
-  onMount(() => {
+  onMount(async () => {
+    // Load test credentials
+    await loadTestCredentials();
+
     // Parse OpenAPI spec
     endpoints = Object.entries(openApiSpec.paths).flatMap(([path, pathObj]) =>
       Object.entries(pathObj as any).map(([method, methodObj]: [string, any]) => ({
@@ -54,6 +57,20 @@
     );
     filterEndpoints();
   });
+
+  async function loadTestCredentials() {
+    try {
+      const response = await fetch('/api/auth/test-key');
+      const data = await response.json();
+
+      if (data.success) {
+        apiKey = data.data.apiKey;
+        console.log('🔑 Auto-loaded test API key for ApiTester');
+      }
+    } catch (error) {
+      console.warn('Failed to load test credentials:', error);
+    }
+  }
 
   function filterEndpoints() {
     filteredEndpoints = endpoints.filter(endpoint => {
@@ -243,7 +260,12 @@
   <!-- API Key Input -->
   <div class="api-key-section glass-card">
     <div class="input-group">
-      <label for="api-key" class="field-label">🔐 API Key:</label>
+      <label for="api-key" class="field-label">
+        🔐 API Key:
+        {#if apiKey && apiKey.startsWith('rag_')}
+          <span class="auto-loaded-badge">✨ Auto-loaded</span>
+        {/if}
+      </label>
       <div class="key-input-wrapper">
         <input
           type="password"

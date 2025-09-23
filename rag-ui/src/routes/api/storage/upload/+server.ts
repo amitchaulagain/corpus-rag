@@ -82,20 +82,19 @@ export const POST: RequestHandler = async (event) => {
 async function uploadFileInternal(userId: string, file: File, replaceExisting: boolean) {
   try {
 
-    // Check if user already has a resume (unless replacing)
+    // Check if user already has reached the file limit (unless replacing)
     if (!replaceExisting) {
       const existingFiles = await storage.listUserFiles(userId);
-      if (existingFiles.success && existingFiles.files && existingFiles.files.length > 0) {
-        throw new Error('You already have a resume uploaded. Please delete it first to upload a new one.');
+      if (existingFiles.success && existingFiles.files && existingFiles.files.length >= 2) {
+        throw new Error('You have reached the maximum limit of 2 files. Please delete a file first to upload a new one.');
       }
     }
 
     // Create user folder if it doesn't exist
     await storage.createUserFolder(userId);
 
-    // Upload file with fixed name "resume.pdf" (or appropriate extension)
-    const fileExtension = file.name.split('.').pop() || 'pdf';
-    const fileName = `resume.${fileExtension}`;
+    // Upload file with original name (sanitized for storage)
+    const fileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
     const result = await storage.uploadFile(userId, file, fileName);
 
     if (!result.success) {
