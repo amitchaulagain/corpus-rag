@@ -719,9 +719,6 @@
         <p>Per-user corpus management with automatic import and AI analysis</p>
       </div>
       <div class="header-nav">
-        <a href="/swagger" class="nav-link" target="_blank" rel="noopener noreferrer">
-          📚 API Docs
-        </a>
         <a href="/api-docs" class="nav-link">
           🧪 API Tester
         </a>

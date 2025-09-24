@@ -4,13 +4,13 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"vite dev\" \"nodemon --watch src --ext ts,js,svelte --exec 'echo [API] Server files changed - hot reload enabled'\" \"npm run dev:test\"",
-    "dev:test": "nodemon --delay 5 --watch src/routes/api --exec 'sleep 3 && node ../dev-test.js'",
+    "dev:test": "nodemon --delay 5 --watch src/routes/api --exec 'sleep 3 && node dev-test.js'",
     "dev:simple": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "test:api": "node ../test-api.js",
+    "test:api": "node test-api.js",
     "setup": "node -e \"const fs=require('fs'); if(!fs.existsSync('.env')){fs.writeFileSync('.env','# Your Google Cloud Project\\nGOOGLE_CLOUD_PROJECT_ID=your-project-id\\nGOOGLE_CLOUD_BUCKET_NAME=your-bucket-name\\n\\n# OAuth (Get from Google Cloud Console)\\nVITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com\\nVITE_GOOGLE_CLIENT_SECRET=your-client-secret\\n\\n# Authentication (Optional - auto-detects)\\nGOOGLE_APPLICATION_CREDENTIALS=/path/to/your/credentials.json\\n'); console.log('✅ .env created! Update with your credentials then run: bun run dev');} else {console.log('✅ .env already exists! Run: bun run dev');}\""
   },
   "devDependencies": {
@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^7.17.1",
-    "google-auth-library": "^9.15.0",
-    "swagger-ui-dist": "^5.29.0"
+    "google-auth-library": "^9.15.0"
   }
 }
