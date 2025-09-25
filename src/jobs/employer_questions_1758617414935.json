@@ -1,0 +1,66 @@
+{
+  "instruction": "Read the user's resume and answer these employer questions. Respond ONLY with a JSON array of numbers (0-indexed option selections). Example: [0, 2, 1]",
+  "questions": [
+    {
+      "id": 0,
+      "q": "Which of the following statements best describes your right to work in Australia?",
+      "opts": [
+        "I'm an Australian citizen",
+        "I'm a permanent resident and/or NZ citizen",
+        "I have a family/partner visa with no restrictions",
+        "I have a graduate temporary work visa",
+        "I have a holiday temporary work visa",
+        "I have a temporary visa with restrictions on work location (e.g. skilled regional visa 491)",
+        "I have a temporary protection or safe haven enterprise work visa",
+        "I have a temporary visa with no restrictions (e.g. doctoral student)",
+        "I have a temporary visa with restrictions on work hours (e.g. student visa, retirement visa)",
+        "I have a temporary visa with restrictions on industry (e.g. temporary activity visa 408)",
+        "I require sponsorship to work for a new employer (e.g. 482, 457)"
+      ]
+    },
+    {
+      "id": 1,
+      "q": "What's your expected annual base salary?",
+      "opts": [
+        "$30k",
+        "$35k",
+        "$40k",
+        "$45k",
+        "$50k",
+        "$55k",
+        "$60k",
+        "$65k",
+        "$70k",
+        "$80k",
+        "$90k",
+        "$100k",
+        "$110k",
+        "$120k",
+        "$130k",
+        "$140k",
+        "$150k",
+        "$170k",
+        "$200k",
+        "$250k",
+        "$300k",
+        "$350k",
+        "$350k+"
+      ]
+    },
+    {
+      "id": 2,
+      "q": "How much notice are you required to give your current employer?",
+      "opts": [
+        "None, I'm ready to go now",
+        "1 week",
+        "2 weeks",
+        "3 weeks",
+        "4 weeks",
+        "5 weeks",
+        "6 or more weeks"
+      ]
+    }
+  ],
+  "expectedResponse": "JSON array like [0, 1, 2] where each number is the option index for that question",
+  "lastUpdated": "2025-09-23T08:50:14.932Z"
+}

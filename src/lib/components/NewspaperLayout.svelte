@@ -78,152 +78,83 @@
 
 <svelte:head>
   <title>{pageTitle} - {sectionName}</title>
-  <link rel="stylesheet" href="/newspaper.css">
 </svelte:head>
 
-<div class="newspaper">
+<div class="min-h-screen bg-base-200">
   <!-- Masthead -->
-  <header class="masthead">
-    <div class="weather">
-      <div class="weather-temp">{weatherTemp}°F</div>
-      <div class="weather-desc">{weatherDesc}</div>
-    </div>
-    <div class="title-section">
-      <h1>The RAG Herald</h1>
-      <div class="subtitle">{sectionName}</div>
-      <div class="date">{getCurrentDate()}</div>
-    </div>
-    <div class="stock-ticker">
-      <div class="ticker-item">DOCS: +{stockValues.DOCS.toFixed(1)}%</div>
-      <div class="ticker-item">AI: +{stockValues.AI.toFixed(1)}%</div>
-      <div class="ticker-item">RAG: +{stockValues.RAG.toFixed(1)}%</div>
+  <header class="bg-primary text-primary-content p-6">
+    <div class="container mx-auto flex flex-col lg:flex-row justify-between items-center gap-4">
+      <div class="text-center">
+        <div class="text-2xl font-bold">{weatherTemp}°F</div>
+        <div class="text-sm italic">{weatherDesc}</div>
+      </div>
+      <div class="text-center">
+        <h1 class="text-4xl lg:text-6xl font-bold tracking-widest">The RAG Herald</h1>
+        <div class="text-lg italic">{sectionName}</div>
+        <div class="text-sm border-t border-b border-primary-content/50 py-2 mt-2">{getCurrentDate()}</div>
+      </div>
+      <div class="flex flex-col gap-2">
+        <div class="badge badge-accent">DOCS: +{stockValues.DOCS.toFixed(1)}%</div>
+        <div class="badge badge-accent">AI: +{stockValues.AI.toFixed(1)}%</div>
+        <div class="badge badge-accent">RAG: +{stockValues.RAG.toFixed(1)}%</div>
+      </div>
     </div>
   </header>
 
   <!-- Breaking News Banner -->
-  <div class="breaking-news">
-    <span class="breaking-label">BREAKING:</span>
-    <span class="breaking-text">{breakingNews}</span>
+  <div class="bg-error text-error-content p-4 text-center animate-pulse">
+    <span class="badge badge-error-content bg-error-content text-error font-bold mr-2">BREAKING:</span>
+    <span class="font-semibold">{breakingNews}</span>
   </div>
 
   <!-- Navigation -->
-  <nav class="newspaper-nav">
-    <div class="nav-header">
-      <h3>📰 Section Navigation</h3>
+  <nav class="bg-base-100 border-2 border-primary border-l-8 m-4 p-4">
+    <div class="mb-4 pb-2 border-b-2 border-primary">
+      <h3 class="text-lg font-bold">📰 Section Navigation</h3>
     </div>
-    <div class="nav-items">
+    <div class="flex flex-wrap gap-4">
       {#each navigationItems as item}
         <a
           href={item.path}
-          class="nav-item"
-          class:active={$page.url.pathname === item.path}
+          class="btn btn-outline btn-primary"
+          class:btn-primary={$page.url.pathname === item.path}
+          class:btn-outline={$page.url.pathname !== item.path}
         >
-          <span class="nav-icon">{item.icon}</span>
-          <span class="nav-label">{item.label}</span>
+          <span>{item.icon}</span>
+          <span>{item.label}</span>
         </a>
       {/each}
     </div>
   </nav>
 
   <!-- Main Content -->
-  <div class="main-content">
+  <div class="container mx-auto p-6">
     <slot />
   </div>
 
   <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-content">
-      <div class="footer-section">
-        <h4>About The RAG Herald</h4>
-        <p>Your trusted source for document intelligence and AI-powered search capabilities since 2024.</p>
+  <footer class="footer bg-primary text-primary-content p-10">
+    <div class="footer-content grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div>
+        <h4 class="text-lg font-bold mb-4 border-b border-primary-content/50 pb-2">About The RAG Herald</h4>
+        <p class="text-sm">Your trusted source for document intelligence and AI-powered search capabilities since 2024.</p>
       </div>
-      <div class="footer-section">
-        <h4>Current Section</h4>
-        <p><strong>{sectionName}</strong></p>
-        <p>Navigate using the section links above to access different newspaper departments.</p>
+      <div>
+        <h4 class="text-lg font-bold mb-4 border-b border-primary-content/50 pb-2">Current Section</h4>
+        <p class="font-bold">{sectionName}</p>
+        <p class="text-sm">Navigate using the section links above to access different newspaper departments.</p>
       </div>
-      <div class="footer-section">
-        <h4>System Status</h4>
-        <div class="status-indicator">
-          <span class="status-dot operational"></span>
-          <span>All Systems Operational</span>
+      <div>
+        <h4 class="text-lg font-bold mb-4 border-b border-primary-content/50 pb-2">System Status</h4>
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 bg-success rounded-full"></div>
+          <span class="text-sm">All Systems Operational</span>
         </div>
       </div>
     </div>
-    <div class="footer-bottom">
-      <p>&copy; 2024 The RAG Herald. All rights reserved. | Powered by AI Document Intelligence</p>
+    <div class="border-t border-primary-content/50 pt-4 mt-8 text-center">
+      <p class="text-xs opacity-75">&copy; 2024 The RAG Herald. All rights reserved. | Powered by AI Document Intelligence</p>
     </div>
   </footer>
 </div>
 
-<style>
-  .newspaper-nav {
-    background: #f5f5f5;
-    border: 2px solid #000;
-    border-left: 8px solid #000;
-    margin: 0 0 20px 0;
-    padding: 15px;
-  }
-
-  .nav-header {
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #000;
-  }
-
-  .nav-header h3 {
-    margin: 0;
-    font-family: 'Times New Roman', serif;
-    font-size: 18px;
-    font-weight: bold;
-  }
-
-  .nav-items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-  }
-
-  .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 15px;
-    border: 2px solid #000;
-    background: #fff;
-    color: #000;
-    text-decoration: none;
-    font-family: 'Times New Roman', serif;
-    font-weight: bold;
-    transition: all 0.2s ease;
-  }
-
-  .nav-item:hover {
-    background: #e0e0e0;
-    box-shadow: 2px 2px 0 #000;
-  }
-
-  .nav-item.active {
-    background: #000;
-    color: #fff;
-  }
-
-  .nav-icon {
-    font-size: 16px;
-  }
-
-  .nav-label {
-    font-size: 14px;
-  }
-
-  @media (max-width: 768px) {
-    .nav-items {
-      flex-direction: column;
-    }
-
-    .nav-item {
-      width: 100%;
-      justify-content: flex-start;
-    }
-  }
-</style>

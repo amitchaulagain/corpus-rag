@@ -1,0 +1,137 @@
+{
+  "application_volume": "",
+  "category": "$160,000 – $190,000 + Super",
+  "company": "Morgan Consulting",
+  "debug": {
+    "details_length": 3449,
+    "extracted_company": "Morgan Consulting",
+    "extracted_title": "Senior Software Developer",
+    "title_length": 101
+  },
+  "details": "Senior Software Developer\nMorgan Consulting\nSydney NSW\n(Hybrid)\nDevelopers/Programmers (Information & Communication Technology)\nFull time\n$160,000 – $190,000 + Super\nPosted 6d ago\n•\nMedium application volume\nHow you match\nMatches based on your career history\nSoftware Development\nAPI\nCI/CD\n+4 more\n⁠\nSenior Software Developer – Node.js / React / TypeScript + DevOps – FinTech Scale-Up\nLocation:\nSydney (Hybrid – Mostly Remote)\nSalary:\n$170–190k + Super\nWork Type:\nFull Time – Permanent\nJoin a Scale-Up Building the Next Generation of FinTech Infrastructure\nWe’ve partnered exclusively with a product-led FinTech scale-up solving complex problems in the investment and compliance space. Their platform is already gaining strong market traction, and they’re now scaling the engineering team to support new greenfield builds, infrastructure improvements, and rapid customer growth.\nThis is a rare chance to join\nearly enough to make a real impact\n, but late enough that the foundations are already stable, well-architected, and ready to grow.\nThe Stack\nYou’ll be working in a modern JavaScript/TypeScript environment:\nBackend:\nNode.js, TypeScript,\nExpress/NestJS\nFrontend:\nReact.js,\nNext.js,\nTypeScript\n, Tailwind\nDevOps:\nAWS (Lambda, API Gateway, CDK), Docker, CI/CD\nOther:\nGraphQL, PostgreSQL, Kafka (bonus), legacy PHP (bonus)\nWhat You’ll Do\nOwn greenfield feature builds from architecture to release\nBuild scalable full-stack systems in a modern cloud-native environment\nImprove infrastructure, CI/CD, and DevOps practices as part of a growing team\nCollaborate with founders, designers, and product leaders in a tight-knit setup\nBring thoughtful technical input into both product and platform direction\nWhat They’re Looking For\n5+ years of experience in full-stack development, and Ideally 10+ years of software development experience\nProficiency in\nNode.js, React.js, TypeScript\n, and related tooling\nStrong experience with\nDevOps and cloud infrastructure\n(ideally AWS – CDK, Docker, etc.)\nSelf-driven, delivery-focused, and comfortable in fast-moving teams\nBonus: experience in FinTech, RegTech, or compliance-heavy products\nWhy Join?\n95% remote flexibility\n, with optional team meetups in Sydney CBD\nHigh-impact role with full ownership over your work\nSmall, high-performing team with minimal process and no red tape\nProduct with real traction, strong leadership, and technical excellence\nJoin a company building something truly unique in a growing market\nApply now\nor contact us for a confidential chat — we’re exclusively recruiting this role and can give you insight into the team, stack, and culture.\nEmployer questions\nYour application will include the following questions:\nWhich of the following statements best describes your right to work in Australia?\nHow many years' experience do you have as a software developer?\nWhich of the following front end development libraries and frameworks are you proficient in?\nHow many years' experience do you have as a Node JS Developer?\nHow many years' experience do you have as a React Developer?\nHow many years' experience do you have in a DevOps role?\nDon’t provide your bank or credit card details when applying for jobs.\nFeatured jobs\nFull Stack Node.JS / React Developer (Hybrid)\nPharmx Technologies Ltd\n7d ago\n.Net Full Stack Developer\nChecked In Care\n2d ago\nFull Stack Developer (Mobile & Web)\nEdisons Mytopia\n6d ago\nWhat can I earn as a Software Developer\nSee more detailed salary information",
+  "jobId": "87302371",
+  "location": "Sydney NSW (Hybrid)",
+  "posted": "",
+  "raw_title": "Senior Software Developer\nMorgan Consulting\nSydney NSW (Hybrid)\nFull time\n$160,000 – $190,000 + Super",
+  "salary_note": "$160,000 – $190,000 + Super",
+  "scrapedAt": "2025-09-24T21:49:52.884Z",
+  "title": "Senior Software Developer",
+  "url": "https://www.seek.com.au/java-jobs/in-All-Sydney-NSW?jobId=87302371&type=standard",
+  "work_type": "Full time",
+  "instruction": "Answer each question in order according to its type. For select/radio: return the chosen option index (number). For checkbox: return an array of option indices. For text/textarea: return a string. For number: return a number. For date: return 'YYYY-MM-DD'.",
+  "questions": [
+    {
+      "id": 0,
+      "q": "Which of the following front end development libraries and frameworks are you proficient in?",
+      "type": "checkbox",
+      "opts": [
+        "jQuery",
+        "Bootstrap",
+        "Angular.js",
+        "Backbone.js",
+        "React.js",
+        "LESS",
+        "SASS",
+        "Node.js",
+        "Knockout",
+        "Ember.js",
+        "Ext JS",
+        "CanJS",
+        "Durandal",
+        "D3.js",
+        "None of these"
+      ],
+      "instruction": "Select all applicable option indices for this checkbox group based on the resume.",
+      "expectedResponse": "Return an array of numbers representing the selected option indices (0-based)."
+    },
+    {
+      "id": 1,
+      "q": "Which of the following statements best describes your right to work in Australia?",
+      "type": "select",
+      "opts": [
+        "I'm an Australian citizen",
+        "I'm a permanent resident and/or NZ citizen",
+        "I have a family/partner visa with no restrictions",
+        "I have a graduate temporary work visa",
+        "I have a holiday temporary work visa",
+        "I have a temporary visa with restrictions on work location (e.g. skilled regional visa 491)",
+        "I have a temporary protection or safe haven enterprise work visa",
+        "I have a temporary visa with no restrictions (e.g. doctoral student)",
+        "I have a temporary visa with restrictions on work hours (e.g. student visa, retirement visa)",
+        "I have a temporary visa with restrictions on industry (e.g. temporary activity visa 408)",
+        "I require sponsorship to work for a new employer (e.g. 482, 457)"
+      ],
+      "instruction": "Choose the best single option index for this select question based on the resume.",
+      "expectedResponse": "Return a single number representing the selected option index (0-based)."
+    },
+    {
+      "id": 2,
+      "q": "How many years' experience do you have as a software developer?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "instruction": "Choose the best single option index for this select question based on the resume.",
+      "expectedResponse": "Return a single number representing the selected option index (0-based)."
+    },
+    {
+      "id": 3,
+      "q": "How many years' experience do you have as a Node JS Developer?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "instruction": "Choose the best single option index for this select question based on the resume.",
+      "expectedResponse": "Return a single number representing the selected option index (0-based)."
+    },
+    {
+      "id": 4,
+      "q": "How many years' experience do you have as a React Developer?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "instruction": "Choose the best single option index for this select question based on the resume.",
+      "expectedResponse": "Return a single number representing the selected option index (0-based)."
+    },
+    {
+      "id": 5,
+      "q": "How many years' experience do you have in a DevOps role?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "instruction": "Choose the best single option index for this select question based on the resume.",
+      "expectedResponse": "Return a single number representing the selected option index (0-based)."
+    }
+  ],
+  "lastUpdated": "2025-09-24T21:50:17.843Z"
+}

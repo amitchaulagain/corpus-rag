@@ -1,0 +1,62 @@
+{
+  "application_volume": "",
+  "category": "",
+  "company": "DataMesh",
+  "debug": {
+    "details_length": 3480,
+    "extracted_company": "DataMesh",
+    "extracted_title": "Senior Software Engineer",
+    "title_length": 63
+  },
+  "details": "Senior Software Engineer\nDataMesh\nSydney NSW\n(Hybrid)\nEngineering - Software (Information & Communication Technology)\nFull time\nPosted 14d ago\n•\nMedium application volume\nHow you match\nMatches based on your career history\nAPI\nMicrosoft Azure\nDeployment\n+2 more\n⁠\nOur Story!\nDataMesh Group is revolutionising the payment systems available to merchants and retailers, delivering integrated payment capabilities and valuable customer insights through bespoke payment and data processing solutions.\nThe company is in an exciting growth phase, and we are looking for individuals with the appetite and energy to make impactful changes and accelerate their career development with this unique opportunity!\nSmarter connections, infinite possibilities!\nAbout the role -\nBuild. Mentor. Impact!\nWe’re looking for a\nwho’s excited about tackling complex challenges, building scalable systems, and leaving a real mark in a fast-growing tech company.\nIf you love writing clean, elegant code, mentoring others, and collaborating on products that make a difference, you’ll feel right at home here.\nWhat You’ll Be Doing\nLead technical delivery - writing efficient, scalable, and secure code.\nDesign and build APIs and distributed systems that power products used at scale.\nTranslate business needs into smart, practical technical solutions.\nMentor engineers, uplift team performance, and champion best practices.\nTake full ownership of features from design and prototyping through to deployment.\nOptimise performance and scalability across cloud platforms (AWS or Azure).\nContribute to technical architecture and influence long-term engineering strategy.\nPartner with PMs, QA, designers, and fellow devs to deliver with impact.\nWhat We're Looking For\nStrong computer science fundamentals and problem-solving ability (degree or equivalent experience).\nProven track record building cloud-native applications (AWS/Azure).\nProficiency with the MERN stack, RESTful APIs, and modern dev practices.\nBonus: experience with Golang, Docker, Kubernetes.\nA growth mindset—you’re curious, adaptable, and always pushing boundaries.\nA collaborative leader who thrives in a team but can also run with big projects independently.\nWhy You’ll Love Working with Us\nInnovation at Its Core:\nBe part of a company that’s shaping the future of tech with cutting-edge solutions\nCollaborative Culture:\nWork with smart, driven, and supportive teammates who value your input\nCareer Growth:\nEnjoy a clear path for growth and development in an expanding organisation\nImpactful Work:\nSee the results of your efforts as you help bring transformative projects to life\nSocial Perks:\nEnjoy company events, including lunches, celebrations and after work drinks!\nWant to work somewhere where your ideas are valued, your code makes an impact, and your growth is supported? Apply now and let’s create something exceptional together.\nEmployer questions\nYour application will include the following questions:\nWhich of the following statements best describes your right to work in Australia?\nHow many years' experience do you have as a software engineer?\nCompany profile\nMore about this company\nDon’t provide your bank or credit card details when applying for jobs.\nFeatured jobs\nFull Stack Software Engineer (React, Next.js, Python) - Agentic AI Startup\nNinjaTech AI Australia Pty Ltd\n13d ago\nFullstack Developer\nSpark Recruitment\n1d ago\nBackend Engineer\nThe Onset\nWhat can I earn as a Software Engineer\nSee more detailed salary information",
+  "jobId": "87100391",
+  "location": "Sydney NSW (Hybrid)",
+  "posted": "",
+  "raw_title": "Senior Software Engineer\nDataMesh\nSydney NSW (Hybrid)\nFull time",
+  "salary_note": "",
+  "scrapedAt": "2025-09-24T21:47:55.243Z",
+  "title": "Senior Software Engineer",
+  "url": "https://www.seek.com.au/java-jobs/in-All-Sydney-NSW?jobId=87100391&type=standard",
+  "work_type": "Full time",
+  "instruction": "Answer each question in order according to its type. For select/radio: return the chosen option index (number). For checkbox: return an array of option indices. For text/textarea: return a string. For number: return a number. For date: return 'YYYY-MM-DD'.",
+  "questions": [
+    {
+      "id": 0,
+      "q": "Which of the following statements best describes your right to work in Australia?",
+      "type": "select",
+      "opts": [
+        "I'm an Australian citizen",
+        "I'm a permanent resident and/or NZ citizen",
+        "I have a family/partner visa with no restrictions",
+        "I have a graduate temporary work visa",
+        "I have a holiday temporary work visa",
+        "I have a temporary visa with restrictions on work location (e.g. skilled regional visa 491)",
+        "I have a temporary protection or safe haven enterprise work visa",
+        "I have a temporary visa with no restrictions (e.g. doctoral student)",
+        "I have a temporary visa with restrictions on work hours (e.g. student visa, retirement visa)",
+        "I have a temporary visa with restrictions on industry (e.g. temporary activity visa 408)",
+        "I require sponsorship to work for a new employer (e.g. 482, 457)"
+      ],
+      "instruction": "Choose the best single option index for this select question based on the resume.",
+      "expectedResponse": "Return a single number representing the selected option index (0-based)."
+    },
+    {
+      "id": 1,
+      "q": "How many years' experience do you have as a software engineer?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "instruction": "Choose the best single option index for this select question based on the resume.",
+      "expectedResponse": "Return a single number representing the selected option index (0-based)."
+    }
+  ],
+  "lastUpdated": "2025-09-24T21:48:20.242Z"
+}

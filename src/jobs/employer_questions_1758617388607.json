@@ -1,0 +1,38 @@
+{
+  "instruction": "Read the user's resume and answer these employer questions. Respond ONLY with a JSON array of numbers (0-indexed option selections). Example: [0, 2, 1]",
+  "questions": [
+    {
+      "id": 0,
+      "q": "Which of the following statements best describes your right to work in Australia?",
+      "opts": [
+        "I'm an Australian citizen",
+        "I'm a permanent resident and/or NZ citizen",
+        "I have a family/partner visa with no restrictions",
+        "I have a graduate temporary work visa",
+        "I have a holiday temporary work visa",
+        "I have a temporary visa with restrictions on work location (e.g. skilled regional visa 491)",
+        "I have a temporary protection or safe haven enterprise work visa",
+        "I have a temporary visa with no restrictions (e.g. doctoral student)",
+        "I have a temporary visa with restrictions on work hours (e.g. student visa, retirement visa)",
+        "I have a temporary visa with restrictions on industry (e.g. temporary activity visa 408)",
+        "I require sponsorship to work for a new employer (e.g. 482, 457)"
+      ]
+    },
+    {
+      "id": 1,
+      "q": "How many years' experience do you have as a Full Stack Software Engineer?",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ]
+    }
+  ],
+  "expectedResponse": "JSON array like [0, 1, 2] where each number is the option index for that question",
+  "lastUpdated": "2025-09-23T08:49:48.607Z"
+}

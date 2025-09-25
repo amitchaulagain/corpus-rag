@@ -1,0 +1,123 @@
+{
+  "application_volume": "",
+  "category": "$100,000 – $120,000 per year",
+  "company": "Desired Skill Pty Ltd",
+  "debug": {
+    "details_length": 4043,
+    "extracted_company": "Desired Skill Pty Ltd",
+    "extracted_title": "Java Developer (Sydney) – Visa Transfer Welcome",
+    "title_length": 128
+  },
+  "details": "Java Developer (Sydney) – Visa Transfer Welcome\nDesired Skill Pty Ltd\nSydney NSW\n(Hybrid)\nDevelopers/Programmers (Information & Communication Technology)\nFull time\n$100,000 – $120,000 per year\nPosted 26d ago\n•\nHigh application volume\nHow you match\nMatches based on your career history\nCI/CD\nDevOps\nMicrosoft Azure\n+7 more\n⁠\nVISA Transfer available for suitably strong candidates.\nJob Title:\nJava Developer\nLocation:\nSydney, NSW (Preferred: Candidates currently in Australia )\nEmployment Type:\nFull-time (Hybrid – 2-3 days per week in office)\nPosition :\nFTC \\ Daily Rate\nExperience:\n5\n+\nyears commercial Java development\nPositions Available: Multiple\nWork Eligibility:\nCandidates must hold any valid Australian work visa or eligibility for visa sponsorship.\nRole overview :\nWe are seeking a highly skilled\nJava Engineer\nto join our team in support of a major financial client. The ideal candidate will have strong experience in building scalable, secure, and high-performance applications using\nJava\n,\nSpring\nand\nSpring Boot\nframeworks. Familiarity with\nEvent-Driven Architecture (EDA)\nAgile development methodologies\nis essential.\nYou will be working on mission-critical systems that support financial operations, contributing to both greenfield development and modernization of legacy systems.\nKey Responsibilities:\n• Design, develop, and maintain enterprise-grade applications using Java, Spring, and Spring Boot.\n• Collaborate with cross-functional teams to define, design, and deliver new features.\n• Implement and advocate for Event-Driven Architecture and microservices-based solutions.\n• Participate in Agile ceremonies and contribute to iterative software delivery.\n• Write clean, scalable, and testable code following best practices and coding standards.\n• Troubleshoot, debug, and enhance existing systems to ensure optimal performance and reliability.\n• Work closely with DevOps and QA teams to streamline CI/CD and testing pipelines.\nRequired Skills & Experience:\n• 5+ years of hands-on experience with\n(preferably Java 11 or newer).\n• Strong experience with\nSpring Framework\n(including Spring Boot, Spring MVC, Spring Data, etc.).\n• Minimum 5+ years of commercial Spring Framework experience is required.\n• Solid understanding and practical experience with\nEvent-Driven Architecture\nand messaging platforms (e.g., Kafka, RabbitMQ).\n• Familiarity with\nRESTful APIs\n, microservices, and distributed systems.\n• Experience working in an\nAgile/Scrum\nenvironment.\n• Knowledge of relational and/or NoSQL databases (e.g., PostgreSQL, MongoDB).\n• Exposure to DevOps tools and CI/CD pipelines (e.g., Jenkins, Docker, Kubernetes) is a plus.\n• Excellent problem-solving skills and the ability to work independently or as part of a team.\nPreferred Qualifications:\n• Experience in the\nfinancial services industry\nor other regulated environments.\ncloud platforms\n(AWS, Azure, or GCP).\n• Understanding of security best practices and compliance standards in financial systems.\nWhy Join Us?\n• Opportunity to work with a global leader in financial services.\n• Cutting-edge projects with modern tech stacks.\n• Supportive and collaborative work environment.\n• Opportunities for growth and professional development.\nEmployer questions\nYour application will include the following questions:\nWhich of the following statements best describes your right to work in Australia?\nHow many years' experience do you have as a java developer?\nHow many years' experience do you have in the financial services industry?\nDo you have experience working within a scrum agile team?\nHow many years' experience do you have as a Java Spring Developer?\nHow much notice are you required to give your current employer?\nDon’t provide your bank or credit card details when applying for jobs.\nFeatured jobs\nSenior Java + Kafka developer\nHCL Australia Services Pty Ltd\n28d ago\nSoftware Programmer\nVision InfoSoft\nNewtown, Sydney NSW\n15d ago\nJava Developer (mid level)\nDXC Technology Australia & New Zealand\nWhat can I earn as a Java Developer\nSee more detailed salary information",
+  "jobId": "86822537",
+  "location": "Sydney NSW (Hybrid)",
+  "posted": "",
+  "raw_title": "Java Developer (Sydney) – Visa Transfer Welcome\nDesired Skill Pty Ltd\nSydney NSW (Hybrid)\nFull time\n$100,000 – $120,000 per year",
+  "salary_note": "$100,000 – $120,000 per year",
+  "scrapedAt": "2025-09-24T20:36:56.437Z",
+  "title": "Java Developer (Sydney) – Visa Transfer Welcome",
+  "url": "https://www.seek.com.au/java-jobs/in-All-Sydney-NSW?jobId=86822537&type=standard",
+  "work_type": "Full time",
+  "instruction": "Answer each question in order according to its type. For select/radio: return the chosen option index (number). For checkbox: return an array of option indices. For text/textarea: return a string. For number: return a number. For date: return 'YYYY-MM-DD'.",
+  "questions": [
+    {
+      "id": 0,
+      "q": "Do you have experience working within a scrum agile team?",
+      "type": "radio",
+      "opts": [
+        "Yes",
+        "No"
+      ],
+      "instruction": "Choose the best single option index for this radio group based on the resume.",
+      "expectedResponse": "Return a single number representing the selected option index (0-based)."
+    },
+    {
+      "id": 1,
+      "q": "Which of the following statements best describes your right to work in Australia?",
+      "type": "select",
+      "opts": [
+        "I'm an Australian citizen",
+        "I'm a permanent resident and/or NZ citizen",
+        "I have a family/partner visa with no restrictions",
+        "I have a graduate temporary work visa",
+        "I have a holiday temporary work visa",
+        "I have a temporary visa with restrictions on work location (e.g. skilled regional visa 491)",
+        "I have a temporary protection or safe haven enterprise work visa",
+        "I have a temporary visa with no restrictions (e.g. doctoral student)",
+        "I have a temporary visa with restrictions on work hours (e.g. student visa, retirement visa)",
+        "I have a temporary visa with restrictions on industry (e.g. temporary activity visa 408)",
+        "I require sponsorship to work for a new employer (e.g. 482, 457)"
+      ],
+      "instruction": "Choose the best single option index for this select question based on the resume.",
+      "expectedResponse": "Return a single number representing the selected option index (0-based)."
+    },
+    {
+      "id": 2,
+      "q": "How many years' experience do you have as a java developer?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "instruction": "Choose the best single option index for this select question based on the resume.",
+      "expectedResponse": "Return a single number representing the selected option index (0-based)."
+    },
+    {
+      "id": 3,
+      "q": "How many years' experience do you have in the financial services industry?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "instruction": "Choose the best single option index for this select question based on the resume.",
+      "expectedResponse": "Return a single number representing the selected option index (0-based)."
+    },
+    {
+      "id": 4,
+      "q": "How many years' experience do you have as a Java Spring Developer?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "instruction": "Choose the best single option index for this select question based on the resume.",
+      "expectedResponse": "Return a single number representing the selected option index (0-based)."
+    },
+    {
+      "id": 5,
+      "q": "How much notice are you required to give your current employer?",
+      "type": "select",
+      "opts": [
+        "None, I'm ready to go now",
+        "1 week",
+        "2 weeks",
+        "3 weeks",
+        "4 weeks",
+        "5 weeks",
+        "6 or more weeks"
+      ],
+      "instruction": "Choose the best single option index for this select question based on the resume.",
+      "expectedResponse": "Return a single number representing the selected option index (0-based)."
+    }
+  ],
+  "lastUpdated": "2025-09-24T20:37:17.060Z"
+}

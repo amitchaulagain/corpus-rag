@@ -120,6 +120,11 @@ export class ApiAuth {
       .map(key => ({ ...key, key: this.maskApiKey(key.key) })); // Mask the actual key
   }
 
+  // Get all API keys (admin function)
+  static getAllApiKeys(): ApiKey[] {
+    return Array.from(this.apiKeys.values());
+  }
+
   // Mask API key for display
   private static maskApiKey(apiKey: string): string {
     if (apiKey.length <= 12) return apiKey;

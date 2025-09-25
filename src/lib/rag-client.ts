@@ -337,6 +337,56 @@ export class VertexRAGClient {
   }
 
   /**
+   * Delete a RAG file from the corpus
+   */
+  async deleteRagFile(ragFileId: string): Promise<{
+    success: boolean;
+    error?: string;
+  }> {
+    try {
+      const headers = await this.getAuthHeaders();
+
+      // Try clients6 endpoint first
+      const deleteUrl = `https://${this.config.location}-aiplatform.clients6.google.com/ui/${ragFileId}${this.config.apiKey ? `?key=${this.config.apiKey}` : ''}`;
+
+      const response = await fetch(deleteUrl, {
+        method: 'DELETE',
+        headers
+      });
+
+      // If clients6 fails, try googleapis endpoint
+      if (!response.ok && response.status === 404) {
+        const fallbackUrl = `https://${this.config.location}-aiplatform.googleapis.com/v1beta1/${ragFileId}`;
+
+        const fallbackResponse = await fetch(fallbackUrl, {
+          method: 'DELETE',
+          headers
+        });
+
+        if (fallbackResponse.ok) {
+          return { success: true };
+        }
+
+        const fallbackError = await fallbackResponse.text();
+        return { success: false, error: `Delete failed: ${fallbackResponse.status} - ${fallbackError}` };
+      }
+
+      if (!response.ok) {
+        const error = await response.text();
+        return { success: false, error: `Delete failed: ${response.status} - ${error}` };
+      }
+
+      return { success: true };
+
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  /**
    * List files in a specific corpus
    */
   async listCorpusFiles(corpusId: string): Promise<{

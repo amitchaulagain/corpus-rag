@@ -134,4 +134,107 @@ export class RAGStorageClient {
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   }
+
+  /**
+   * Get file content as text (for preview)
+   */
+  async getFileContent(userId: string, fileName: string): Promise<{
+    success: boolean;
+    content?: string;
+    contentType?: string;
+    error?: string
+  }> {
+    try {
+      const filePath = `users/${userId}/${fileName}`;
+      const file = this.bucket.file(filePath);
+
+      // Check if file exists
+      const [exists] = await file.exists();
+      if (!exists) {
+        return { success: false, error: 'File not found' };
+      }
+
+      // Get metadata to check content type
+      const [metadata] = await file.getMetadata();
+      const contentType = metadata.contentType || 'application/octet-stream';
+
+      // Only read text files for preview
+      const textTypes = [
+        'text/',
+        'application/json',
+        'application/xml',
+        'application/javascript',
+        'application/typescript'
+      ];
+
+      const isTextFile = textTypes.some(type => contentType.startsWith(type));
+      if (!isTextFile) {
+        return { success: false, error: `Cannot preview file type: ${contentType}` };
+      }
+
+      // Download file content
+      const [buffer] = await file.download();
+      const content = buffer.toString('utf8');
+
+      // Limit content size for preview (first 10KB)
+      const maxPreviewSize = 10 * 1024;
+      const truncatedContent = content.length > maxPreviewSize
+        ? content.substring(0, maxPreviewSize) + '\n... (content truncated)'
+        : content;
+
+      return {
+        success: true,
+        content: truncatedContent,
+        contentType
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  /**
+   * Update file content
+   */
+  async updateFileContent(userId: string, fileName: string, content: string): Promise<{
+    success: boolean;
+    error?: string
+  }> {
+    try {
+      const filePath = `users/${userId}/${fileName}`;
+      const file = this.bucket.file(filePath);
+
+      // Check if file exists
+      const [exists] = await file.exists();
+      if (!exists) {
+        return { success: false, error: 'File not found' };
+      }
+
+      // Get original metadata
+      const [metadata] = await file.getMetadata();
+      const contentType = metadata.contentType || 'text/plain';
+
+      // Save updated content
+      await file.save(content, {
+        metadata: {
+          contentType,
+          metadata: {
+            ...metadata.metadata,
+            lastModified: new Date().toISOString(),
+            modifiedBy: userId
+          }
+        },
+        resumable: false
+      });
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
 }
