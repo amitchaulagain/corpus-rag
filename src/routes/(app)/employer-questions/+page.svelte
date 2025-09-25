@@ -273,7 +273,7 @@ Questions: [Questions List]`;
             <small class="text-base-content/50">Only jobs with screening questions will appear here</small>
           </div>
         {:else}
-          <div class="space-y-3 max-h-[32rem] overflow-y-auto pr-2">
+          <div class="space-y-3 h-full overflow-y-auto pr-2">
             {#each jobs as job}
               <div
                 class="card bg-base-200 shadow-md cursor-pointer hover:shadow-lg hover:shadow-primary/20 hover:border-primary/30 border border-transparent transition-all duration-300 hover:-translate-y-1"
@@ -370,7 +370,7 @@ Questions: [Questions List]`;
                 <div class="card bg-base-200 border border-base-300 shadow-md hover:shadow-lg transition-shadow duration-300">
                   <div class="card-body">
                     <h3 class="card-title text-primary mb-4">📝 Employer Questions ({jobContent.questions.length})</h3>
-                    <div class="space-y-6 max-h-[40rem] overflow-y-auto pr-4">
+                    <div class="space-y-6 h-full overflow-y-auto pr-4">
                       {#each jobContent.questions as question, index}
                         <div class="card bg-base-100 shadow-md border border-base-200 hover:shadow-lg hover:border-primary/20 transition-all duration-200">
                           <div class="card-body p-6">

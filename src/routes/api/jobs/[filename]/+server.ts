@@ -4,7 +4,7 @@ import { authenticateRequest, handleApiRequest, requireScope, handleOptions, add
 import fs from 'fs';
 import path from 'path';
 
-const JOBS_DIR = '/home/wagle/corpus-rag/src/jobs';
+const JOBS_DIR = path.resolve(process.cwd(), 'src/jobs');
 
 // Handle preflight OPTIONS requests
 export const OPTIONS: RequestHandler = () => {

@@ -478,7 +478,7 @@ Please format as a professional cover letter with proper greeting and closing.`;
   }
 
   .jobs-list {
-    max-height: 600px;
+    height: 100%;
     overflow-y: auto;
   }
 
