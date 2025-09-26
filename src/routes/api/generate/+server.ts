@@ -23,7 +23,7 @@ export const POST: RequestHandler = async (event) => {
 
   const response = await handleApiRequest(async () => {
     const requestBody = await event.request.json();
-    const { type, jobDetails, questions, userEmail, customPrompt } = requestBody;
+    const { type, jobDetails, questions, userEmail, customPrompt, enhancementFocus } = requestBody;
 
     if (!type || !userEmail) {
       throw new Error('Type and user email are required');
@@ -82,8 +82,126 @@ Format: Question → Recommended Answer → 2-sentence rationale
 Please be specific about which option number (starting from 0) to select for each question.`;
       }
 
+    } else if (type === 'job_analysis') {
+      if (!jobDetails) {
+        throw new Error('Job details are required for job analysis');
+      }
+
+      prompt = customPrompt || `Analyze this job description and my resume to provide a detailed fit analysis.
+
+Job Details: ${JSON.stringify(jobDetails, null, 2)}
+
+Please provide a comprehensive analysis including:
+
+1. Overall fit score (0-100%)
+2. Skill categories breakdown:
+   - Technical Skills (programming languages, frameworks, tools)
+   - Soft Skills (communication, leadership, teamwork)
+   - Domain Knowledge (industry-specific expertise)
+   - Certifications & Education
+   - Experience Level
+
+For each category, list:
+- Required skills from the job
+- Skills I have that match
+- Skills I'm missing
+- Category-specific fit score
+
+3. Key insights:
+   - Top 3 strongest matches
+   - Top 3 areas for improvement
+   - Specific recommendations to improve fit
+
+4. ATS keyword analysis:
+   - Important keywords from the job description
+   - Keywords present in my resume
+   - Missing keywords that should be added
+
+Format the response as a detailed analysis with specific scores and actionable recommendations.`;
+
+    } else if (type === 'resume_enhancement') {
+      if (!jobDetails) {
+        throw new Error('Job details are required for resume enhancement');
+      }
+
+      const focusDescription = enhancementFocus === 'ats' ? 'ATS Optimization' : 
+                              enhancementFocus === 'skills' ? 'Skills Matching' :
+                              enhancementFocus === 'keywords' ? 'Keyword Enhancement' :
+                              enhancementFocus === 'experience' ? 'Experience Boost' : 'General Enhancement';
+
+      prompt = customPrompt || `Enhance my resume for this specific job posting with focus on ${focusDescription}.
+
+Job Details: ${JSON.stringify(jobDetails, null, 2)}
+
+Please provide:
+
+1. **Original vs Enhanced Fit Score**: Calculate fit scores before and after enhancement (0-100%)
+
+2. **Specific Improvements**: For each section that needs enhancement, provide:
+   - Section name (Summary, Experience, Skills, etc.)
+   - Original text
+   - Enhanced version
+   - Reason for change
+   - Impact level (high/medium/low)
+
+3. **ATS Optimization**:
+   - Keywords added for ATS scanning
+   - Formatting improvements
+   - Skills alignment with job requirements
+
+4. **Enhanced Resume**: Complete enhanced resume text
+
+Focus areas based on selection:
+- ATS Optimization: Keyword density, formatting, ATS-friendly structure
+- Skills Matching: Highlight relevant technical and soft skills
+- Keyword Enhancement: Industry-specific terminology and buzzwords
+- Experience Boost: Quantify achievements, use action verbs, show impact
+
+Provide specific, actionable enhancements with clear before/after comparisons.`;
+
+    } else if (type === 'resume_comparison') {
+      if (!jobDetails) {
+        throw new Error('Job details are required for resume comparison');
+      }
+
+      prompt = customPrompt || `Generate a detailed before/after comparison of my resume for this job posting.
+
+Job Details: ${JSON.stringify(jobDetails, null, 2)}
+
+Please provide:
+
+1. **Original Resume Analysis**:
+   - Current resume content from RAG system
+   - Fit score for the job (0-100%)
+   - Count of matching keywords
+   - Key sections present
+
+2. **Enhanced Resume**:
+   - Optimized version tailored for this job
+   - New fit score after improvements
+   - Additional keywords incorporated
+   - New/improved sections
+
+3. **Detailed Changes**:
+   - Section-by-section comparison
+   - What was added, modified, or removed
+   - Why each change was made
+   - Impact level of each change
+
+4. **Improvement Metrics**:
+   - Specific areas improved (keywords, skills, experience descriptions)
+   - Quantified improvements (% increase in keyword matches, etc.)
+   - ATS optimization score improvement
+
+5. **Highlighted Changes**:
+   - Mark specific text additions with [ADDED: text]
+   - Mark modifications with [CHANGED: old text → new text]
+   - Mark removals with [REMOVED: text]
+
+Focus on concrete, measurable improvements that will help with ATS systems and human reviewers.`;
+
     } else {
-      throw new Error('Invalid generation type. Must be "cover_letter" or "employer_answers"');
+      throw new Error('Invalid generation type. Must be "cover_letter", "employer_answers", "job_analysis", "resume_enhancement", or "resume_comparison"');
     }
 
     // Call the RAG query endpoint to generate response
