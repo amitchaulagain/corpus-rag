@@ -142,26 +142,177 @@ rag = RAGClient('rag_abc123_your-secret-key')
 result = rag.query('user@company.com', 'Summarize this resume')
 ```
 
-## Key API Endpoints
+## Dedicated AI Generation API Endpoints
 
-### Authentication
+### Cover Letter API
+**POST** `/api/cover_letter`
+
+Generate professional cover letters tailored to specific job postings.
+
+**Request:**
+```json
+{
+  "jobDetails": {
+    "title": "Software Engineer",
+    "company": "Company Name",
+    "description": "Job description text...",
+    "requirements": ["React", "Node.js", "TypeScript"]
+  },
+  "userEmail": "user@example.com",
+  "customPrompt": "Optional custom prompt override"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "coverLetter": "Dear Hiring Manager...",
+    "prompt": "Write a compelling cover letter for this position..."
+  }
+}
+```
+
+**Required scopes:** `rag:query`
+
+### Resume API
+**POST** `/api/resume`
+
+Generate tailored resumes optimized for specific job requirements.
+
+**Request:**
+```json
+{
+  "jobDetails": {
+    "title": "Senior Software Engineer",
+    "company": "TechCorp",
+    "description": "Job description...",
+    "requirements": ["React", "Node.js", "TypeScript", "AWS"]
+  },
+  "userEmail": "user@example.com",
+  "resumeType": "tailored",
+  "customPrompt": "Optional custom prompt override"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "resume": "JOHN DOE\nSoftware Engineer\n...",
+    "resumeType": "tailored",
+    "prompt": "Create a tailored resume for this position..."
+  }
+}
+```
+
+**Required scopes:** `rag:query`
+
+### Question & Answers API
+**POST** `/api/questionAndAnswers`
+
+Generate optimal answers for employer questionnaires and application forms.
+
+**Request:**
+```json
+{
+  "questions": [
+    {
+      "q": "What is your experience level with React?",
+      "opts": ["Beginner", "Intermediate", "Advanced", "Expert"]
+    },
+    {
+      "q": "Are you willing to work remotely?",
+      "opts": ["Yes", "No", "Hybrid preferred"]
+    }
+  ],
+  "userEmail": "user@example.com",
+  "jobDetails": {
+    "title": "Frontend Developer",
+    "company": "WebCorp"
+  },
+  "customPrompt": "Optional custom prompt override"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "answers": "Question 1 → Recommended Answer: Advanced → Rationale: Based on your portfolio...",
+    "questionsCount": 2,
+    "prompt": "For each of these employer questions..."
+  }
+}
+```
+
+**Required scopes:** `rag:query`
+
+## Complete API Endpoints
+
+### Authentication APIs
 - `GET /api/auth/me` - Get current user info
 - `GET /api/auth/keys` - List API keys (admin only)
 - `POST /api/auth/keys` - Create API key (admin only)
+- `DELETE /api/auth/keys/:keyId` - Revoke API key (admin only)
+- `GET /api/auth/test-key` - Generate test key (dev only)
+- `POST /api/auth/exchange-code` - OAuth token exchange
 
-### File Management
-- `GET /api/files?userId=user@example.com` - List files
-- `POST /api/files` - Upload file
-- `DELETE /api/files/{filename}?userId=user@example.com` - Delete file
+### Corpus Management APIs
+- `GET /api/corpus` - Get/create user corpus with files
+- `POST /api/corpus` - Manage corpus (create/cleanup)
+- `POST /api/corpus/cleanup` - Clean duplicate corpora
+- `POST /api/corpus/create` - Create new corpus
+- `GET /api/corpus/files` - List corpus files
+- `GET /api/corpus/get` - Get/create corpus (legacy)
+- `POST /api/corpus/get` - Get/create corpus (legacy)
+- `GET /api/corpus/list` - List all corpora
 
-### RAG Operations
-- `POST /api/rag/query` - Ask questions about documents
+### RAG (AI Query) APIs
 - `POST /api/rag/import` - Import files to RAG system
-- `GET /api/rag/operations/{operationId}` - Check import status
+- `GET /api/rag/operations/[operationId]` - Check import status
+- `POST /api/rag/query` - Query AI with RAG context
 
-### System
-- `GET /api/system/status` - Health check
+### File Storage APIs
+- `GET /api/storage/browse-all` - Browse all storage files
+- `DELETE /api/storage/delete` - Delete user file
+- `POST /api/storage/create-folder` - Create user folder
+- `GET /api/storage/list` - List user files
+- `POST /api/storage/sync` - Sync files to Vertex AI
+- `POST /api/storage/upload` - Upload with RAG sync
+
+### Files API (Consolidated)
+- `GET /api/files` - List user files
+- `POST /api/files` - Upload file
+- `GET /api/files/[filename]` - Get file details
+- `DELETE /api/files/[filename]` - Delete file
+- `PATCH /api/files/[filename]` - Update file content
+
+### System APIs
 - `GET /api/system/stats` - Usage statistics
+- `GET /api/system/status` - System health check
+
+### Vertex AI APIs
+- `GET /api/vertex/files` - List RAG corpus files
+- `GET /api/vertex/operations` - Check operation status
+
+### Job Management APIs
+- `GET /api/jobs` - List job files
+- `GET /api/jobs/[filename]` - Get job file content
+
+### AI Generation APIs
+- `POST /api/generate` - Generate cover letters/employer answers (legacy)
+- `POST /api/cover_letter` - Generate cover letters
+- `POST /api/resume` - Generate tailored resumes
+- `POST /api/questionAndAnswers` - Generate employer question answers
+
+### Session & Debug APIs
+- `GET /api/session` - Get session API key
+- `POST /api/debug/test-import` - Test RAG import
+- `GET /api/debug/vertex-config` - Debug Vertex config
 
 ## Example Use Cases
 
@@ -194,6 +345,41 @@ await rag.uploadFile(manual, 'support-docs');
 
 // Answer customer questions
 const answer = await rag.query('support-docs', customerQuestion);
+```
+
+### 4. Job Application Assistant
+```javascript
+// Generate cover letter for job application
+const coverLetter = await rag.request('POST', '/cover_letter', {
+  jobDetails: {
+    title: 'Senior Software Engineer',
+    company: 'TechCorp',
+    description: 'We are looking for an experienced developer...',
+    requirements: ['React', 'Node.js', 'TypeScript']
+  },
+  userEmail: 'candidate@email.com'
+});
+
+// Generate tailored resume
+const resume = await rag.request('POST', '/resume', {
+  jobDetails: {
+    title: 'Senior Software Engineer',
+    company: 'TechCorp',
+    requirements: ['React', 'Node.js', 'TypeScript']
+  },
+  userEmail: 'candidate@email.com',
+  resumeType: 'tailored'
+});
+
+// Get answers for employer questions
+const answers = await rag.request('POST', '/questionAndAnswers', {
+  questions: [
+    { q: 'What is your experience level?', opts: ['Entry', 'Mid', 'Senior'] },
+    { q: 'Are you willing to relocate?', opts: ['Yes', 'No', 'Maybe'] }
+  ],
+  userEmail: 'candidate@email.com',
+  jobDetails: { title: 'Senior Software Engineer', company: 'TechCorp' }
+});
 ```
 
 ## Rate Limiting
