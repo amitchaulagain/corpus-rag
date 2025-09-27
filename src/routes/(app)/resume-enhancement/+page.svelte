@@ -55,7 +55,7 @@
       const data = await response.json();
 
       if (data.success) {
-        jobs = (data.data.jobs || []).filter(job => job.hasJobDetails);
+        jobs = (data.data.jobs || []).filter((job: any) => job.hasJobDetails);
       } else {
         console.error('Failed to load jobs:', data.error);
       }
@@ -148,49 +148,81 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
   }
 
   function parseEnhancementResponse(text: string): EnhancementResult {
-    // Extract fit scores
-    const originalScoreMatch = text.match(/original[^0-9]*(\d+)%?/i);
-    const enhancedScoreMatch = text.match(/enhanced[^0-9]*(\d+)%?/i);
-    
-    const originalFitScore = originalScoreMatch ? parseInt(originalScoreMatch[1]) : Math.floor(Math.random() * 30) + 50;
-    const enhancedFitScore = enhancedScoreMatch ? parseInt(enhancedScoreMatch[1]) : Math.min(originalFitScore + Math.floor(Math.random() * 20) + 10, 95);
+    try {
+      // Extract fit scores
+      const originalScoreMatch = text.match(/original[^0-9]*(\d+)%?/i);
+      const enhancedScoreMatch = text.match(/enhanced[^0-9]*(\d+)%?/i);
+      
+      const originalFitScore = originalScoreMatch ? parseInt(originalScoreMatch[1]) : 0;
+      const enhancedFitScore = enhancedScoreMatch ? parseInt(enhancedScoreMatch[1]) : 0;
 
-    // Mock enhancement data - in a real app, you'd parse the actual response
-    const improvements: Enhancement[] = [
-      {
-        section: 'Professional Summary',
-        original: 'Experienced software developer with strong technical skills.',
-        enhanced: 'Results-driven Full Stack Developer with 5+ years of experience in React, Node.js, and cloud technologies, delivering scalable solutions that increased user engagement by 40%.',
-        reason: 'Added specific technologies and quantified achievements',
-        impact: 'high'
-      },
-      {
-        section: 'Technical Skills',
-        original: 'JavaScript, React, Node.js',
-        enhanced: 'JavaScript (ES6+), React.js, Node.js, TypeScript, AWS, Docker, MongoDB, RESTful APIs, GraphQL',
-        reason: 'Added job-specific technologies and modern frameworks',
-        impact: 'high'
-      },
-      {
-        section: 'Work Experience',
-        original: 'Developed web applications using modern technologies.',
-        enhanced: 'Architected and developed 3 full-stack web applications using React and Node.js, serving 10,000+ daily active users with 99.9% uptime.',
-        reason: 'Quantified achievements and added specific metrics',
-        impact: 'medium'
+      // Extract improvements from the text
+      const improvements: Enhancement[] = [];
+      
+      // Look for section improvements
+      const sectionMatches = text.matchAll(/(?:section|improvement)[:\s]*([^:]+)[:\s]*\n(?:original|before)[:\s]*([^\n]+)\n(?:enhanced|after)[:\s]*([^\n]+)\n(?:reason|why)[:\s]*([^\n]+)/gi);
+      for (const match of sectionMatches) {
+        improvements.push({
+          section: match[1].trim(),
+          original: match[2].trim(),
+          enhanced: match[3].trim(),
+          reason: match[4].trim(),
+          impact: 'medium' as const
+        });
       }
-    ];
 
-    return {
-      originalFitScore,
-      enhancedFitScore,
-      improvements,
-      atsKeywords: {
-        added: ['Full Stack', 'Scalable', 'RESTful APIs', 'Agile', 'CI/CD'],
-        optimized: ['React.js', 'Node.js', 'JavaScript', 'TypeScript', 'AWS']
-      },
-      summary: text.substring(0, 300) + '...',
-      enhancedResume: text
-    };
+      // Extract ATS keywords
+      const atsKeywords = {
+        added: [] as string[],
+        optimized: [] as string[]
+      };
+
+      // Look for keywords
+      const keywordMatches = text.matchAll(/(?:keyword|ats)[:\s]*([^\n]+)/gi);
+      for (const match of keywordMatches) {
+        const keywords = match[1].split(',').map(k => k.trim()).filter(k => k.length > 0);
+        atsKeywords.added.push(...keywords);
+      }
+
+      // Extract enhanced resume content
+      let enhancedResume = '';
+      const resumeMatch = text.match(/(?:enhanced resume|complete resume)[:\s]*\n([\s\S]+?)(?:\n\n|\n##|\n###|$)/i);
+      if (resumeMatch) {
+        enhancedResume = resumeMatch[1].trim();
+      }
+
+      // Extract summary
+      let summary = '';
+      const summaryMatch = text.match(/(?:summary|overview)[:\s]*\n([^\n]+)/i);
+      if (summaryMatch) {
+        summary = summaryMatch[1].trim();
+      }
+
+      // If parsing failed to extract meaningful data, return the raw text as enhanced resume
+      if (improvements.length === 0 && !enhancedResume) {
+        enhancedResume = text;
+        summary = 'AI-generated resume enhancement based on job requirements';
+      }
+
+      return {
+        originalFitScore,
+        enhancedFitScore,
+        improvements,
+        atsKeywords,
+        summary,
+        enhancedResume
+      };
+    } catch (error) {
+      console.warn('Failed to parse enhancement response, using raw text:', error);
+      return {
+        originalFitScore: 0,
+        enhancedFitScore: 0,
+        improvements: [],
+        atsKeywords: { added: [], optimized: [] },
+        summary: 'AI-generated resume enhancement',
+        enhancedResume: text
+      };
+    }
   }
 
   function getImpactColor(impact: string): string {
@@ -282,7 +314,10 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
                   class:border-primary={selectedJob?.filename === job.filename}
                   class:bg-primary={selectedJob?.filename === job.filename}
                   class:bg-opacity-5={selectedJob?.filename === job.filename}
+                  role="button"
+                  tabindex="0"
                   on:click={() => selectJob(job)}
+                  on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectJob(job); } }}
                 >
                   <div class="flex justify-between items-start mb-1">
                     <div class="badge badge-xs badge-primary">Job</div>
@@ -376,6 +411,20 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
               </div>
             </div>
           </div>
+
+          <!-- Job Description -->
+          {#if jobContent && jobContent.details}
+            <div class="card bg-base-100 shadow-xl">
+              <div class="card-body">
+                <h3 class="card-title mb-4">📄 Job Description</h3>
+                <div class="prose prose-sm max-w-none">
+                  <div class="whitespace-pre-wrap text-sm leading-relaxed max-h-64 overflow-y-auto">
+                    {jobContent.details}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {/if}
 
           <!-- Enhancement Results -->
           {#if enhancement}
@@ -471,7 +520,7 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
                   <div class="flex gap-2">
                     <button 
                       class="btn btn-outline btn-sm" 
-                      on:click={() => copyToClipboard(enhancement.enhancedResume)}
+                      on:click={() => copyToClipboard(enhancement?.enhancedResume || '')}
                     >
                       📋 Copy
                     </button>

@@ -369,7 +369,10 @@ ${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${chan
                   class:border-primary={selectedJob?.filename === job.filename}
                   class:bg-primary={selectedJob?.filename === job.filename}
                   class:bg-opacity-5={selectedJob?.filename === job.filename}
+                  role="button"
+                  tabindex="0"
                   on:click={() => selectJob(job)}
+                  on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectJob(job); } }}
                 >
                   <div class="flex justify-between items-start mb-1">
                     <div class="badge badge-xs badge-primary">Job</div>

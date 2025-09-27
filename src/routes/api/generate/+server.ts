@@ -1,6 +1,8 @@
 // AI Generation API endpoint
 import type { RequestHandler } from './$types';
 import { authenticateRequest, handleApiRequest, requireScope, handleOptions, addCorsHeaders } from '$lib/api-utils.js';
+import fs from 'fs';
+import path from 'path';
 
 // Handle preflight OPTIONS requests
 export const OPTIONS: RequestHandler = () => {
@@ -23,13 +25,27 @@ export const POST: RequestHandler = async (event) => {
 
   const response = await handleApiRequest(async () => {
     const requestBody = await event.request.json();
-    const { type, jobDetails, questions, userEmail, customPrompt, enhancementFocus } = requestBody;
+    console.log('=== GENERATE API DEBUG ===');
+    console.log('Raw request body:', JSON.stringify(requestBody, null, 2));
+    
+    const { type, jobDetails, questions, userEmail, customPrompt, enhancementFocus, filename, jobId, jobTitle } = requestBody;
+    
+    console.log('Extracted values:');
+    console.log('- type:', type);
+    console.log('- jobDetails:', jobDetails);
+    console.log('- jobDetails type:', typeof jobDetails);
+    console.log('- userEmail:', userEmail);
+    console.log('- filename:', filename);
+    console.log('- jobId:', jobId);
+    console.log('- jobTitle:', jobTitle);
+    console.log('=========================');
 
     if (!type || !userEmail) {
       throw new Error('Type and user email are required');
     }
 
     let prompt = '';
+    let analysisContext: string | undefined = undefined;
 
     if (type === 'cover_letter') {
       if (!jobDetails) {
@@ -83,13 +99,89 @@ Please be specific about which option number (starting from 0) to select for eac
       }
 
     } else if (type === 'job_analysis') {
-      if (!jobDetails) {
-        throw new Error('Job details are required for job analysis');
+      let effectiveJobDetails = jobDetails;
+
+      // Server-side fallback: if jobDetails missing, attempt to load from filename
+      if (!effectiveJobDetails && filename) {
+        try {
+          const JOBS_DIR = '/Users/admin/extratech/corpus-rag/src/jobs';
+          const filePath = path.join(JOBS_DIR, filename);
+          if (fs.existsSync(filePath)) {
+            const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            effectiveJobDetails = content;
+            console.log('Loaded job details from filename on server');
+          } else {
+            console.warn('Filename provided but file not found:', filePath);
+          }
+        } catch (e) {
+          console.error('Failed to load job details by filename:', e);
+        }
       }
 
-      prompt = customPrompt || `Analyze this job description and my resume to provide a detailed fit analysis.
+      // Fallback by jobId if provided
+      if (!effectiveJobDetails && jobId) {
+        try {
+          const JOBS_DIR = '/Users/admin/extratech/corpus-rag/src/jobs';
+          const files = fs.readdirSync(JOBS_DIR).filter((f) => f.endsWith('.json'));
+          for (const f of files) {
+            try {
+              const content = JSON.parse(fs.readFileSync(path.join(JOBS_DIR, f), 'utf8'));
+              if (content.jobId === jobId) {
+                effectiveJobDetails = content;
+                console.log('Loaded job details by jobId on server:', f);
+                break;
+              }
+            } catch {}
+          }
+        } catch (e) {
+          console.error('Failed to scan jobs by jobId:', e);
+        }
+      }
 
-Job Details: ${JSON.stringify(jobDetails, null, 2)}
+      // Fallback by title if provided
+      if (!effectiveJobDetails && jobTitle) {
+        try {
+          const JOBS_DIR = '/Users/admin/extratech/corpus-rag/src/jobs';
+          const files = fs.readdirSync(JOBS_DIR).filter((f) => f.endsWith('.json'));
+          for (const f of files) {
+            try {
+              const content = JSON.parse(fs.readFileSync(path.join(JOBS_DIR, f), 'utf8'));
+              if (content.title === jobTitle || content.raw_title?.includes(jobTitle)) {
+                effectiveJobDetails = content;
+                console.log('Loaded job details by title on server:', f);
+                break;
+              }
+            } catch {}
+          }
+        } catch (e) {
+          console.error('Failed to scan jobs by title:', e);
+        }
+      }
+
+      // If jobDetails is a string, wrap as { details }
+      if (typeof effectiveJobDetails === 'string') {
+        effectiveJobDetails = { details: effectiveJobDetails } as any;
+      }
+
+      if (!effectiveJobDetails) {
+        console.error('jobDetails is missing or null:', jobDetails);
+        console.error('Full request body was:', requestBody);
+        throw new Error('Job details are required for job analysis');
+      }
+      
+      if (!(effectiveJobDetails as any).details && !(effectiveJobDetails as any).title) {
+        console.error('jobDetails exists but missing details/title:', effectiveJobDetails);
+        throw new Error('Job details must contain job description (details field) or title');
+      }
+
+      if (customPrompt) {
+        prompt = `${customPrompt}
+
+Job Details: ${JSON.stringify(effectiveJobDetails, null, 2)}\n`;
+      } else {
+        prompt = `Analyze this job description and my resume to provide a detailed fit analysis.
+
+Job Details: ${JSON.stringify(effectiveJobDetails, null, 2)}
 
 Please provide a comprehensive analysis including:
 
@@ -118,6 +210,9 @@ For each category, list:
    - Missing keywords that should be added
 
 Format the response as a detailed analysis with specific scores and actionable recommendations.`;
+      }
+      // Provide explicit context to RAG endpoint as well
+      analysisContext = `Job Details:\n${typeof effectiveJobDetails === 'string' ? effectiveJobDetails : JSON.stringify(effectiveJobDetails)}`;
 
     } else if (type === 'resume_enhancement') {
       if (!jobDetails) {
@@ -129,7 +224,12 @@ Format the response as a detailed analysis with specific scores and actionable r
                               enhancementFocus === 'keywords' ? 'Keyword Enhancement' :
                               enhancementFocus === 'experience' ? 'Experience Boost' : 'General Enhancement';
 
-      prompt = customPrompt || `Enhance my resume for this specific job posting with focus on ${focusDescription}.
+      if (customPrompt) {
+        prompt = `${customPrompt}
+
+Job Details: ${JSON.stringify(jobDetails, null, 2)}\n`;
+      } else {
+        prompt = `Enhance my resume for this specific job posting with focus on ${focusDescription}.
 
 Job Details: ${JSON.stringify(jobDetails, null, 2)}
 
@@ -158,13 +258,20 @@ Focus areas based on selection:
 - Experience Boost: Quantify achievements, use action verbs, show impact
 
 Provide specific, actionable enhancements with clear before/after comparisons.`;
+      }
+      analysisContext = `Job Details:\n${typeof jobDetails === 'string' ? jobDetails : JSON.stringify(jobDetails)}`;
 
     } else if (type === 'resume_comparison') {
       if (!jobDetails) {
         throw new Error('Job details are required for resume comparison');
       }
 
-      prompt = customPrompt || `Generate a detailed before/after comparison of my resume for this job posting.
+      if (customPrompt) {
+        prompt = `${customPrompt}
+
+Job Details: ${JSON.stringify(jobDetails, null, 2)}\n`;
+      } else {
+        prompt = `Generate a detailed before/after comparison of my resume for this job posting.
 
 Job Details: ${JSON.stringify(jobDetails, null, 2)}
 
@@ -199,6 +306,8 @@ Please provide:
    - Mark removals with [REMOVED: text]
 
 Focus on concrete, measurable improvements that will help with ATS systems and human reviewers.`;
+      }
+      analysisContext = `Job Details:\n${typeof jobDetails === 'string' ? jobDetails : JSON.stringify(jobDetails)}`;
 
     } else {
       throw new Error('Invalid generation type. Must be "cover_letter", "employer_answers", "job_analysis", "resume_enhancement", or "resume_comparison"');
@@ -214,6 +323,7 @@ Focus on concrete, measurable improvements that will help with ATS systems and h
       body: JSON.stringify({
         userId: userEmail,
         question: prompt,
+        context: analysisContext,
         maxTokens: 2000,
         temperature: 0.7
       })
