@@ -33,24 +33,16 @@
   }
 </script>
 
-<main class="container mx-auto max-w-4xl p-10 min-h-screen">
+<main class="container mx-auto max-w-4xl p-10 min-h-screen relative">
   {#if isAuthenticated && user}
-    <!-- Welcome authenticated user -->
-    <div class="card bg-success/20 border-2 border-success p-8 mb-10">
-      <div class="flex flex-col lg:flex-row items-center gap-6">
-        <div class="avatar">
-          <div class="w-20 rounded-full ring ring-success ring-offset-2">
-            <img src={user.picture} alt={user.name} />
-          </div>
-        </div>
-        <div class="flex-1 text-center lg:text-left">
-          <h1 class="text-3xl font-bold text-success-content mb-2">Welcome, {user.name}!</h1>
-          <p class="text-success-content/70">{user.email}</p>
-        </div>
-        <button class="btn btn-error" on:click={handleLogout}>
-          Sign Out
-        </button>
-      </div>
+    <!-- Logout button -->
+    <div class="absolute top-4 left-4 z-50">
+      <button
+        class="btn text-white bg-red-700 hover:bg-red-900 border-none shadow-lg"
+        on:click={handleLogout}
+      >
+        {user.name} Out!
+      </button>
     </div>
 
     <!-- Main navigation for authenticated users -->
@@ -96,8 +88,6 @@
       </header>
 
       <div class="card bg-base-100 shadow-xl border-2 p-10 mb-12 max-w-md mx-auto">
-        <h2 class="text-2xl font-bold mb-4">Sign in to continue</h2>
-        <p class="text-base-content/70 mb-8">Access your documents and AI-powered search</p>
         <GoogleAuth on:authenticated={handleAuthenticated} />
       </div>
 
