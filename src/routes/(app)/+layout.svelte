@@ -1,10 +1,10 @@
-<script>
+<script lang="ts">
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
 
   let isAuthenticated = false;
-  let user = null;
+  let user: any = null;
   let currentTheme = 'corporate';
 
   onMount(() => {
@@ -120,6 +120,29 @@
           <li>
             <a href="/employer-questions" class="flex items-center gap-3" class:active={currentPath === '/employer-questions'}>
               ❓ Q&A
+            </a>
+          </li>
+          
+          <!-- Divider -->
+          <li><hr class="my-2" /></li>
+          
+          <!-- New Resume Analysis Section -->
+          <li class="menu-title">
+            <span class="text-xs text-base-content/60">Resume Analysis</span>
+          </li>
+          <li>
+            <a href="/job-analysis" class="flex items-center gap-3" class:active={currentPath === '/job-analysis'}>
+              🎯 Job Analysis
+            </a>
+          </li>
+          <li>
+            <a href="/resume-enhancement" class="flex items-center gap-3" class:active={currentPath === '/resume-enhancement'}>
+              ✨ Resume Enhancement
+            </a>
+          </li>
+          <li>
+            <a href="/resume-comparison" class="flex items-center gap-3" class:active={currentPath === '/resume-comparison'}>
+              🔄 Resume Comparison
             </a>
           </li>
         </ul>

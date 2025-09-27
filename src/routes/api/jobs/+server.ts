@@ -75,6 +75,19 @@ export const GET: RequestHandler = async (event) => {
             }
           }
 
+          // Create a preview from job details
+          let preview = '';
+          if (content.details) {
+            // Extract a meaningful preview from the details
+            const details = content.details.replace(/\n+/g, ' ').trim();
+            // Find the first substantial paragraph after the header info
+            const lines = details.split(/[.\n]/).filter(line => line.trim().length > 50);
+            preview = lines[0]?.trim() || details.substring(0, 150);
+            if (preview.length >= 150) {
+              preview = preview.substring(0, 150) + '...';
+            }
+          }
+
           return {
             filename: file,
             company,
@@ -85,6 +98,7 @@ export const GET: RequestHandler = async (event) => {
             hasQuestions,
             hasJobDetails,
             questionCount: content.questions ? content.questions.length : 0,
+            preview,
             lastModified: stats.mtime,
             size: stats.size
           };

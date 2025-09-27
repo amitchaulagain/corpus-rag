@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { apiRequest } from '$lib/api-client.js';
 
+  // all variables
   let user = null;
   let jobs = [];
   let selectedJob = null;
