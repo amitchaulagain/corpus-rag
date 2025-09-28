@@ -216,6 +216,11 @@ Generate tailored resumes optimized for specific job requirements.
 Generate optimal answers for employer questionnaires and application forms.
 
 **Request:**
+
+The `questions` array contains objects for each question. The API is flexible with the key names for these objects:
+- The question text can use the key `q`, `question`, or `text`.
+- The options array can use the key `opts` or `options`.
+
 ```json
 {
   "questions": [
@@ -224,8 +229,8 @@ Generate optimal answers for employer questionnaires and application forms.
       "opts": ["Beginner", "Intermediate", "Advanced", "Expert"]
     },
     {
-      "q": "Are you willing to work remotely?",
-      "opts": ["Yes", "No", "Hybrid preferred"]
+      "question": "Are you willing to work remotely?",
+      "options": ["Yes", "No", "Hybrid preferred"]
     }
   ],
   "userEmail": "user@example.com",
