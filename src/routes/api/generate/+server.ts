@@ -229,35 +229,64 @@ Format the response as a detailed analysis with specific scores and actionable r
 
 Job Details: ${JSON.stringify(jobDetails, null, 2)}\n`;
       } else {
-        prompt = `Enhance my resume for this specific job posting with focus on ${focusDescription}.
+        prompt = `You are a professional resume analyst with deep expertise in Applicant Tracking Systems (ATS), keyword optimization, and job-market alignment. 
+
+Analyze my resume against this job posting and provide comprehensive enhancement recommendations:
 
 Job Details: ${JSON.stringify(jobDetails, null, 2)}
 
-Please provide:
+## Your Analysis Should Include:
 
-1. **Original vs Enhanced Fit Score**: Calculate fit scores before and after enhancement (0-100%)
+### 1. **RAG Analysis Output**
+- **Important Keywords**: Extract all critical keywords from the job description
+- **Missing Skills**: Identify skills mentioned in the job that are absent from my resume
+- **Skills to Add**: Recommend specific skills to include for better ATS optimization
+- **Resume Fit Score**: Provide detailed breakdown by categories:
+  * Skills Match (0-100%)
+  * Experience Relevance (0-100%) 
+  * Format Compliance (0-100%)
+  * Keyword Density (0-100%)
+  * Overall Fit Score (0-100%)
 
-2. **Specific Improvements**: For each section that needs enhancement, provide:
-   - Section name (Summary, Experience, Skills, etc.)
-   - Original text
-   - Enhanced version
-   - Reason for change
-   - Impact level (high/medium/low)
+### 2. **Resume Enhancement Instructions**
+Following the professional resume enhancement guidelines:
 
-3. **ATS Optimization**:
-   - Keywords added for ATS scanning
-   - Formatting improvements
-   - Skills alignment with job requirements
+**PRESERVE IDENTITY**: Maintain my original professional tone, structure, and personal branding
+**INCORPORATE MISSING SKILLS**: Seamlessly integrate missing/recommended skills into relevant sections
+**OPTIMIZE FOR ATS**: Ensure formatting, phrasing, and keyword usage align with ATS best practices
+**BOOST FIT SCORE**: Improve fit score across all categories without fabricating information
+**NATURAL INTEGRATION**: Contextually relevant additions, not keyword stuffing
 
-4. **Enhanced Resume**: Complete enhanced resume text
+### 3. **Specific Improvements**
+For each section requiring enhancement:
+- **Section**: (Summary, Skills, Experience, Education, etc.)
+- **Original Text**: Current content from my resume
+- **Enhanced Version**: Improved version with explanations
+- **Reason**: Why this change improves ATS compliance and job fit
+- **Impact Level**: High/Medium/Low based on expected improvement
 
-Focus areas based on selection:
-- ATS Optimization: Keyword density, formatting, ATS-friendly structure
-- Skills Matching: Highlight relevant technical and soft skills
-- Keyword Enhancement: Industry-specific terminology and buzzwords
-- Experience Boost: Quantify achievements, use action verbs, show impact
+### 4. **ATS Keyword Analysis**
+- **Keywords Present**: List keywords from job description already in my resume
+- **Keywords Added**: New keywords integrated naturally
+- **Keywords Optimized**: Existing keywords improved for better ATS scanning
+- **Keyword Density**: Optimal distribution across resume sections
 
-Provide specific, actionable enhancements with clear before/after comparisons.`;
+### 5. **Enhanced Resume**
+Provide the complete enhanced resume that is:
+- ATS-optimized and keyword-rich
+- Customized for this specific job
+- Free from identity tampering
+- Improved across all scoring categories
+- Professional and natural in tone
+
+### 6. **Enhancement Focus: ${focusDescription}**
+Tailor recommendations based on selected focus:
+- **ATS Optimization**: Keyword density, formatting, ATS-friendly structure, technical requirements
+- **Skills Matching**: Highlight relevant technical and soft skills, demonstrate proficiency levels
+- **Keyword Enhancement**: Industry-specific terminology, buzzwords, and job-relevant phrases
+- **Experience Boost**: Quantify achievements, use action verbs, show measurable impact
+
+Provide specific, actionable enhancements with clear before/after comparisons and measurable improvements.`;
       }
       analysisContext = `Job Details:\n${typeof jobDetails === 'string' ? jobDetails : JSON.stringify(jobDetails)}`;
 

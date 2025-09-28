@@ -13,8 +13,19 @@
   interface EnhancementResult {
     originalFitScore: number;
     enhancedFitScore: number;
+    fitScoreBreakdown: {
+      skillsMatch: number;
+      experienceRelevance: number;
+      formatCompliance: number;
+      keywordDensity: number;
+      overallFit: number;
+    };
+    importantKeywords: string[];
+    missingSkills: string[];
+    skillsToAdd: string[];
     improvements: Enhancement[];
     atsKeywords: {
+      present: string[];
       added: string[];
       optimized: string[];
     };
@@ -30,6 +41,8 @@
   let isLoading = false;
   let isEnhancing = false;
   let enhancementFocus = 'ats'; // 'ats', 'skills', 'experience', 'keywords'
+  let hasResume = false;
+  let resumeStatus = '';
 
   const focusOptions = [
     { value: 'ats', label: '🤖 ATS Optimization', description: 'Optimize for Applicant Tracking Systems' },
@@ -43,8 +56,30 @@
     if (storedUser) {
       user = JSON.parse(storedUser);
       loadJobs();
+      checkResumeStatus();
     }
   });
+
+  async function checkResumeStatus() {
+    if (!user?.email) return;
+    
+    try {
+      const response = await apiRequest('/api/files');
+      const data = await response.json();
+      
+      if (data.success && data.data.files && data.data.files.length > 0) {
+        hasResume = true;
+        resumeStatus = `✅ Resume uploaded (${data.data.files.length} file${data.data.files.length > 1 ? 's' : ''})`;
+      } else {
+        hasResume = false;
+        resumeStatus = '❌ No resume uploaded - Upload your resume first';
+      }
+    } catch (error) {
+      console.error('Failed to check resume status:', error);
+      hasResume = false;
+      resumeStatus = '❌ Unable to check resume status';
+    }
+  }
 
   async function loadJobs() {
     if (!user) return;
@@ -149,53 +184,134 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
 
   function parseEnhancementResponse(text: string): EnhancementResult {
     try {
-      // Extract fit scores
-      const originalScoreMatch = text.match(/original[^0-9]*(\d+)%?/i);
-      const enhancedScoreMatch = text.match(/enhanced[^0-9]*(\d+)%?/i);
+      // Extract fit scores with improved regex patterns
+      const originalScoreMatch = text.match(/(?:original|current|before)[^0-9]*(\d+)%?/i);
+      const enhancedScoreMatch = text.match(/(?:enhanced|improved|after)[^0-9]*(\d+)%?/i);
       
       const originalFitScore = originalScoreMatch ? parseInt(originalScoreMatch[1]) : 0;
       const enhancedFitScore = enhancedScoreMatch ? parseInt(enhancedScoreMatch[1]) : 0;
 
-      // Extract improvements from the text
-      const improvements: Enhancement[] = [];
-      
-      // Look for section improvements
-      const sectionMatches = text.matchAll(/(?:section|improvement)[:\s]*([^:]+)[:\s]*\n(?:original|before)[:\s]*([^\n]+)\n(?:enhanced|after)[:\s]*([^\n]+)\n(?:reason|why)[:\s]*([^\n]+)/gi);
-      for (const match of sectionMatches) {
-        improvements.push({
-          section: match[1].trim(),
-          original: match[2].trim(),
-          enhanced: match[3].trim(),
-          reason: match[4].trim(),
-          impact: 'medium' as const
-        });
+      // Extract detailed fit score breakdown
+      const fitScoreBreakdown = {
+        skillsMatch: extractScore(text, /skills match[^0-9]*(\d+)%?/i),
+        experienceRelevance: extractScore(text, /experience relevance[^0-9]*(\d+)%?/i),
+        formatCompliance: extractScore(text, /format compliance[^0-9]*(\d+)%?/i),
+        keywordDensity: extractScore(text, /keyword density[^0-9]*(\d+)%?/i),
+        overallFit: enhancedFitScore || extractScore(text, /overall fit[^0-9]*(\d+)%?/i)
+      };
+
+      // Extract important keywords from job description
+      const importantKeywords: string[] = [];
+      const keywordSectionMatch = text.match(/(?:important keywords|keywords from job)[:\s]*\n([\s\S]*?)(?:\n\n|\n###|\n##)/i);
+      if (keywordSectionMatch) {
+        const keywordsText = keywordSectionMatch[1];
+        const keywordList = keywordsText.split(/[,\n•\-\*]/).map(k => k.trim()).filter(k => k.length > 0);
+        importantKeywords.push(...keywordList.slice(0, 20)); // Limit to first 20 keywords
       }
 
-      // Extract ATS keywords
+      // Extract missing skills
+      const missingSkills: string[] = [];
+      const missingSkillsMatch = text.match(/(?:missing skills|skills absent)[:\s]*\n([\s\S]*?)(?:\n\n|\n###|\n##)/i);
+      if (missingSkillsMatch) {
+        const skillsText = missingSkillsMatch[1];
+        const skillsList = skillsText.split(/[,\n•\-\*]/).map(s => s.trim()).filter(s => s.length > 0);
+        missingSkills.push(...skillsList.slice(0, 15)); // Limit to first 15 missing skills
+      }
+
+      // Extract skills to add
+      const skillsToAdd: string[] = [];
+      const skillsToAddMatch = text.match(/(?:skills to add|recommended skills)[:\s]*\n([\s\S]*?)(?:\n\n|\n###|\n##)/i);
+      if (skillsToAddMatch) {
+        const skillsText = skillsToAddMatch[1];
+        const skillsList = skillsText.split(/[,\n•\-\*]/).map(s => s.trim()).filter(s => s.length > 0);
+        skillsToAdd.push(...skillsList.slice(0, 15)); // Limit to first 15 skills to add
+      }
+
+      // Extract improvements with better parsing
+      const improvements: Enhancement[] = [];
+      
+      // Look for section improvements with more flexible patterns
+      const sectionPatterns = [
+        /(?:section|improvement)[:\s]*([^:]+)[:\s]*\n(?:original|before)[:\s]*([^\n]+)\n(?:enhanced|after)[:\s]*([^\n]+)\n(?:reason|why)[:\s]*([^\n]+)/gi,
+        /([^:]+):\s*\n(?:original|before)[:\s]*([^\n]+)\n(?:enhanced|after)[:\s]*([^\n]+)\n(?:reason|why)[:\s]*([^\n]+)/gi,
+        /(?:###|##)\s*([^\n]+)[:\s]*\n(?:original|before)[:\s]*([^\n]+)\n(?:enhanced|after)[:\s]*([^\n]+)\n(?:reason|why)[:\s]*([^\n]+)/gi
+      ];
+
+      for (const pattern of sectionPatterns) {
+        const matches = text.matchAll(pattern);
+        for (const match of matches) {
+          if (match.length >= 5) {
+            improvements.push({
+              section: match[1].trim(),
+              original: match[2].trim(),
+              enhanced: match[3].trim(),
+              reason: match[4].trim(),
+              impact: determineImpact(match[4])
+            });
+          }
+        }
+      }
+
+      // Extract ATS keywords with improved parsing
       const atsKeywords = {
+        present: [] as string[],
         added: [] as string[],
         optimized: [] as string[]
       };
 
-      // Look for keywords
-      const keywordMatches = text.matchAll(/(?:keyword|ats)[:\s]*([^\n]+)/gi);
-      for (const match of keywordMatches) {
-        const keywords = match[1].split(',').map(k => k.trim()).filter(k => k.length > 0);
-        atsKeywords.added.push(...keywords);
+      // Extract keywords present
+      const presentKeywordsMatch = text.match(/(?:keywords present|existing keywords)[:\s]*\n([\s\S]*?)(?:\n\n|\n###|\n##)/i);
+      if (presentKeywordsMatch) {
+        const keywordsText = presentKeywordsMatch[1];
+        const keywords = keywordsText.split(/[,\n•\-\*]/).map(k => k.trim()).filter(k => k.length > 0);
+        atsKeywords.present.push(...keywords.slice(0, 20));
       }
 
-      // Extract enhanced resume content
+      // Extract keywords added
+      const addedKeywordsMatch = text.match(/(?:keywords added|new keywords)[:\s]*\n([\s\S]*?)(?:\n\n|\n###|\n##)/i);
+      if (addedKeywordsMatch) {
+        const keywordsText = addedKeywordsMatch[1];
+        const keywords = keywordsText.split(/[,\n•\-\*]/).map(k => k.trim()).filter(k => k.length > 0);
+        atsKeywords.added.push(...keywords.slice(0, 20));
+      }
+
+      // Extract keywords optimized
+      const optimizedKeywordsMatch = text.match(/(?:keywords optimized|improved keywords)[:\s]*\n([\s\S]*?)(?:\n\n|\n###|\n##)/i);
+      if (optimizedKeywordsMatch) {
+        const keywordsText = optimizedKeywordsMatch[1];
+        const keywords = keywordsText.split(/[,\n•\-\*]/).map(k => k.trim()).filter(k => k.length > 0);
+        atsKeywords.optimized.push(...keywords.slice(0, 15));
+      }
+
+      // Extract enhanced resume content with multiple patterns
       let enhancedResume = '';
-      const resumeMatch = text.match(/(?:enhanced resume|complete resume)[:\s]*\n([\s\S]+?)(?:\n\n|\n##|\n###|$)/i);
-      if (resumeMatch) {
-        enhancedResume = resumeMatch[1].trim();
+      const resumePatterns = [
+        /(?:enhanced resume|complete enhanced resume)[:\s]*\n([\s\S]+?)(?:\n\n|\n##|\n###|$)/i,
+        /(?:###|##)\s*Enhanced Resume[:\s]*\n([\s\S]+?)(?:\n\n|\n##|\n###|$)/i,
+        /(?:final resume|optimized resume)[:\s]*\n([\s\S]+?)(?:\n\n|\n##|\n###|$)/i
+      ];
+
+      for (const pattern of resumePatterns) {
+        const resumeMatch = text.match(pattern);
+        if (resumeMatch && resumeMatch[1].trim().length > 100) {
+          enhancedResume = resumeMatch[1].trim();
+          break;
+        }
       }
 
       // Extract summary
       let summary = '';
-      const summaryMatch = text.match(/(?:summary|overview)[:\s]*\n([^\n]+)/i);
-      if (summaryMatch) {
-        summary = summaryMatch[1].trim();
+      const summaryPatterns = [
+        /(?:summary|overview)[:\s]*\n([^\n]+)/i,
+        /(?:###|##)\s*Summary[:\s]*\n([^\n]+)/i
+      ];
+
+      for (const pattern of summaryPatterns) {
+        const summaryMatch = text.match(pattern);
+        if (summaryMatch) {
+          summary = summaryMatch[1].trim();
+          break;
+        }
       }
 
       // If parsing failed to extract meaningful data, return the raw text as enhanced resume
@@ -207,6 +323,10 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
       return {
         originalFitScore,
         enhancedFitScore,
+        fitScoreBreakdown,
+        importantKeywords,
+        missingSkills,
+        skillsToAdd,
         improvements,
         atsKeywords,
         summary,
@@ -217,12 +337,37 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
       return {
         originalFitScore: 0,
         enhancedFitScore: 0,
+        fitScoreBreakdown: {
+          skillsMatch: 0,
+          experienceRelevance: 0,
+          formatCompliance: 0,
+          keywordDensity: 0,
+          overallFit: 0
+        },
+        importantKeywords: [],
+        missingSkills: [],
+        skillsToAdd: [],
         improvements: [],
-        atsKeywords: { added: [], optimized: [] },
+        atsKeywords: { present: [], added: [], optimized: [] },
         summary: 'AI-generated resume enhancement',
         enhancedResume: text
       };
     }
+  }
+
+  function extractScore(text: string, pattern: RegExp): number {
+    const match = text.match(pattern);
+    return match ? parseInt(match[1]) : 0;
+  }
+
+  function determineImpact(reasonText: string): 'high' | 'medium' | 'low' {
+    const reason = reasonText.toLowerCase();
+    if (reason.includes('high') || reason.includes('critical') || reason.includes('essential')) {
+      return 'high';
+    } else if (reason.includes('low') || reason.includes('minor') || reason.includes('optional')) {
+      return 'low';
+    }
+    return 'medium';
   }
 
   function getImpactColor(impact: string): string {
@@ -277,13 +422,46 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
 
 <main class="container mx-auto max-w-7xl p-6">
   <header class="mb-8">
-    <h1 class="text-4xl font-bold mb-4 text-primary">✨ Resume Enhancement</h1>
-    <p class="text-base-content/70">ATS optimization and tailored resume improvements for specific job descriptions</p>
+    <h1 class="text-4xl font-bold mb-4 text-primary">✨ Resume Enhancement AI</h1>
+    <p class="text-base-content/70">Professional resume analyst with deep expertise in ATS optimization and job-market alignment</p>
+    
+    <!-- Quick Guide -->
+    <div class="alert alert-info mt-4">
+      <div class="flex">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div class="text-sm">
+          <strong>How it works:</strong> 
+          <ol class="list-decimal list-inside mt-1 space-y-1">
+            <li>Upload your resume to the RAG system (Files page)</li>
+            <li>Select a job description from the available jobs</li>
+            <li>Choose your enhancement focus (ATS, Skills, Keywords, or Experience)</li>
+            <li>Get AI-powered enhancements that preserve your identity while optimizing for the job</li>
+          </ol>
+        </div>
+      </div>
+    </div>
   </header>
 
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
     <!-- Jobs List Sidebar -->
     <div class="lg:col-span-1">
+      <!-- Resume Status -->
+      <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+          <h3 class="card-title text-sm mb-2">📄 Resume Status</h3>
+          <p class="text-sm" class:text-error={!hasResume} class:text-success={hasResume}>
+            {resumeStatus}
+          </p>
+          {#if !hasResume}
+            <div class="mt-2">
+              <a href="/files" class="btn btn-primary btn-sm w-full">
+                📤 Upload Resume
+              </a>
+            </div>
+          {/if}
+        </div>
+      </div>
+
       <div class="card bg-base-100 shadow-xl mb-6">
         <div class="card-body">
           <div class="flex justify-between items-center mb-4">
@@ -398,11 +576,13 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
                   <button
                     class="btn btn-primary"
                     on:click={enhanceResume}
-                    disabled={isEnhancing}
+                    disabled={isEnhancing || !hasResume}
                   >
                     {#if isEnhancing}
                       <span class="loading loading-spinner loading-sm"></span>
                       Enhancing...
+                    {:else if !hasResume}
+                      📤 Upload Resume First
                     {:else}
                       ✨ Enhance Resume
                     {/if}
@@ -451,6 +631,78 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
               </div>
             </div>
 
+            <!-- Detailed Fit Score Breakdown -->
+            {#if enhancement.fitScoreBreakdown && (enhancement.fitScoreBreakdown.skillsMatch > 0 || enhancement.fitScoreBreakdown.experienceRelevance > 0)}
+              <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                  <h3 class="card-title mb-4">📊 Detailed Fit Score Breakdown</h3>
+                  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="text-center">
+                      <div class="text-xl font-bold text-primary">{enhancement.fitScoreBreakdown.skillsMatch}%</div>
+                      <div class="text-xs text-base-content/70">Skills Match</div>
+                    </div>
+                    <div class="text-center">
+                      <div class="text-xl font-bold text-secondary">{enhancement.fitScoreBreakdown.experienceRelevance}%</div>
+                      <div class="text-xs text-base-content/70">Experience</div>
+                    </div>
+                    <div class="text-center">
+                      <div class="text-xl font-bold text-accent">{enhancement.fitScoreBreakdown.formatCompliance}%</div>
+                      <div class="text-xs text-base-content/70">Format</div>
+                    </div>
+                    <div class="text-center">
+                      <div class="text-xl font-bold text-info">{enhancement.fitScoreBreakdown.keywordDensity}%</div>
+                      <div class="text-xs text-base-content/70">Keywords</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            {/if}
+
+            <!-- RAG Analysis Output -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Important Keywords -->
+              {#if enhancement.importantKeywords.length > 0}
+                <div class="card bg-base-100 shadow-xl">
+                  <div class="card-body">
+                    <h3 class="card-title mb-4">🔑 Important Keywords</h3>
+                    <div class="flex flex-wrap gap-2">
+                      {#each enhancement.importantKeywords as keyword}
+                        <span class="badge badge-primary badge-outline">{keyword}</span>
+                      {/each}
+                    </div>
+                  </div>
+                </div>
+              {/if}
+
+              <!-- Missing Skills -->
+              {#if enhancement.missingSkills.length > 0}
+                <div class="card bg-base-100 shadow-xl">
+                  <div class="card-body">
+                    <h3 class="card-title mb-4">❌ Missing Skills</h3>
+                    <div class="flex flex-wrap gap-2">
+                      {#each enhancement.missingSkills as skill}
+                        <span class="badge badge-error badge-outline">{skill}</span>
+                      {/each}
+                    </div>
+                  </div>
+                </div>
+              {/if}
+            </div>
+
+            <!-- Skills to Add -->
+            {#if enhancement.skillsToAdd.length > 0}
+              <div class="card bg-base-100 shadow-xl">
+                <div class="card-body">
+                  <h3 class="card-title mb-4">✅ Skills to Add</h3>
+                  <div class="flex flex-wrap gap-2">
+                    {#each enhancement.skillsToAdd as skill}
+                      <span class="badge badge-success">{skill}</span>
+                    {/each}
+                  </div>
+                </div>
+              </div>
+            {/if}
+
             <!-- Specific Improvements -->
             <div class="card bg-base-100 shadow-xl">
               <div class="card-body">
@@ -491,7 +743,15 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
             <div class="card bg-base-100 shadow-xl">
               <div class="card-body">
                 <h3 class="card-title mb-4">🤖 ATS Keywords Enhancement</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <h4 class="font-semibold text-primary mb-2">📋 Keywords Present</h4>
+                    <div class="flex flex-wrap gap-2">
+                      {#each enhancement.atsKeywords.present as keyword}
+                        <span class="badge badge-primary badge-outline">{keyword}</span>
+                      {/each}
+                    </div>
+                  </div>
                   <div>
                     <h4 class="font-semibold text-success mb-2">✅ Keywords Added</h4>
                     <div class="flex flex-wrap gap-2">
