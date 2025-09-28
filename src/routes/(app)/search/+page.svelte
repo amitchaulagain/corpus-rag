@@ -18,7 +18,20 @@
       // Load search history from localStorage
       const history = localStorage.getItem('search_history');
       if (history) {
-        searchHistory = JSON.parse(history);
+        try {
+          const parsedHistory = JSON.parse(history);
+          // Filter out any corrupted entries
+          searchHistory = parsedHistory.filter((item: any) => 
+            item && 
+            typeof item.question === 'string' && 
+            typeof item.answer === 'string' && 
+            typeof item.timestamp === 'string'
+          );
+        } catch (error) {
+          console.error('Error parsing search history:', error);
+          searchHistory = [];
+          localStorage.removeItem('search_history');
+        }
       }
     }
   });
@@ -46,12 +59,14 @@
       const data = await response.json();
 
       if (data.success) {
-        answer = data.data.answer;
+        // Handle both new API format (data.data.answer) and legacy format (data.answer)
+        const answerText = data.data?.answer || data.answer;
+        answer = answerText;
 
         // Add to search history
         const searchEntry = {
           question: question.trim(),
-          answer: data.data.answer,
+          answer: answerText,
           timestamp: new Date().toISOString()
         };
 
@@ -63,7 +78,7 @@
       }
     } catch (error) {
       console.error('Search failed:', error);
-      answer = `Error: ${error.message}`;
+      answer = `Error: ${error instanceof Error ? error.message : 'Unknown error'}`;
     } finally {
       isLoading = false;
     }
@@ -74,8 +89,19 @@
     localStorage.removeItem('search_history');
   }
 
+  function clearCorruptedHistory() {
+    console.log('Clearing corrupted search history...');
+    searchHistory = [];
+    localStorage.removeItem('search_history');
+  }
+
   function useHistoryQuestion(q: string) {
     question = q;
+  }
+
+  // Debug function to clear corrupted data (can be called from browser console)
+  if (typeof window !== 'undefined') {
+    (window as any).clearSearchHistory = clearCorruptedHistory;
   }
 </script>
 
@@ -158,7 +184,7 @@
                   {item.question}
                 </button>
                 <div class="text-sm opacity-70 mb-2 line-clamp-3">
-                  {item.answer.substring(0, 150)}{item.answer.length > 150 ? '...' : ''}
+                  {item.answer ? (item.answer.substring(0, 150) + (item.answer.length > 150 ? '...' : '')) : 'No answer available'}
                 </div>
                 <div class="text-xs opacity-50">
                   {new Date(item.timestamp).toLocaleString()}
