@@ -119,3 +119,5 @@ venv/
 .ENV/
 .env/
 .venv/
+
+/Users/admin/extratech/corpus-rag/application_default_credentials.json
