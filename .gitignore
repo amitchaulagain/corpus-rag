@@ -120,4 +120,4 @@ venv/
 .env/
 .venv/
 
-/Users/admin/extratech/corpus-rag/application_default_credentials.json
+application_default_credentials.json
