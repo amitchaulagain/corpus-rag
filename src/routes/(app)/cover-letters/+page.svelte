@@ -12,20 +12,8 @@
   let generatedCoverLetter = '';
   let coverLetterPrompt = '';
 
-  let debounceTimeout;
   let lastSavedPrompt = '';
   let initialLoaded = false;
-
-  // $: makes this a reactive statement that runs when coverLetterPrompt changes
-  $: if (initialLoaded) {
-    // Debounce and avoid saving if unchanged
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
-      if (coverLetterPrompt && coverLetterPrompt !== lastSavedPrompt) {
-        savePrompt(coverLetterPrompt);
-      }
-    }, 700);
-  }
 
   onMount(async () => {
     const storedUser = localStorage.getItem('google_user');
@@ -58,6 +46,11 @@ Please format as a professional cover letter with proper greeting and closing.`;
   });
 
   async function savePrompt(content) {
+    // Only save if content has actually changed
+    if (content === lastSavedPrompt) {
+      return;
+    }
+    
     try {
       const response = await apiRequest('/api/prompts/cover-letter', {
         method: 'POST',
@@ -67,9 +60,9 @@ Please format as a professional cover letter with proper greeting and closing.`;
         body: JSON.stringify({ content })
       });
       const result = await response.json().catch(() => ({}));
-      if (!result || result.success !== true) return;
-      if (result.changed) {
+      if (result && result.success === true) {
         lastSavedPrompt = content;
+        console.log('Prompt saved successfully');
       }
     } catch (error) {
       console.error('Failed to save prompt:', error);
@@ -186,6 +179,7 @@ Please format as a professional cover letter with proper greeting and closing.`;
             bind:value={coverLetterPrompt}
             placeholder="Enter your AI prompt here..."
             rows="6"
+            on:blur={() => savePrompt(coverLetterPrompt)}
           ></textarea>
         </div>
 

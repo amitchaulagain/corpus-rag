@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite dev\" \"nodemon --watch src --ext ts,js,svelte --exec 'echo [API] Server files changed - hot reload enabled'\" \"npm run dev:test\"",
+    "dev": "concurrently \"vite dev\" \"nodemon\" \"npm run dev:test\"",
     "dev:test": "nodemon --delay 5 --watch src/routes/api --exec 'sleep 3 && node dev-test.js'",
     "dev:simple": "vite dev",
     "build": "vite build",
