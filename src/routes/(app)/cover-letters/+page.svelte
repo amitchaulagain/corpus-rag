@@ -10,11 +10,34 @@
   let isLoading = false;
   let isGenerating = false;
   let generatedCoverLetter = '';
-  let isEditingPrompt = false;
   let coverLetterPrompt = '';
 
-  // Default prompt that can be edited
-  const defaultCoverLetterPrompt = `Write a compelling cover letter for this position: [Job Details]
+  let debounceTimeout;
+
+  // $: makes this a reactive statement that runs when coverLetterPrompt changes
+  $: if (coverLetterPrompt) {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+      savePrompt(coverLetterPrompt);
+    }, 500); // 500ms debounce delay
+  }
+
+  onMount(async () => {
+    const storedUser = localStorage.getItem('google_user');
+    if (storedUser) {
+      user = JSON.parse(storedUser);
+      loadJobs();
+    }
+
+    // Load prompt from the server
+    try {
+      const response = await apiRequest('/api/prompts/cover-letter');
+      const data = await response.json();
+      coverLetterPrompt = data.content;
+    } catch (error) {
+      console.error('Failed to load prompt:', error);
+      // Fallback to default if loading fails
+      coverLetterPrompt = `Write a compelling cover letter for this position: [Job Details]
 
 Use my background from the resume and user info to:
 - Address their specific pain points mentioned in the job posting
@@ -24,26 +47,21 @@ Use my background from the resume and user info to:
 - End with a strong call to action
 
 Please format as a professional cover letter with proper greeting and closing.`;
-
-  onMount(() => {
-    const storedUser = localStorage.getItem('google_user');
-    if (storedUser) {
-      user = JSON.parse(storedUser);
-      loadJobs();
     }
-
-    // Load saved prompt from localStorage or use default
-    const savedPrompt = localStorage.getItem('cover_letter_prompt');
-    coverLetterPrompt = savedPrompt || defaultCoverLetterPrompt;
   });
 
-  function savePrompt() {
-    localStorage.setItem('cover_letter_prompt', coverLetterPrompt);
-  }
-
-  function resetPrompt() {
-    coverLetterPrompt = defaultCoverLetterPrompt;
-    localStorage.setItem('cover_letter_prompt', coverLetterPrompt);
+  async function savePrompt(content) {
+    try {
+      await apiRequest('/api/prompts/cover-letter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ content })
+      });
+    } catch (error) {
+      console.error('Failed to save prompt:', error);
+    }
   }
 
   async function loadJobs() {
@@ -158,10 +176,7 @@ Please format as a professional cover letter with proper greeting and closing.`;
             rows="6"
           ></textarea>
         </div>
-        <div class="prompt-actions">
-          <button class="save-btn" on:click={savePrompt}>💾 Save Prompt</button>
-          <button class="reset-btn" on:click={resetPrompt}>🔄 Reset to Default</button>
-        </div>
+
       </div>
     </div>
   </div>

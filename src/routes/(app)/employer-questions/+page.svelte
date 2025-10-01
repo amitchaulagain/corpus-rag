@@ -10,9 +10,18 @@
   let isGenerating = false;
   let generatedAnswers = '';
   let parsedAnswers = [];
-  let isEditingPrompt = false;
   let employerQuestionsPrompt = '';
   let jobDescriptionStates = {}; // Track checkbox state per job filename
+
+  let debounceTimeout;
+
+  // $: makes this a reactive statement that runs when employerQuestionsPrompt changes
+  $: if (employerQuestionsPrompt) {
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(() => {
+      savePrompt(employerQuestionsPrompt);
+    }, 500); // 500ms debounce delay
+  }
 
   // Reactive statement to help with debugging
   $: {
@@ -21,7 +30,22 @@
     }
   }
 
-  const defaultEmployerQuestionsPrompt = `For each of these employer questions, analyze the question and my resume/background, then return ONLY a JSON array with the recommended responses.
+  onMount(async () => {
+    const storedUser = localStorage.getItem('google_user');
+    if (storedUser) {
+      user = JSON.parse(storedUser);
+      loadJobs();
+    }
+
+    // Load prompt from the server
+    try {
+      const response = await apiRequest('/api/prompts/employer-questions');
+      const data = await response.json();
+      employerQuestionsPrompt = data.content;
+    } catch (error) {
+      console.error('Failed to load prompt:', error);
+      // Fallback to default if loading fails
+      employerQuestionsPrompt = `For each of these employer questions, analyze the question and my resume/background, then return ONLY a JSON array with the recommended responses.
 
 Response Format:
 - For "select" questions: single number (e.g., 2)
@@ -39,22 +63,22 @@ Rules:
 - Choose answers that position me as the ideal candidate
 
 Questions: [Questions List]`;
-
-  onMount(() => {
-    const storedUser = localStorage.getItem('google_user');
-    if (storedUser) {
-      user = JSON.parse(storedUser);
-      loadJobs();
-    }
-
-    // Load custom prompt from localStorage
-    const storedPrompt = localStorage.getItem('employer_questions_prompt');
-    if (storedPrompt) {
-      employerQuestionsPrompt = storedPrompt;
-    } else {
-      employerQuestionsPrompt = defaultEmployerQuestionsPrompt;
     }
   });
+
+  async function savePrompt(content) {
+    try {
+      await apiRequest('/api/prompts/employer-questions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ content })
+      });
+    } catch (error) {
+      console.error('Failed to save prompt:', error);
+    }
+  }
 
   async function loadJobs() {
     if (!user) return;
@@ -218,15 +242,6 @@ Questions: [Questions List]`;
       alert('Failed to copy to clipboard');
     });
   }
-
-  function savePrompt() {
-    localStorage.setItem('employer_questions_prompt', employerQuestionsPrompt);
-  }
-
-  function resetPrompt() {
-    employerQuestionsPrompt = defaultEmployerQuestionsPrompt;
-    localStorage.setItem('employer_questions_prompt', defaultEmployerQuestionsPrompt);
-  }
 </script>
 
 <main class="container mx-auto max-w-7xl p-4 lg:p-6">
@@ -246,10 +261,7 @@ Questions: [Questions List]`;
             rows="20"
           ></textarea>
         </div>
-        <div class="flex gap-2">
-          <button class="btn btn-primary btn-sm" on:click={savePrompt}>💾 Save Prompt</button>
-          <button class="btn btn-ghost btn-sm" on:click={resetPrompt}>🔄 Reset to Default</button>
-        </div>
+
       </div>
     </div>
   </div>

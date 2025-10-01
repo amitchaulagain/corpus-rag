@@ -1,0 +1,10 @@
+Write a compelling cover letter for this position: [Job Details]
+
+Use my background from the resume and user info to:
+- Address their specific pain points mentioned in the job posting
+- Highlight 2-3 most relevant experiences
+- Match their company tone/culture if discernible
+- Keep it under 300 words
+- End with a strong call to action
+
+Please format as a professional cover letter with proper greeting and closing.
