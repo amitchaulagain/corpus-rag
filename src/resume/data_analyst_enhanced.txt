@@ -1,0 +1,79 @@
+JANE SMITH
+Data Scientist
+Email: jane.smith@email.com | Phone: (555) 987-6543
+LinkedIn: linkedin.com/in/janesmith | GitHub: github.com/janesmith
+
+SUMMARY
+Analytical Data Scientist with 4+ years of experience in machine learning, statistical analysis, and business intelligence. Proven expertise in Python, R, SQL, and advanced ML libraries with demonstrated success in predictive modeling, A/B testing, and data visualization. Delivered insights driving 15% revenue increase and automated processes saving 20+ hours weekly while achieving 85% model accuracy.
+
+EXPERIENCE
+
+Senior Data Scientist | DataCorp Solutions | New York, NY | 2021 - Present
+• Developed and deployed machine learning models using scikit-learn, TensorFlow, and PyTorch achieving 85%+ accuracy across 5+ prediction tasks
+• Created interactive Tableau dashboards serving 50+ stakeholders and driving data-informed decisions across 3 business units
+• Performed advanced statistical analysis on customer data leading to 15% increase in customer retention and $2M+ revenue impact
+• Automated reporting processes using Python and Apache Airflow, saving 20+ hours weekly and improving data accuracy by 95%
+• Led comprehensive A/B testing initiatives that improved conversion rates by 12% and increased revenue by $500K annually
+• Mentored 2 junior analysts and established best practices for data science workflows
+• Technologies: Python, R, SQL, TensorFlow, PyTorch, scikit-learn, Tableau, Power BI, AWS, Apache Airflow
+
+Data Scientist | Marketing Insights LLC | Boston, MA | 2020 - 2021
+• Built predictive models using Python, scikit-learn, and XGBoost achieving 78% accuracy in customer churn prediction
+• Analyzed marketing campaign performance across 10+ channels and provided actionable recommendations improving ROI by 25%
+• Developed SQL queries to extract and process data from large databases (5M+ records) with 99.9% data quality
+• Collaborated with marketing team to optimize ad spend and targeting, resulting in 30% reduction in customer acquisition cost
+• Implemented automated data pipelines using Python and pandas, reducing manual data processing time by 80%
+• Technologies: Python, R, SQL, scikit-learn, XGBoost, pandas, matplotlib, Google Analytics, BigQuery
+
+Junior Data Analyst | Business Analytics Inc. | Boston, MA | 2019 - 2020
+• Prepared comprehensive weekly and monthly reports for executive management team with 100% accuracy
+• Cleaned and processed raw data using Excel, SQL, and Python, handling 100K+ records monthly
+• Assisted in data collection and validation processes, improving data quality by 90%
+• Created advanced visualizations using Excel, Tableau, and Python matplotlib for stakeholder presentations
+• Contributed to statistical analysis projects using SPSS and R, supporting 5+ business initiatives
+• Technologies: SQL, Excel, Tableau, SPSS, Python, R, matplotlib
+
+EDUCATION
+Master of Science in Statistics | MIT | 2019
+Bachelor of Science in Mathematics | Boston University | 2017
+GPA: 3.9/4.0
+Relevant Coursework: Machine Learning, Statistical Inference, Data Mining, Experimental Design, Time Series Analysis
+
+SKILLS
+Programming: Python, R, SQL, Julia
+Machine Learning: TensorFlow, PyTorch, scikit-learn, XGBoost, LightGBM
+Data Visualization: Tableau, Power BI, matplotlib, seaborn, plotly, D3.js
+Databases: MySQL, PostgreSQL, MongoDB, BigQuery, Snowflake
+Statistical Analysis: Hypothesis testing, Regression analysis, A/B testing, Causal inference
+Big Data: Apache Spark, Hadoop, AWS EMR, Google Cloud Platform
+Tools: Excel, SPSS, Google Analytics, Jupyter Notebooks, Apache Airflow
+Cloud: AWS, Google Cloud Platform, Azure
+
+CERTIFICATIONS
+• Tableau Desktop Certified Professional (2022)
+• Google Analytics Certified (2021)
+• AWS Certified Cloud Practitioner (2021)
+• TensorFlow Developer Certificate (2023)
+• Microsoft Azure Data Scientist Associate (2023)
+
+PROJECTS
+Customer Segmentation & Churn Prediction Model | Freelance Project | 2021-2022
+• Analyzed customer purchase patterns for e-commerce client with 100K+ customers
+• Developed K-means clustering model to identify 5 distinct customer segments with 90% silhouette score
+• Built LSTM neural network for churn prediction achieving 82% accuracy
+• Created comprehensive Tableau dashboard showing segment characteristics and actionable recommendations
+• Deployed model using Flask API and achieved 95% prediction accuracy in production
+
+Sales Forecasting & Demand Planning System | Personal Project | 2020-2021
+• Built ensemble time series forecasting model using Python, ARIMA, Prophet, and LSTM
+• Achieved 85% accuracy in predicting monthly sales across 50+ product categories
+• Implemented automated feature engineering pipeline reducing model development time by 60%
+• Deployed model using Flask web application with real-time predictions
+• GitHub: github.com/janesmith/sales-forecasting
+
+Real-time Recommendation Engine | Academic Research | 2019
+• Developed collaborative filtering recommendation system using Python and scikit-learn
+• Implemented matrix factorization algorithms achieving 75% recommendation accuracy
+• Built real-time API using FastAPI and Redis for instant recommendations
+• Published research paper on "Scalable Recommendation Systems for E-commerce"
+• GitHub: github.com/janesmith/recommendation-engine 

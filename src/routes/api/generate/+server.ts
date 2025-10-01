@@ -28,7 +28,7 @@ export const POST: RequestHandler = async (event) => {
     console.log('=== GENERATE API DEBUG ===');
     console.log('Raw request body:', JSON.stringify(requestBody, null, 2));
     
-    const { type, jobDetails, questions, userEmail, customPrompt, enhancementFocus, filename, jobId, jobTitle } = requestBody;
+    const { type, jobDetails, details, questions, userEmail, customPrompt, enhancementFocus, filename, jobId, jobTitle, prompt: userPrompt } = requestBody;
     
     console.log('Extracted values:');
     console.log('- type:', type);
@@ -40,8 +40,8 @@ export const POST: RequestHandler = async (event) => {
     console.log('- jobTitle:', jobTitle);
     console.log('=========================');
 
-    if (!type || !userEmail) {
-      throw new Error('Type and user email are required');
+    if (!type) {
+      throw new Error('Type is required');
     }
 
     let prompt = '';
@@ -75,27 +75,20 @@ Please format as a professional cover letter with proper greeting and closing.`;
         throw new Error('Questions array is required for employer answers');
       }
 
+      if (!userPrompt) {
+        throw new Error('User prompt is required for employer answers');
+      }
+
       const questionsText = questions.map((q, index) =>
-        `Question ${index + 1}: ${q.q}\nOptions: ${q.opts.join(', ')}`
+        `Question ${index} - TYPE: ${q.type.toUpperCase()} - ${q.q}\nOptions: ${q.opts.join(', ')}`
       ).join('\n\n');
 
-      // Use custom prompt if provided, otherwise use default
-      if (customPrompt) {
-        prompt = `${customPrompt}
+      // Use ONLY the user's textarea prompt, replace placeholders
+      prompt = userPrompt.replace('[Questions List]', questionsText);
 
-Questions: ${questionsText}`;
-      } else {
-        prompt = `For each of these employer questions: ${questionsText}
-
-Provide the best answer choice and a brief rationale. Consider:
-- My actual experience level and background
-- What the employer is really asking (subtext)
-- Which answer positions me as the ideal candidate
-- Consistency with my resume and cover letter
-
-Format: Question → Recommended Answer → 2-sentence rationale
-
-Please be specific about which option number (starting from 0) to select for each question.`;
+      if (details) {
+        // If job description checkbox is checked, add it as context
+        analysisContext = `Job Details:\n${details}`;
       }
 
     } else if (type === 'job_analysis') {
@@ -321,7 +314,7 @@ Focus on concrete, measurable improvements that will help with ATS systems and h
         'Authorization': event.request.headers.get('Authorization') || ''
       },
       body: JSON.stringify({
-        userId: userEmail,
+        userId: userEmail || auth.user?.email || 'anonymous',
         question: prompt,
         context: analysisContext,
         maxTokens: 2000,

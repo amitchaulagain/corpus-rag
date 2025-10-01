@@ -1,0 +1,80 @@
+{
+  "application_volume": "",
+  "category": "",
+  "company": "DXC Technology Australia & New Zealand",
+  "debug": {
+    "details_length": 1682,
+    "extracted_company": "DXC Technology Australia & New Zealand",
+    "extracted_title": "Java Developer (mid level)",
+    "title_length": 99
+  },
+  "details": "We are seeking an experienced Java Developer (mid level) to join us on a banking project at a large Australian financial institution to provide resources to their Calypso program. Calypso is a software application specializing in Capital Markets, Investment Management, Central Banking, Risk Management, Clearing, Collateral, Treasury and Liquidity.\nJoining this program, you will have the benefit of working with an established client team, fully involved in the project initiation through to project implementation.\nResponsibilities:\n- Work in Agile teams to develop functionalities of the Calypso application using Java\n- Own developments end-to-end from understanding requirements to unit testing and release\n- Create, change and use relevant DevOps tools and CI/CD pipelines\n- Interact and liaise with teams across various geographic locations\n- Interact with Business and Operations users and resolve their queries\nMandatory Skills Description:\n- Strong Java experience. At least 5 years is expected.\n- Exposure to complex topics like coding for performance, multithreading\n- Experience with Springboot, Docker, Kubernetes, Jenkins, Gradle, ..\n- Experience in developing Java APIs\n- Good analytical skills, should be able to analyze and understand complex requirements\n- Ability to write SQL queries and understand relational database concepts\n- Good and effective communication skills\n- Understanding of UNIX servers and commands\nNice-to-Have Skills:\n- Calypso exposure (Capital Markets Technology) experience is very highly regarded.\n- Other capital markets technology experience (Murex, FIS, Kondor, ...)\n- Capital markets functional experience (especially FX, Commodities)",
+  "jobId": "",
+  "location": "Sydney NSW (Hybrid)",
+  "posted": "",
+  "raw_title": "Java Developer (mid level)\nDXC Technology Australia & New Zealand\nSydney NSW (Hybrid)\nContract/Temp",
+  "salary_note": "",
+  "scrapedAt": "2025-09-28T00:33:24.797Z",
+  "title": "Java Developer (mid level)",
+  "url": "https://www.seek.com.au/job/87057769",
+  "work_type": "Contract/Temp",
+  "questions": [
+    {
+      "id": 0,
+      "q": "Which of the following statements best describes your right to work in Australia?",
+      "type": "select",
+      "opts": [
+        "I'm an Australian citizen",
+        "I'm a permanent resident and/or NZ citizen",
+        "I have a family/partner visa with no restrictions",
+        "I have a graduate temporary work visa",
+        "I have a holiday temporary work visa",
+        "I have a temporary visa with restrictions on work location (e.g. skilled regional visa 491)",
+        "I have a temporary protection or safe haven enterprise work visa",
+        "I have a temporary visa with no restrictions (e.g. doctoral student)",
+        "I have a temporary visa with restrictions on work hours (e.g. student visa, retirement visa)",
+        "I have a temporary visa with restrictions on industry (e.g. temporary activity visa 408)",
+        "I require sponsorship to work for a new employer (e.g. 482, 457)"
+      ],
+      "containerSelector": "#gemini-q-seek-0"
+    },
+    {
+      "id": 1,
+      "q": "How many years' experience do you have as a java developer?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "containerSelector": "#gemini-q-seek-1"
+    },
+    {
+      "id": 2,
+      "q": "Current salary or rate",
+      "type": "text",
+      "opts": [],
+      "containerSelector": "#gemini-q-seek-2"
+    },
+    {
+      "id": 3,
+      "q": "Expected salary or rate",
+      "type": "text",
+      "opts": [],
+      "containerSelector": "#gemini-q-seek-3"
+    },
+    {
+      "id": 4,
+      "q": "notice period in days",
+      "type": "text",
+      "opts": [],
+      "containerSelector": "#gemini-q-seek-4"
+    }
+  ],
+  "lastUpdated": "2025-09-28T00:33:42.003Z"
+}

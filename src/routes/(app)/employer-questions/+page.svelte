@@ -12,6 +12,7 @@
   let parsedAnswers = [];
   let isEditingPrompt = false;
   let employerQuestionsPrompt = '';
+  let jobDescriptionStates = {}; // Track checkbox state per job filename
 
   // Reactive statement to help with debugging
   $: {
@@ -20,14 +21,20 @@
     }
   }
 
-  const defaultEmployerQuestionsPrompt = `For each of these employer questions, analyze the question and my resume/background, then return ONLY a JSON array of the recommended option indices (0-based).
+  const defaultEmployerQuestionsPrompt = `For each of these employer questions, analyze the question and my resume/background, then return ONLY a JSON array with the recommended responses.
 
-Example: If there are 5 questions and you recommend option 3 for Q1, option 1 for Q2, option 4 for Q3, etc., return: [3,1,4,2,0]
+Response Format:
+- For "select" questions: single number (e.g., 2)
+- For "checkbox" questions: array of numbers (e.g., [0,3,7])
+
+Example: If Q1 is select (recommend option 3), Q2 is checkbox (recommend options 1,4), Q3 is select (recommend option 2):
+Return: [3, [1,4], 2]
 
 Rules:
 - Return ONLY the array, no explanations or text
 - Use 0-based indexing (first option = 0, second = 1, etc.)
 - Array length must match number of questions
+- Select questions = single number, checkbox questions = array of numbers
 - Consider my actual experience and background from resume
 - Choose answers that position me as the ideal candidate
 
@@ -106,9 +113,9 @@ Questions: [Questions List]`;
         },
         body: JSON.stringify({
           type: 'employer_answers',
+          ...(jobDescriptionStates[selectedJob.filename] && { details: jobContent.details }),
           questions: jobContent.questions,
-          userEmail: user.email,
-          customPrompt: employerQuestionsPrompt
+          prompt: employerQuestionsPrompt
         })
       });
 
@@ -152,32 +159,34 @@ Questions: [Questions List]`;
       const cleanResponse = aiResponse.trim();
       console.log('Clean response:', cleanResponse);
 
-      // Look for array pattern in the response like [0,4] or [1,2,3]
-      const arrayMatch = cleanResponse.match(/\[\s*(\d+(?:\s*,\s*\d+)*)\s*\]/);
-      console.log('Array match:', arrayMatch);
-      console.log('Full match (if found):', arrayMatch ? arrayMatch[0] : 'No match');
+      // Try to parse as JSON directly first - find balanced brackets
+      try {
+        let startIndex = cleanResponse.indexOf('[');
+        if (startIndex !== -1) {
+          let bracketCount = 0;
+          let endIndex = startIndex;
 
-      if (arrayMatch) {
-        try {
-          const array = JSON.parse(arrayMatch[0]);
-          console.log('Successfully parsed array:', array);
-          // Each value in the array represents the recommended option index for that question
+          for (let i = startIndex; i < cleanResponse.length; i++) {
+            if (cleanResponse[i] === '[') bracketCount++;
+            if (cleanResponse[i] === ']') bracketCount--;
+            if (bracketCount === 0) {
+              endIndex = i;
+              break;
+            }
+          }
+
+          const jsonString = cleanResponse.substring(startIndex, endIndex + 1);
+          console.log('Attempting to parse JSON string:', jsonString);
+
+          const array = JSON.parse(jsonString);
+          console.log('Successfully parsed complex array:', array);
           return array;
-        } catch (error) {
-          console.error('Failed to parse JSON array:', error);
-          console.error('Attempted to parse:', arrayMatch[0]);
         }
+      } catch (error) {
+        console.error('Failed to parse as JSON:', error);
       }
 
-      // Fallback: look for individual numbers
-      const numbers = cleanResponse.match(/\d+/g);
-      if (numbers) {
-        const result = numbers.map(num => parseInt(num));
-        console.log('Fallback numbers:', result);
-        return result;
-      }
-
-      console.log('No matches found, returning empty array');
+      console.log('Could not parse AI response, returning empty array');
       return [];
     } catch (error) {
       console.error('Error parsing AI answers:', error);
@@ -186,25 +195,19 @@ Questions: [Questions List]`;
   }
 
   function isOptionRecommended(questionIndex, optionIndex) {
-    console.log(`Checking Q${questionIndex} Option${optionIndex}:`, {
-      parsedAnswers,
-      questionIndex,
-      optionIndex,
-      recommendedOptionForThisQuestion: parsedAnswers?.[questionIndex],
-      isMatch: parsedAnswers?.[questionIndex] === optionIndex
-    });
-
     if (!parsedAnswers || parsedAnswers.length <= questionIndex) {
-      console.log('No parsed answers or invalid question index');
       return false;
     }
 
-    // parsedAnswers[questionIndex] contains the recommended option index for that question
-    // So if AI returns [1, 5], then for question 0 it recommends option 1, for question 1 it recommends option 5
-    const recommendedOptionForThisQuestion = parsedAnswers[questionIndex];
-    const isRecommended = recommendedOptionForThisQuestion === optionIndex;
-    console.log(`Q${questionIndex} Option${optionIndex} recommended:`, isRecommended, `(AI chose option ${recommendedOptionForThisQuestion} for this question)`);
-    return isRecommended;
+    const recommendedResponse = parsedAnswers[questionIndex];
+
+    if (Array.isArray(recommendedResponse)) {
+      // Checkbox question: check if optionIndex is in the array
+      return recommendedResponse.includes(optionIndex);
+    } else {
+      // Select question: direct comparison
+      return recommendedResponse === optionIndex;
+    }
   }
 
   function copyToClipboard(text) {
@@ -286,7 +289,15 @@ Questions: [Questions List]`;
                     <div class="badge badge-primary badge-sm">
                       ❓ {job.questionCount} Questions
                     </div>
-                    <div class="text-xs text-base-content/50">{formatFileSize(job.size)}</div>
+                    <div class="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        class="checkbox checkbox-xs"
+                        bind:checked={jobDescriptionStates[job.filename]}
+                        on:click|stopPropagation
+                      />
+                      <div class="text-xs text-base-content/50">{formatFileSize(job.size)}</div>
+                    </div>
                   </div>
                   <h3 class="font-bold text-sm text-primary">{job.company}</h3>
                   <p class="text-sm text-base-content/80">{job.title}</p>

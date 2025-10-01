@@ -25,6 +25,13 @@ export class RAGStorageClient {
   }
 
   /**
+   * Get the bucket name
+   */
+  getBucketName(): string {
+    return this.bucketName;
+  }
+
+  /**
    * Create user-specific folder structure
    */
   async createUserFolder(userId: string): Promise<{ success: boolean; folderPath?: string; error?: string }> {

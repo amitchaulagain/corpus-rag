@@ -1,0 +1,69 @@
+JOHN DOE
+Senior Software Engineer
+Email: john.doe@email.com | Phone: (555) 123-4567
+LinkedIn: linkedin.com/in/johndoe | GitHub: github.com/johndoe
+
+SUMMARY
+Results-driven Senior Software Engineer with 5+ years of experience architecting and developing scalable web applications and distributed systems. Proven expertise in Python, Java, Go, and cloud technologies with demonstrated success in microservices architecture, Docker, Kubernetes, and CI/CD pipelines. Led teams of 3+ developers and delivered solutions serving 1M+ daily users while reducing deployment time by 60%.
+
+EXPERIENCE
+
+Senior Software Engineer | TechCorp Inc. | San Francisco, CA | 2021 - Present
+• Architected and developed microservices-based platform serving 1M+ daily users with 99.9% uptime
+• Implemented comprehensive CI/CD pipelines using Jenkins, Docker, and Kubernetes, reducing deployment time by 60% and eliminating 95% of deployment errors
+• Led cross-functional team of 3 junior developers, mentored 5+ new hires, and established coding standards that improved code quality by 40%
+• Designed and optimized database schemas for PostgreSQL and MongoDB, improving query performance by 50%
+• Technologies: Python, Java, Go, Flask, Spring Boot, PostgreSQL, MongoDB, AWS, Docker, Kubernetes, Jenkins, Git
+
+Software Engineer | StartupXYZ | Austin, TX | 2019 - 2021
+• Built scalable REST APIs for mobile and web applications using Python, Django, and Java Spring Boot
+• Collaborated with product managers and designers to deliver 15+ features on tight deadlines with 100% on-time delivery
+• Optimized database queries and implemented caching strategies, improving application performance by 40% and reducing response time from 800ms to 300ms
+• Implemented automated testing suite achieving 90% code coverage and reducing bug reports by 60%
+• Technologies: Python, Java, Django, Spring Boot, MySQL, Redis, Git, Docker, AWS
+
+Junior Developer | DevShop LLC | Austin, TX | 2018 - 2019
+• Developed responsive frontend components using React, JavaScript, and modern CSS frameworks
+• Participated in code reviews and implemented agile development practices, contributing to 20+ successful sprint deliveries
+• Fixed 50+ critical bugs and implemented 15+ small features under senior guidance
+• Contributed to open-source projects and maintained 3+ GitHub repositories
+• Technologies: JavaScript, React, Node.js, MongoDB, Git, Docker
+
+EDUCATION
+Bachelor of Science in Computer Science | University of Texas at Austin | 2018
+GPA: 3.8/4.0
+Relevant Coursework: Data Structures & Algorithms, Database Systems, Software Engineering, Distributed Systems, Cloud Computing
+
+SKILLS
+Programming Languages: Python, Java, Go, JavaScript, TypeScript
+Frameworks & Libraries: Django, Flask, Spring Boot, React, Node.js, Express.js
+Databases: PostgreSQL, MySQL, MongoDB, Redis, Cassandra
+Cloud & DevOps: AWS, Docker, Kubernetes, Jenkins, Git, CI/CD, Terraform
+Architecture: Microservices, REST APIs, GraphQL, Event-Driven Architecture
+Other: Agile Development, TDD, Performance Optimization, System Design, API Design
+
+CERTIFICATIONS
+• AWS Certified Solutions Architect - Associate (2022)
+• Docker Certified Associate (2021)
+• Kubernetes Administrator (CKA) - In Progress
+• Google Cloud Professional Cloud Developer (2023)
+
+PROJECTS
+E-commerce Microservices Platform | Personal Project | 2020-2021
+• Built a full-stack e-commerce application using Python/Django, Java Spring Boot, and React
+• Implemented microservices architecture with Docker and Kubernetes deployment
+• Integrated payment processing with Stripe API and achieved 99.9% transaction success rate
+• Deployed on AWS using CI/CD pipeline with automated testing and monitoring
+• GitHub: github.com/johndoe/ecommerce-platform
+
+Real-time Chat Application | Open Source Contribution | 2021
+• Developed real-time messaging system using WebSockets, Node.js, and Redis
+• Implemented user authentication, message encryption, and file sharing capabilities
+• Achieved 1000+ concurrent users with sub-100ms message delivery
+• GitHub: github.com/johndoe/realtime-chat
+
+Machine Learning API Service | Freelance Project | 2022
+• Built RESTful API for image classification using Python, TensorFlow, and FastAPI
+• Implemented Docker containerization and deployed on AWS with auto-scaling
+• Achieved 95% accuracy and processed 10,000+ images daily
+• GitHub: github.com/johndoe/ml-api-service 

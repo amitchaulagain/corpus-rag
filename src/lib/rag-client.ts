@@ -463,4 +463,104 @@ export class VertexRAGClient {
       };
     }
   }
+
+  /**
+   * Check the status of a long-running operation
+   */
+  async checkOperationStatus(operationId: string): Promise<{
+    success: boolean;
+    done?: boolean;
+    error?: string;
+    response?: any;
+  }> {
+    try {
+      const headers = await this.getAuthHeaders();
+      const url = `https://${this.config.location}-aiplatform.googleapis.com/v1beta1/${operationId}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        return { success: false, error: `Failed to check operation: ${response.status} - ${error}` };
+      }
+
+      const result = await response.json();
+      return {
+        success: true,
+        done: result.done || false,
+        error: result.error ? JSON.stringify(result.error) : undefined,
+        response: result.response
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  /**
+   * Wait for an operation to complete with timeout
+   */
+  async waitForOperation(operationId: string, timeoutMs: number = 300000): Promise<{
+    success: boolean;
+    completed?: boolean;
+    error?: string;
+    response?: any;
+  }> {
+    const startTime = Date.now();
+    const pollInterval = 5000; // 5 seconds
+
+    while (Date.now() - startTime < timeoutMs) {
+      const status = await this.checkOperationStatus(operationId);
+
+      if (!status.success) {
+        return { success: false, error: status.error };
+      }
+
+      if (status.done) {
+        if (status.error) {
+          return { success: false, error: status.error };
+        }
+        return { success: true, completed: true, response: status.response };
+      }
+
+      // Wait before polling again
+      await new Promise(resolve => setTimeout(resolve, pollInterval));
+    }
+
+    return { success: false, error: 'Operation timed out' };
+  }
+
+  /**
+   * Get files by their GCS source URIs (for better matching)
+   */
+  async getFilesByGcsUri(corpusId: string, gcsUris: string[]): Promise<{
+    success: boolean;
+    files?: any[];
+    error?: string;
+  }> {
+    try {
+      const listResult = await this.listCorpusFiles(corpusId);
+      if (!listResult.success) {
+        return { success: false, error: listResult.error };
+      }
+
+      const files = (listResult.files || []).filter(file => {
+        if (!file.gcsSource?.uris) return false;
+        return gcsUris.some(uri => file.gcsSource.uris.includes(uri));
+      });
+
+      return { success: true, files };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
 }

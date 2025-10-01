@@ -1,68 +1,49 @@
 // API endpoint for manually syncing cloud storage files to Vertex AI
 import { json } from '@sveltejs/kit';
-import { RAGStorageClient } from '$lib/storage-client.js';
-import { VertexRAGClient } from '$lib/rag-client.js';
+import { CloudVertexSyncService } from '$lib/sync-service.js';
 import { GOOGLE_CLOUD_PROJECT_ID, GOOGLE_CLOUD_BUCKET_NAME, GOOGLE_CLOUD_API_KEY } from '$env/static/private';
 import type { RequestHandler } from './$types.js';
 
-const storage = new RAGStorageClient({
+const syncService = new CloudVertexSyncService({
   projectId: GOOGLE_CLOUD_PROJECT_ID,
-  bucketName: GOOGLE_CLOUD_BUCKET_NAME
-});
-
-const rag = new VertexRAGClient({
-  projectId: GOOGLE_CLOUD_PROJECT_ID,
+  bucketName: GOOGLE_CLOUD_BUCKET_NAME,
   location: 'us-east4',
   apiKey: GOOGLE_CLOUD_API_KEY
 });
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
-    const { userId } = await request.json();
+    const { userId, waitForCompletion = true } = await request.json();
 
     if (!userId) {
       return json({ success: false, error: 'userId is required' }, { status: 400 });
     }
 
-    console.log(`🔄 Starting manual sync for user: ${userId}`);
+    console.log(`🔄 Starting manual sync for user: ${userId} (wait: ${waitForCompletion})`);
 
-    // 1. List all files in user's cloud storage
-    const filesResult = await storage.listUserFiles(userId);
-    if (!filesResult.success) {
-      return json({ success: false, error: `Failed to list files: ${filesResult.error}` }, { status: 500 });
-    }
+    const syncResult = await syncService.syncUserFiles(userId, waitForCompletion);
 
-    const files = filesResult.files || [];
-    if (files.length === 0) {
+    if (!syncResult.success) {
       return json({
-        success: true,
-        message: `No files found for user ${userId}`,
-        importedCount: 0
-      });
+        success: false,
+        error: `Sync failed: ${syncResult.error}`
+      }, { status: 500 });
     }
 
-    console.log(`📁 Found ${files.length} files for user ${userId}`);
-
-    // 2. Import all files to Vertex AI
-    const cloudStorageUris = files.map(file => file.fileId);
-
-    const importResult = await rag.importFiles({
-      userId,
-      cloudStorageUris
-    });
-
-    if (!importResult.success) {
-      return json({ success: false, error: `Import failed: ${importResult.error}` }, { status: 500 });
-    }
-
-    console.log(`✅ Manual sync completed for user ${userId}`);
+    console.log(`✅ Manual sync completed for user ${userId}:`, syncResult);
 
     return json({
       success: true,
-      message: `Successfully started import of ${files.length} files for user ${userId}`,
-      operationId: importResult.operationId,
-      importedCount: files.length,
-      files: files.map(f => f.name)
+      message: `Sync completed for user ${userId}`,
+      synced: syncResult.synced,
+      removed: syncResult.removed,
+      failed: syncResult.failed,
+      pendingOperations: syncResult.pendingOperations,
+      details: {
+        waitedForCompletion: waitForCompletion,
+        hasFailures: syncResult.failed > 0,
+        hasPendingOperations: (syncResult.pendingOperations?.length || 0) > 0
+      }
     });
 
   } catch (error) {
