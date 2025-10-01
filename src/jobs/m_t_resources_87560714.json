@@ -1,0 +1,21 @@
+{
+  "application_volume": "",
+  "category": "",
+  "company": "M&T Resources",
+  "debug": {
+    "details_length": 1025,
+    "extracted_company": "M&T Resources",
+    "extracted_title": "Senior Software Engineer - Java",
+    "title_length": 79
+  },
+  "details": "We're seeking an experienced Senior Java Engineer to join a leading financial services organisation on a 12-month contract, working across customer and data platforms.\nWhat you'll do\nDesign, build, and support cloud-native applications on AWS, Azure, or GCP\nDevelop secure, high-performance APIs and microservices\nWork with Docker, Kubernetes, and serverless technologies\nDrive adoption of modern engineering practices (CI/CD, DevOps, Agile)\nMentor junior engineers and contribute to a collaborative team culture\nWhat we're looking for\n7+ years in complex technology environments\nStrong backend experience (Java, Kotlin, NodeJS, or Python)\nSolid cloud engineering skills (AWS/GCP/Azure)\nHands-on with CI/CD pipelines and containerisation\nFamiliarity with databases (SQL/NoSQL) and messaging (Kafka, RabbitMQ)\nNice to have\nTerraform/CloudFormation experience\nCloud certifications (AWS, GCP)\nInsurance or financial services background\n�� Sydney / Brisbane / Melbourne based (hybrid)\n⏳ 12-month contract | Competitive daily rate",
+  "jobId": "87560714",
+  "location": "Sydney NSW (Hybrid)",
+  "posted": "",
+  "raw_title": "Senior Software Engineer - Java\nM&T Resources\nSydney NSW (Hybrid)\nContract/Temp",
+  "salary_note": "",
+  "scrapedAt": "2025-10-01T13:01:42.025Z",
+  "title": "Senior Software Engineer - Java",
+  "url": "https://www.seek.com.au/java-jobs/in-All-Sydney-NSW?jobId=87560714&type=standard",
+  "work_type": "Contract/Temp"
+}

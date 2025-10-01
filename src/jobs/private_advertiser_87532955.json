@@ -1,0 +1,90 @@
+{
+  "application_volume": "",
+  "category": "$110,000 – $135,000 per year",
+  "company": "Private Advertiser",
+  "debug": {
+    "details_length": 3897,
+    "extracted_company": "Private Advertiser",
+    "extracted_title": "Mid/Snr Software Engineer",
+    "title_length": 103
+  },
+  "details": "Our client \"Paperly\" is seeking a Mid/Senior Software Engineer to join their team!\nAre you ready to be at the forefront of EdTech innovation? Join Paperly, a leading Australian company, as a Senior Software Engineer and play a crucial role in revolutionising school processes globally. This is an exciting opportunity to work with cutting-edge technology, contribute to product development, and grow with a fast-scaling venture-backed startup.\nAbout Our Client\nPaperly is a pioneering Australian EdTech company on a mission to streamline and automate manual processes in schools worldwide. Backed by venture capital and experiencing rapid growth, Paperly offers a dynamic work environment where you can make a significant impact and be part of an exciting global journey.\nWhat you'll be doing?\nProduct Development:\nDesign, develop, and deploy solutions, working closely with engineers and product managers to deliver features to global customers.\nTechnical Expertise:\nBuild and debug product features primarily in PHP/Laravel, with opportunities to work with other languages and environments.\nCloud Infrastructure Management:\nPlay a key role in managing AWS infrastructure, including environment configuration, deployment automation, and security best practices.\nDevOps Implementation:\nContribute to infrastructure-as-code and CI/CD pipeline development for scalable, secure deployments.\nCross-functional Collaboration:\nFacilitate knowledge sharing and advocate for engineering needs to non-technical team members.\nLeadership and Innovation:\nTake initiative in achieving goals, improving processes, and identifying opportunities for cross-team collaboration.\nCustomer Support:\nAssist with escalations from customer onboarding and support teams, ensuring optimal user experience.\nAgile Practices:\nActively participate in agile ceremonies and code reviews, contributing to a collaborative development environment.\nWho are they looking for?\nStrong Technical Foundation:\nYou have robust computer science and software engineering fundamentals, with a passion for algorithms and performance.\nBackend Expertise:\nYou're highly competent in backend development, with deep knowledge of PHP & Laravel.\nCloud Proficiency:\nYou have hands-on experience designing and managing cloud infrastructure in AWS.\nVersatile Skill Set:\nYou're comfortable working across both application and infrastructure layers of a product.\nSolution-Oriented Mindset:\nYou can identify solution options, weigh trade-offs, and propose scalable software architectures to solve business problems.\nEffective Communication:\nYou have a strong ability to communicate technical concepts to various audiences, including non-technical stakeholders.\nProblem-Solving Skills:\nYou excel at breaking large projects into manageable tasks and delivering through collaboration.\nRelevant Experience:\nYou have at least 5 years of commercial experience building software products.\nQualifications:\nYou hold a qualification in Software Engineering, Computer Science, or equivalent.\nSecurity Clearance:\nYou can provide a National Police Certificate or Working with Children Check.\nWhy you should consider this opportunity?\nOur client offers an attractive remuneration package and other benefits, such as:\nFlexible work-from-home options for a better work-life balance\nA relaxed, friendly startup culture that fosters creativity and innovation\nUnparalleled learning opportunities in a fast-growing environment\nDirect collaboration with senior leadership, including the CEO\nHow to apply\nReady to join this role? Click Apply now to submit your resume and share your availability and expected salary with us!\nWe welcome applications from candidates of all backgrounds and experiences. Your unique perspective could be exactly what we're looking for!\nAll information received will be kept strictly confidential and will be used only for employment-related purposes.",
+  "jobId": "87532955",
+  "location": "Sydney NSW (Remote)",
+  "posted": "",
+  "raw_title": "Mid/Snr Software Engineer\nPrivate Advertiser\nSydney NSW (Remote)\nFull time\n$110,000 – $135,000 per year",
+  "salary_note": "$110,000 – $135,000 per year",
+  "scrapedAt": "2025-10-01T13:06:23.835Z",
+  "title": "Mid/Snr Software Engineer",
+  "url": "https://www.seek.com.au/java-jobs/in-All-Sydney-NSW?jobId=87532955&type=standard",
+  "work_type": "Full time",
+  "questions": [
+    {
+      "id": 0,
+      "q": "Which of the following statements best describes your right to work in Australia?",
+      "type": "select",
+      "opts": [
+        "I'm an Australian citizen",
+        "I'm a permanent resident and/or NZ citizen",
+        "I have a family/partner visa with no restrictions",
+        "I have a graduate temporary work visa",
+        "I have a holiday temporary work visa",
+        "I have a temporary visa with restrictions on work location (e.g. skilled regional visa 491)",
+        "I have a temporary protection or safe haven enterprise work visa",
+        "I have a temporary visa with no restrictions (e.g. doctoral student)",
+        "I have a temporary visa with restrictions on work hours (e.g. student visa, retirement visa)",
+        "I have a temporary visa with restrictions on industry (e.g. temporary activity visa 408)",
+        "I require sponsorship to work for a new employer (e.g. 482, 457)"
+      ],
+      "containerSelector": "#gemini-q-seek-0"
+    },
+    {
+      "id": 1,
+      "q": "How many years' experience do you have as a software engineer?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "containerSelector": "#gemini-q-seek-1"
+    },
+    {
+      "id": 2,
+      "q": "What's your expected annual base salary?",
+      "type": "select",
+      "opts": [
+        "$30k",
+        "$35k",
+        "$40k",
+        "$45k",
+        "$50k",
+        "$55k",
+        "$60k",
+        "$65k",
+        "$70k",
+        "$80k",
+        "$90k",
+        "$100k",
+        "$110k",
+        "$120k",
+        "$130k",
+        "$140k",
+        "$150k",
+        "$170k",
+        "$200k",
+        "$250k",
+        "$300k",
+        "$350k",
+        "$350k+"
+      ],
+      "containerSelector": "#gemini-q-seek-2"
+    }
+  ],
+  "lastUpdated": "2025-10-01T13:06:44.431Z"
+}

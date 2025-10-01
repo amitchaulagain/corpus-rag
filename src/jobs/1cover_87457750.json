@@ -1,0 +1,131 @@
+{
+  "application_volume": "",
+  "category": "$75,000 – $90,000 per year",
+  "company": "1Cover",
+  "debug": {
+    "details_length": 2535,
+    "extracted_company": "1Cover",
+    "extracted_title": "Full Stack Developer (Junior to Mid-level)",
+    "title_length": 97
+  },
+  "details": "We are a leading travel insurance provider with a strong focus on technology. We let our insights, innovative thinking, and customer-centric approach drive the business. At 1Cover, we believe that travelers should explore the world and return home safely. That's why we offer travel insurance that you can count on.\nWe are a travel insurance brand unlike any other - we are quirky, fun, and charismatic.\nAt present, we are looking for a Junior to Mid Full-stack Java Spring Developer to join our DevOps team. This position will provide a fantastic opportunity for a smart and ambitious software developer to grow within the team, gain valuable industry experience and develop professionally.\nYour role will involve:\nContributing to the development of our core insurance platform and its websites and APIs, with a broad use of Java and the Spring Framework.\nCreating SQL queries for use in OLTP databases, data pipeline, and data warehouse;\nTaking ideas, requirements, bug reports, UX wireframes, 3rd-party API specifications and working through them with team members and stakeholders to design appropriate, and sometimes innovative, solutions to business problems.\nBuilding website and application front-ends using natural templating via Thymeleaf, and REST via AJAX with Angular and React.\nTesting your work thoroughly, as well as getting involved in code reviews and retrospectives to improve the work of other team members.\nTake charge of your own Continuous Professional Development with mentoring provided by our senior team members.\nHere’s what we are looking for in candidates for this job:\nAs this is a Junior position, we are looking for someone with relevant experience who is passionate about coding, learning and innovating;\nAt least a Bachelor Degree and 12 months of experience, or 5 years of experience in lieu of qualification;\nThe ability to write good practical core Java code, and to read and understand the source code of 3rd-party frameworks and libraries - with commercial experience of using them appropriately;\nA diverse range of complementary experience, with an awareness of software engineering practices;\nFamiliarity with other programming and scripting languages, and understand their use in build tools;\nYou must be able to gain a thorough understanding of the insurance business, so that you can design and build appropriate solutions;\nWe need you to have excellent attention to detail and communication skills; and\nFinally, we care about our customers and our colleagues and we want you to do the same.",
+  "jobId": "87457750",
+  "location": "Sydney NSW",
+  "posted": "",
+  "raw_title": "Full Stack Developer (Junior to Mid-level)\n1Cover\nSydney NSW\nFull time\n$75,000 – $90,000 per year",
+  "salary_note": "$75,000 – $90,000 per year",
+  "scrapedAt": "2025-10-01T13:02:31.135Z",
+  "title": "Full Stack Developer (Junior to Mid-level)",
+  "url": "https://www.seek.com.au/java-jobs/in-All-Sydney-NSW?jobId=87457750&type=standard",
+  "work_type": "Full time",
+  "questions": [
+    {
+      "id": 0,
+      "q": "Which of the following statements best describes your right to work in Australia?",
+      "type": "select",
+      "opts": [
+        "I'm an Australian citizen",
+        "I'm a permanent resident and/or NZ citizen",
+        "I have a family/partner visa with no restrictions",
+        "I have a graduate temporary work visa",
+        "I have a holiday temporary work visa",
+        "I have a temporary visa with restrictions on work location (e.g. skilled regional visa 491)",
+        "I have a temporary protection or safe haven enterprise work visa",
+        "I have a temporary visa with no restrictions (e.g. doctoral student)",
+        "I have a temporary visa with restrictions on work hours (e.g. student visa, retirement visa)",
+        "I have a temporary visa with restrictions on industry (e.g. temporary activity visa 408)",
+        "I require sponsorship to work for a new employer (e.g. 482, 457)"
+      ],
+      "containerSelector": "#gemini-q-seek-0"
+    },
+    {
+      "id": 1,
+      "q": "How many years' experience do you have as a full stack developer?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "containerSelector": "#gemini-q-seek-1"
+    },
+    {
+      "id": 2,
+      "q": "Which of the following programming languages are you experienced in?",
+      "type": "checkbox",
+      "opts": [
+        "JavaScript",
+        "HTML",
+        "CSS",
+        "Java",
+        "C",
+        "C#",
+        "Python",
+        "C++",
+        ".NET",
+        "Objective-C",
+        "PHP",
+        "Swift",
+        "Ruby",
+        "Scala",
+        "Visual Basic",
+        "None of these"
+      ],
+      "containerSelector": "#checkbox-group-3"
+    },
+    {
+      "id": 3,
+      "q": "How many years' experience do you have in a software development role?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "containerSelector": "#gemini-q-seek-19"
+    },
+    {
+      "id": 4,
+      "q": "How many years' experience do you have using SQL queries?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "containerSelector": "#gemini-q-seek-20"
+    },
+    {
+      "id": 5,
+      "q": "How many years' experience do you have in a DevOps role?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "containerSelector": "#gemini-q-seek-21"
+    }
+  ],
+  "lastUpdated": "2025-10-01T13:02:51.809Z"
+}

@@ -1,0 +1,59 @@
+{
+  "application_volume": "",
+  "category": "",
+  "company": "M&T Resources",
+  "debug": {
+    "details_length": 1221,
+    "extracted_company": "M&T Resources",
+    "extracted_title": "Full stack Developer",
+    "title_length": 78
+  },
+  "details": "We’re looking for a talented\nFull-Stack Developer\nto join a high-impact team delivering scalable, cloud-based digital solutions in the education space. You’ll work across the full stack—designing, building, and maintaining enterprise-grade applications that make a real difference.\nWhat you’ll do\nOwn the full software development lifecycle—from design to deployment.\nBuild and enhance complex systems using Java, Node.js, AWS, and modern frameworks.\nCollaborate with cross-functional teams in an Agile/DevOps environment.\nEnsure high standards in testing, performance, and security.\nSupport and troubleshoot production systems and integrations.\nWhat you bring\n5–10 years of experience in enterprise software development.\nStrong skills in Java/J2EE, Spring Boot, Node.js, AWS (Lambda, API Gateway, DynamoDB).\nExperience with containerisation (OpenShift, Docker), CI/CD, and monitoring tools.\nSolid understanding of microservices, APIs, and event-driven architecture.\nFamiliarity with tools like Git, Bamboo, Nexus, Splunk, Kafka, ElasticSearch.\nPassion for clean code, continuous learning, and solving complex problems.\nReady to build meaningful tech that supports education?\nApply now and be part of something impactful.",
+  "jobId": "87500954",
+  "location": "Eveleigh, Sydney NSW (Hybrid)",
+  "posted": "",
+  "raw_title": "Full stack Developer\nM&T Resources\nEveleigh, Sydney NSW (Hybrid)\nContract/Temp",
+  "salary_note": "",
+  "scrapedAt": "2025-10-01T13:04:36.871Z",
+  "title": "Full stack Developer",
+  "url": "https://www.seek.com.au/java-jobs/in-All-Sydney-NSW?jobId=87500954&type=standard",
+  "work_type": "Contract/Temp",
+  "questions": [
+    {
+      "id": 0,
+      "q": "Which of the following statements best describes your right to work in Australia?",
+      "type": "select",
+      "opts": [
+        "I'm an Australian citizen",
+        "I'm a permanent resident and/or NZ citizen",
+        "I have a family/partner visa with no restrictions",
+        "I have a graduate temporary work visa",
+        "I have a holiday temporary work visa",
+        "I have a temporary visa with restrictions on work location (e.g. skilled regional visa 491)",
+        "I have a temporary protection or safe haven enterprise work visa",
+        "I have a temporary visa with no restrictions (e.g. doctoral student)",
+        "I have a temporary visa with restrictions on work hours (e.g. student visa, retirement visa)",
+        "I have a temporary visa with restrictions on industry (e.g. temporary activity visa 408)",
+        "I require sponsorship to work for a new employer (e.g. 482, 457)"
+      ],
+      "containerSelector": "#gemini-q-seek-0"
+    },
+    {
+      "id": 1,
+      "q": "How many years' experience do you have as a full stack developer?",
+      "type": "select",
+      "opts": [
+        "No experience",
+        "Less than 1 year",
+        "1 year",
+        "2 years",
+        "3 years",
+        "4 years",
+        "5 years",
+        "More than 5 years"
+      ],
+      "containerSelector": "#gemini-q-seek-1"
+    }
+  ],
+  "lastUpdated": "2025-10-01T13:04:57.012Z"
+}

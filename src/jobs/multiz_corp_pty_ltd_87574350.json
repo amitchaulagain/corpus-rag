@@ -1,0 +1,21 @@
+{
+  "application_volume": "",
+  "category": "$80,000 – $85,000 per year",
+  "company": "Multiz Corp Pty Ltd",
+  "debug": {
+    "details_length": 1950,
+    "extracted_company": "Multiz Corp Pty Ltd",
+    "extracted_title": "Software Engineer",
+    "title_length": 96
+  },
+  "details": "About the Company:\nMultiz Corp Pty Ltd provides innovative point-of-sale and online ordering systems through the QonUS platform. We deliver advanced software solutions tailored for restaurants and retail businesses across Australia.\nAbout the Role:\nWe are seeking a qualified and experienced\nSoftware Engineer\nto join our growing development team. The successful candidate will be responsible for designing, developing, testing, and maintaining scalable applications that support the QonUS ecosystem.\nKey Responsibilities:\nDesign, develop, and maintain software applications (Flutter, Node.js, C#, .NET, Kotlin, MongoDB).\nIntegrate APIs, payment gateways, and third-party services.\nEnsure high performance, reliability, and security across all software components.\nWork with cross-functional teams to deliver system updates and new features.\nMaintain technical documentation and participate in code reviews.\nProvide technical support and troubleshooting as required.\nSkills and Experience Required:\nBachelor’s degree in Computer Science, Software Engineering, or related field.\nAt least 2 years of relevant industry experience.\nStrong knowledge of modern programming languages (Dart/Flutter, Java/Kotlin, C#, JavaScript/Node.js).\nExperience with cloud platforms (GCP, Kubernetes, Docker).\nDatabase management experience (MongoDB, SQL).\nExcellent problem-solving skills and attention to detail.\nAbility to work independently and in a team environment.\nDesirable:\nExperience with POS or payment system integration.\nFamiliarity with DevOps, CI/CD pipelines, and container registries.\nPosition Title: Software Engineer\nEmployer: Multiz Corp Pty Ltd (QonUS Platform)\nLocation: Chatswood, NSW 2067\nEmployment Type: Full-time, ongoing\nSalary: AUD $80,000 – $85,000 per annum (exclusive of superannuation)\nHours: 38 hours per week\nApplication Process:\nPlease send your CV and cover letter to:\nadmin@qonus.com.au\nOnly shortlisted candidates will be contacted.",
+  "jobId": "87574350",
+  "location": "Chatswood, Sydney NSW",
+  "posted": "",
+  "raw_title": "Software Engineer\nMultiz Corp Pty Ltd\nChatswood, Sydney NSW\nFull time\n$80,000 – $85,000 per year",
+  "salary_note": "$80,000 – $85,000 per year",
+  "scrapedAt": "2025-10-01T12:16:58.662Z",
+  "title": "Software Engineer",
+  "url": "https://www.seek.com.au/java-jobs/in-All-Sydney-NSW?jobId=87574350&type=standard",
+  "work_type": "Full time"
+}
