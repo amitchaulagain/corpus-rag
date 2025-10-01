@@ -13,13 +13,18 @@
   let coverLetterPrompt = '';
 
   let debounceTimeout;
+  let lastSavedPrompt = '';
+  let initialLoaded = false;
 
   // $: makes this a reactive statement that runs when coverLetterPrompt changes
-  $: if (coverLetterPrompt) {
+  $: if (initialLoaded) {
+    // Debounce and avoid saving if unchanged
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
-      savePrompt(coverLetterPrompt);
-    }, 500); // 500ms debounce delay
+      if (coverLetterPrompt && coverLetterPrompt !== lastSavedPrompt) {
+        savePrompt(coverLetterPrompt);
+      }
+    }, 700);
   }
 
   onMount(async () => {
@@ -34,6 +39,8 @@
       const response = await apiRequest('/api/prompts/cover-letter');
       const data = await response.json();
       coverLetterPrompt = data.content;
+      lastSavedPrompt = data.content || '';
+      initialLoaded = true;
     } catch (error) {
       console.error('Failed to load prompt:', error);
       // Fallback to default if loading fails
@@ -52,13 +59,18 @@ Please format as a professional cover letter with proper greeting and closing.`;
 
   async function savePrompt(content) {
     try {
-      await apiRequest('/api/prompts/cover-letter', {
+      const response = await apiRequest('/api/prompts/cover-letter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ content })
       });
+      const result = await response.json().catch(() => ({}));
+      if (!result || result.success !== true) return;
+      if (result.changed) {
+        lastSavedPrompt = content;
+      }
     } catch (error) {
       console.error('Failed to save prompt:', error);
     }

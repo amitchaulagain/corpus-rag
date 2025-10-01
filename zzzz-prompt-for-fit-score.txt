@@ -1,0 +1,90 @@
+We have two input files:
+1.resume
+2.job-description
+
+Task:
+Step 1: find list of skills/experience/keywords/education in resume only => S1,T1,U1,V1
+Step 2: find list of skills/experience/keywords/education in job-description only =>S2,T2,U2,V2
+Step 3: find the list of skills/experience/keywords/education that are both in resume and job description =>S3,T3,U3,V3
+Step 4: find the list of skills/experience/keywords/education that are in job description but not in resume =>S4,T4,U4,V4
+
+
+
+
+Step 5 : Calculate category match scores:
+   - Skills Match Score (S3)
+ -   Experience Match Score (T3)
+   
+Step 6 :Normalize and compute the overall fit score using ATS weighting:
+   - Skills: 40%
+   - Experience: 30%
+   - Keywords: 20%
+   - Education: 10%
+- Highlight matched and missing items.
+- Provide a short ATS-style evaluation summary (2–4 sentences).
+- Suggest actionable recommendations to improve the resume.
+
+Output format (JSON):
+{
+  "overall_fit_score": <weighted score 0-100>,
+  "category_scores": {
+    "skills_match_score": <0-100>,
+    "experience_match_score": <0-100>,
+    
+  },
+  "skills in resume": [S1],
+  "skills in JD": [S2],
+  "matched skills": [S3],
+  "missing skills": [S4],
+  "KEYWORDS in resume": [U1],
+  "KEYWORDS in JD": [U2],
+  "matched_keywords": [U3],
+  "missing_keywords": [U4],
+  "evaluation_summary": "string",
+  "recommendations": [list of resume improvement suggestions]
+
+"We have two input files:
+1.resume
+2.job-description
+
+Task:
+Step 1: find list of skills/experience/keywords/education in resume only => S1,T1,U1,V1
+Step 2: find list of skills/experience/keywords/education in job-description only =>S2,T2,U2,V2
+Step 3: find the list of skills/experience/keywords/education that are both in resume and job description =>S3,T3,U3,V3
+Step 4: find the list of skills/experience/keywords/education that are in job description but not in resume =>S4,T4,U4,V4
+
+
+
+
+Step 5 : Calculate category match scores:
+   - Skills Match Score (S3)
+ -   Experience Match Score (T3)
+   
+Step 6 :Normalize and compute the overall fit score using ATS weighting:
+   - Skills: 40%
+   - Experience: 30%
+   - Keywords: 20%
+   - Education: 10%
+- Highlight matched and missing items.
+- Provide a short ATS-style evaluation summary (2–4 sentences).
+- Suggest actionable recommendations to improve the resume.
+
+Output format (JSON):
+{
+  "overall_fit_score": <weighted score 0-100>,
+  "category_scores": {
+    "skills_match_score": <0-100>,
+    "experience_match_score": <0-100>,
+    
+  },
+  "skills in resume": [S1],
+  "skills in JD": [S2],
+  "matched skills": [S3],
+  "missing skills": [S4],
+  "KEYWORDS in resume": [U1],
+  "KEYWORDS in JD": [U2],
+  "matched_keywords": [U3],
+  "missing_keywords": [U4],
+  "evaluation_summary": "string",
+  "recommendations": [list of resume improvement suggestions]
+

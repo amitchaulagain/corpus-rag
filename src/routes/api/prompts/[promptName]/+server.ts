@@ -68,8 +68,16 @@ export async function POST({ params, request }) {
   const filePath = await getPromptPath(promptName);
 
   try {
+    // Avoid unnecessary writes to prevent dev server reload loops
+    try {
+      const existing = await fs.readFile(filePath, 'utf-8').catch(() => null);
+      if (existing !== null && existing === content) {
+        return json({ success: true, changed: false });
+      }
+    } catch {}
+
     await fs.writeFile(filePath, content, 'utf-8');
-    return json({ success: true });
+    return json({ success: true, changed: true });
   } catch (e) {
     throw error(500, 'Failed to save prompt');
   }
