@@ -18,6 +18,7 @@
   let isPromptExpanded = false;
   let isPromptModified = false;
   let defaultPrompt = '';
+  let jobsWithSavedResponses = new Set();
 
   // $: makes this a reactive statement that runs when employerQuestionsPrompt changes
   $: if (employerQuestionsPrompt) {
@@ -114,6 +115,9 @@ Questions: [Questions List]`;
         // Filter to only jobs with questions
         jobs = (data.data.jobs || []).filter(job => job.hasQuestions);
 
+        // Check which jobs have saved responses
+        await checkSavedResponses();
+
         // Auto-load first job
         if (jobs.length > 0 && !selectedJob) {
           await selectJob(jobs[0]);
@@ -127,6 +131,22 @@ Questions: [Questions List]`;
     } finally {
       isLoading = false;
     }
+  }
+
+  async function checkSavedResponses() {
+    const newSet = new Set();
+    for (const job of jobs) {
+      try {
+        const response = await apiRequest(`/api/save-response?type=employer-questions&jobFilename=${encodeURIComponent(job.filename)}`);
+        const data = await response.json();
+        if (data.success && data.data) {
+          newSet.add(job.filename);
+        }
+      } catch (error) {
+        // Ignore errors, just don't add to set
+      }
+    }
+    jobsWithSavedResponses = newSet;
   }
 
   async function selectJob(job) {
@@ -208,6 +228,8 @@ Questions: [Questions List]`;
           response
         })
       });
+      // Update the set to reflect this job now has a saved response
+      jobsWithSavedResponses = new Set([...jobsWithSavedResponses, selectedJob.filename]);
     } catch (error) {
       console.error('Failed to save response:', error);
     }
@@ -396,14 +418,27 @@ Questions: [Questions List]`;
               <div
                 class="job-item"
                 class:selected={selectedJob?.filename === job.filename}
+                class:has-saved={jobsWithSavedResponses.has(job.filename)}
               >
-                <div on:click={() => selectJob(job)} style="cursor: pointer;">
-                  <div class="job-header">
-                    <span class="job-type">
-                      ❓ {job.questionCount} Questions
-                    </span>
+                <div class="job-header">
+                  <span class="job-type" on:click={() => selectJob(job)} style="cursor: pointer;">
+                    ❓ {job.questionCount} Questions
+                  </span>
+                  <div class="job-header-right">
                     <span class="job-size">{formatFileSize(job.size)}</span>
+                    <button
+                      class="quick-action-btn-inline"
+                      on:click|stopPropagation={async () => {
+                        await selectJob(job);
+                        await generateAnswers();
+                      }}
+                      disabled={isGenerating}
+                    >
+                      💡
+                    </button>
                   </div>
+                </div>
+                <div on:click={() => selectJob(job)} style="cursor: pointer;">
                   <h3 class="job-company">{job.company}</h3>
                   <p class="job-title">{job.title}</p>
                   {#if job.location}
@@ -413,16 +448,6 @@ Questions: [Questions List]`;
                     <p class="job-questions">💼 Has job description too</p>
                   {/if}
                 </div>
-                <button
-                  class="quick-action-btn"
-                  on:click|stopPropagation={async () => {
-                    await selectJob(job);
-                    await generateAnswers();
-                  }}
-                  disabled={isGenerating}
-                >
-                  💡 Answer
-                </button>
               </div>
             {/if}
           {/each}
@@ -724,30 +749,38 @@ Questions: [Questions List]`;
   }
 
   .job-item.selected {
-    border-color: #007bff;
+    border-color: cornflowerblue;
     background: #f8f9ff;
   }
 
-  .quick-action-btn {
-    width: 100%;
-    margin-top: 10px;
-    padding: 6px 12px;
-    background: #007bff;
+  .job-item.has-saved {
+    border-color: #87CEEB;
+  }
+
+  .job-item.has-saved.selected {
+    border-color: cornflowerblue;
+  }
+
+  .quick-action-btn-inline {
+    padding: 4px 10px;
+    background: #ff6b6b;
     color: white;
     border: none;
     border-radius: 4px;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: background 0.2s;
+    margin-left: 8px;
   }
 
-  .quick-action-btn:hover:not(:disabled) {
-    background: #0056b3;
+  .quick-action-btn-inline:hover:not(:disabled) {
+    background: #ee5a52;
   }
 
-  .quick-action-btn:disabled {
+  .quick-action-btn-inline:disabled {
     background: #6c757d;
     cursor: not-allowed;
+    opacity: 0.6;
   }
 
   .job-header {
@@ -755,6 +788,12 @@ Questions: [Questions List]`;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
+  }
+
+  .job-header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .job-type {

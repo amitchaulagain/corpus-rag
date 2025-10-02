@@ -163,18 +163,6 @@
             </a>
           </li>
           <li>
-            <a href="/resume-enhancement" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/resume-enhancement'} title={isSidebarCollapsed ? 'Resume Enhancement' : ''}>
-              <span class="text-xl">✨</span>
-              {#if !isSidebarCollapsed}<span>Resume Enhancement</span>{/if}
-            </a>
-          </li>
-          <li>
-            <a href="/resume-comparison" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/resume-comparison'} title={isSidebarCollapsed ? 'Resume Comparison' : ''}>
-              <span class="text-xl">🔄</span>
-              {#if !isSidebarCollapsed}<span>Resume Comparison</span>{/if}
-            </a>
-          </li>
-          <li>
             <a href="/help" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/help'} title={isSidebarCollapsed ? 'Help' : ''}>
               <span class="text-xl">📚</span>
               {#if !isSidebarCollapsed}<span>Help</span>{/if}

@@ -1,0 +1,15 @@
+{
+  "type": "employer-questions",
+  "company": "Private Advertiser",
+  "title": "Mid/Snr Software Engineer",
+  "jobFilename": "private_advertiser_87532955.json",
+  "generatedAt": "2025-10-02T23:36:04.160Z",
+  "response": {
+    "raw": "[0, 5, 12]",
+    "parsed": [
+      0,
+      5,
+      12
+    ]
+  }
+}

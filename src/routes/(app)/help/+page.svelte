@@ -75,13 +75,6 @@
               <p class="text-sm text-base-content/70">Analyze how well you match a job posting</p>
             </div>
           </div>
-          <div class="flex items-start gap-3">
-            <span class="text-2xl">✨</span>
-            <div>
-              <h3 class="font-bold">Resume Enhancement</h3>
-              <p class="text-sm text-base-content/70">Optimize your resume for ATS and specific jobs</p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

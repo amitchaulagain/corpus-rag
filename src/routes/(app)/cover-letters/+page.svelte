@@ -18,6 +18,7 @@
   let isPromptExpanded = false;
   let isPromptModified = false;
   let defaultPrompt = '';
+  let jobsWithSavedResponses = new Set();
 
   onMount(async () => {
     const storedUser = localStorage.getItem('google_user');
@@ -120,6 +121,9 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
         // Filter to only jobs with descriptions (for cover letters)
         jobs = (data.data.jobs || []).filter(job => job.hasJobDetails);
 
+        // Check which jobs have saved responses
+        await checkSavedResponses();
+
         // Auto-load first job
         if (jobs.length > 0 && !selectedJob) {
           await selectJob(jobs[0]);
@@ -133,6 +137,22 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     } finally {
       isLoading = false;
     }
+  }
+
+  async function checkSavedResponses() {
+    const newSet = new Set();
+    for (const job of jobs) {
+      try {
+        const response = await apiRequest(`/api/save-response?type=cover-letter&jobFilename=${encodeURIComponent(job.filename)}`);
+        const data = await response.json();
+        if (data.success && data.data) {
+          newSet.add(job.filename);
+        }
+      } catch (error) {
+        // Ignore errors, just don't add to set
+      }
+    }
+    jobsWithSavedResponses = newSet;
   }
 
   async function selectJob(job) {
@@ -209,6 +229,8 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
           response
         })
       });
+      // Update the set to reflect this job now has a saved response
+      jobsWithSavedResponses = new Set([...jobsWithSavedResponses, selectedJob.filename]);
     } catch (error) {
       console.error('Failed to save response:', error);
     }
@@ -322,18 +344,31 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
               <div
                 class="job-item"
                 class:selected={selectedJob?.filename === job.filename}
+                class:has-saved={jobsWithSavedResponses.has(job.filename)}
               >
-                <div on:click={() => selectJob(job)} style="cursor: pointer;">
-                  <div class="job-header">
-                    <span class="job-type">
-                      {#if job.hasQuestions}
-                        💼❓ Job + Q&A
-                      {:else}
-                        💼 Job Only
-                      {/if}
-                    </span>
+                <div class="job-header">
+                  <span class="job-type" on:click={() => selectJob(job)} style="cursor: pointer;">
+                    {#if job.hasQuestions}
+                      💼❓ Job + Q&A
+                    {:else}
+                      💼 Job Only
+                    {/if}
+                  </span>
+                  <div class="job-header-right">
                     <span class="job-size">{formatFileSize(job.size)}</span>
+                    <button
+                      class="quick-action-btn-inline"
+                      on:click|stopPropagation={async () => {
+                        await selectJob(job);
+                        await generateCoverLetter();
+                      }}
+                      disabled={isGenerating}
+                    >
+                      📝
+                    </button>
                   </div>
+                </div>
+                <div on:click={() => selectJob(job)} style="cursor: pointer;">
                   <h3 class="job-company">{job.company}</h3>
                   <p class="job-title">{job.title}</p>
                   {#if job.location}
@@ -343,16 +378,6 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
                     <p class="job-questions">❓ {job.questionCount} questions</p>
                   {/if}
                 </div>
-                <button
-                  class="quick-action-btn"
-                  on:click|stopPropagation={async () => {
-                    await selectJob(job);
-                    await generateCoverLetter();
-                  }}
-                  disabled={isGenerating}
-                >
-                  📝 Generate
-                </button>
               </div>
             {/each}
           </div>
@@ -740,30 +765,38 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
   }
 
   .job-item.selected {
-    border-color: #007bff;
+    border-color: cornflowerblue;
     background: #f8f9ff;
   }
 
-  .quick-action-btn {
-    width: 100%;
-    margin-top: 10px;
-    padding: 6px 12px;
-    background: #007bff;
+  .job-item.has-saved {
+    border-color: #87CEEB;
+  }
+
+  .job-item.has-saved.selected {
+    border-color: cornflowerblue;
+  }
+
+  .quick-action-btn-inline {
+    padding: 4px 10px;
+    background: #ff6b6b;
     color: white;
     border: none;
     border-radius: 4px;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: background 0.2s;
+    margin-left: 8px;
   }
 
-  .quick-action-btn:hover:not(:disabled) {
-    background: #0056b3;
+  .quick-action-btn-inline:hover:not(:disabled) {
+    background: #ee5a52;
   }
 
-  .quick-action-btn:disabled {
+  .quick-action-btn-inline:disabled {
     background: #6c757d;
     cursor: not-allowed;
+    opacity: 0.6;
   }
 
   .job-header {
@@ -771,6 +804,12 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
+  }
+
+  .job-header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
   }
 
   .job-type {

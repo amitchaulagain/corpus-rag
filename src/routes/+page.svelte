@@ -87,21 +87,6 @@
         </div>
       </a>
 
-      <a href="/resume-enhancement" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary">
-        <div class="card-body items-center text-center">
-          <span class="text-6xl mb-4">✨</span>
-          <h3 class="card-title text-2xl mb-2">Resume Enhancement</h3>
-          <p class="text-base-content/70">ATS optimization & improvements</p>
-        </div>
-      </a>
-
-      <a href="/resume-comparison" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary">
-        <div class="card-body items-center text-center">
-          <span class="text-6xl mb-4">🔄</span>
-          <h3 class="card-title text-2xl mb-2">Resume Comparison</h3>
-          <p class="text-base-content/70">Compare original vs enhanced</p>
-        </div>
-      </a>
     </nav>
   {:else}
     <!-- Login page for unauthenticated users -->
