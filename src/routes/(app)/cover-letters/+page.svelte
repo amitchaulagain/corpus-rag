@@ -16,6 +16,8 @@
   let initialLoaded = false;
   let isSidebarCollapsed = false;
   let isPromptExpanded = false;
+  let isPromptModified = false;
+  let defaultPrompt = '';
 
   onMount(async () => {
     const storedUser = localStorage.getItem('google_user');
@@ -30,20 +32,47 @@
       const data = await response.json();
       coverLetterPrompt = data.content;
       lastSavedPrompt = data.content || '';
+      isPromptModified = data.isModified || false;
       initialLoaded = true;
+
+      // Load default prompt
+      const defaultResponse = await apiRequest('/api/prompts/cover-letter?default=true');
+      const defaultData = await defaultResponse.json();
+      defaultPrompt = defaultData.content;
     } catch (error) {
       console.error('Failed to load prompt:', error);
       // Fallback to default if loading fails
-      coverLetterPrompt = `Write a compelling cover letter for this position: [Job Details]
+      coverLetterPrompt = `You are an expert cover letter writer. I will provide you with a job description and my resume. Your task is to write a compelling, personalized cover letter that demonstrates why I'm the perfect fit for this role.
 
-Use my background from the resume and user info to:
-- Address their specific pain points mentioned in the job posting
-- Highlight 2-3 most relevant experiences
-- Match their company tone/culture if discernible
-- Keep it under 300 words
-- End with a strong call to action
+Instructions:
+1. Carefully analyze the job description to identify:
+   - Key responsibilities and requirements
+   - Skills and qualifications they're looking for
+   - Company values and culture (if mentioned)
+   - Pain points they're trying to solve
 
-Please format as a professional cover letter with proper greeting and closing.`;
+2. Review my resume to find:
+   - Relevant experiences that match their needs
+   - Specific achievements with quantifiable results
+   - Skills that align with the job requirements
+   - Unique qualities that set me apart
+
+3. Write a professional cover letter that:
+   - Opens with a strong hook that captures attention
+   - Shows genuine enthusiasm for the role and company
+   - Highlights 2-3 most relevant achievements with specific examples
+   - Demonstrates understanding of their challenges and how I can solve them
+   - Uses action verbs and confident language
+   - Maintains a professional yet personable tone
+   - Keeps it concise (250-350 words)
+   - Closes with a clear call to action
+
+4. Format:
+   - Professional greeting (use hiring manager name if available, otherwise "Dear Hiring Manager")
+   - 3-4 well-structured paragraphs
+   - Professional closing with my name
+
+Make it authentic, confident, and tailored specifically to this role. Avoid generic phrases and clichés.`;
     }
   });
 
@@ -52,7 +81,7 @@ Please format as a professional cover letter with proper greeting and closing.`;
     if (content === lastSavedPrompt) {
       return;
     }
-    
+
     try {
       const response = await apiRequest('/api/prompts/cover-letter', {
         method: 'POST',
@@ -64,10 +93,18 @@ Please format as a professional cover letter with proper greeting and closing.`;
       const result = await response.json().catch(() => ({}));
       if (result && result.success === true) {
         lastSavedPrompt = content;
+        isPromptModified = content !== defaultPrompt;
         console.log('Prompt saved successfully');
       }
     } catch (error) {
       console.error('Failed to save prompt:', error);
+    }
+  }
+
+  async function resetPrompt() {
+    if (confirm('Reset prompt to default? This will overwrite your current prompt.')) {
+      coverLetterPrompt = defaultPrompt;
+      await savePrompt(defaultPrompt);
     }
   }
 
@@ -82,6 +119,11 @@ Please format as a professional cover letter with proper greeting and closing.`;
       if (data.success) {
         // Filter to only jobs with descriptions (for cover letters)
         jobs = (data.data.jobs || []).filter(job => job.hasJobDetails);
+
+        // Auto-load first job
+        if (jobs.length > 0 && !selectedJob) {
+          await selectJob(jobs[0]);
+        }
       } else {
         alert('Failed to load jobs: ' + data.error);
       }
@@ -177,6 +219,11 @@ Please format as a professional cover letter with proper greeting and closing.`;
         <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
           🤖 AI Prompt Editor
         </h3>
+        {#if isPromptModified}
+          <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
+            ↺ Reset
+          </button>
+        {/if}
       </div>
       <div class="prompt-container">
         <div class="prompt-area">
@@ -317,9 +364,6 @@ Please format as a professional cover letter with proper greeting and closing.`;
                   <div class="actions">
                     <button class="copy-btn" on:click={() => copyToClipboard(generatedCoverLetter)}>
                       📋 Copy
-                    </button>
-                    <button class="regenerate-btn" on:click={generateCoverLetter} disabled={isGenerating}>
-                      🔄 Regenerate
                     </button>
                   </div>
                 </div>
@@ -524,6 +568,21 @@ Please format as a professional cover letter with proper greeting and closing.`;
   }
 
   .reset-btn:hover {
+    background: #5a6268;
+  }
+
+  .reset-btn-small {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+  }
+
+  .reset-btn-small:hover {
     background: #5a6268;
   }
 

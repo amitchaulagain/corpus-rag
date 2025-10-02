@@ -13,18 +13,7 @@ export const OPTIONS: RequestHandler = () => {
 
 // GET /api/jobs - List all job files
 export const GET: RequestHandler = async (event) => {
-  const auth = await authenticateRequest(event);
-  if (auth instanceof Response) {
-    return addCorsHeaders(auth);
-  }
-
-  if (!requireScope(auth, 'files:read')) {
-    return addCorsHeaders(new Response(JSON.stringify({ success: false, error: 'Insufficient permissions' }), {
-      status: 403,
-      headers: { 'Content-Type': 'application/json' }
-    }));
-  }
-
+  // Internal UI endpoint - no auth required (just reading local files)
   const response = await handleApiRequest(async () => {
     // Read all JSON files from jobs directory
     const files = fs.readdirSync(JOBS_DIR)
@@ -125,5 +114,5 @@ export const GET: RequestHandler = async (event) => {
     };
   });
 
-  return addCorsHeaders(response);
+  return response;
 };

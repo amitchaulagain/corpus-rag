@@ -16,6 +16,8 @@
   let debounceTimeout;
   let isSidebarCollapsed = false;
   let isPromptExpanded = false;
+  let isPromptModified = false;
+  let defaultPrompt = '';
 
   // $: makes this a reactive statement that runs when employerQuestionsPrompt changes
   $: if (employerQuestionsPrompt) {
@@ -44,6 +46,7 @@
       const response = await apiRequest('/api/prompts/employer-questions');
       const data = await response.json();
       employerQuestionsPrompt = data.content;
+      isPromptModified = data.isModified || false;
     } catch (error) {
       console.error('Failed to load prompt:', error);
       // Fallback to default if loading fails
@@ -66,6 +69,15 @@ Rules:
 
 Questions: [Questions List]`;
     }
+
+    // Load default prompt
+    try {
+      const response = await apiRequest('/api/prompts/employer-questions?default=true');
+      const data = await response.json();
+      defaultPrompt = data.content;
+    } catch (error) {
+      console.error('Failed to load default prompt:', error);
+    }
   });
 
   async function savePrompt(content) {
@@ -77,8 +89,16 @@ Questions: [Questions List]`;
         },
         body: JSON.stringify({ content })
       });
+      isPromptModified = content !== defaultPrompt;
     } catch (error) {
       console.error('Failed to save prompt:', error);
+    }
+  }
+
+  async function resetPrompt() {
+    if (confirm('Reset prompt to default? This will overwrite your current prompt.')) {
+      employerQuestionsPrompt = defaultPrompt;
+      await savePrompt(defaultPrompt);
     }
   }
 
@@ -93,6 +113,11 @@ Questions: [Questions List]`;
       if (data.success) {
         // Filter to only jobs with questions
         jobs = (data.data.jobs || []).filter(job => job.hasQuestions);
+
+        // Auto-load first job
+        if (jobs.length > 0 && !selectedJob) {
+          await selectJob(jobs[0]);
+        }
       } else {
         alert('Failed to load jobs: ' + data.error);
       }
@@ -257,6 +282,11 @@ Questions: [Questions List]`;
         <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
           🤖 AI Prompt Editor
         </h3>
+        {#if isPromptModified}
+          <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
+            ↺ Reset
+          </button>
+        {/if}
       </div>
       <div class="prompt-container">
         <div class="prompt-area">
@@ -388,9 +418,6 @@ Questions: [Questions List]`;
                   <div class="actions">
                     <button class="copy-btn" on:click={() => copyToClipboard(generatedAnswers)}>
                       📋 Copy
-                    </button>
-                    <button class="regenerate-btn" on:click={generateAnswers} disabled={isGenerating}>
-                      🔄 Regenerate
                     </button>
                   </div>
                 </div>
@@ -855,5 +882,20 @@ Questions: [Questions List]`;
     border-color: #007bff;
     background: #007bff;
     color: white;
+  }
+
+  .reset-btn-small {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+  }
+
+  .reset-btn-small:hover {
+    background: #5a6268;
   }
 </style>

@@ -1,47 +1,79 @@
-We have two documents 
-1. resume 
-2 job description
+You are writing a cover letter that sounds authentically human - like someone who's genuinely interested in this specific role, not just mass-applying to jobs.
 
+CONTEXT PROVIDED:
+- My resume and professional background (use this to understand my voice, experience, and achievements)
+- The job description for the role I'm applying to
 
+YOUR MISSION:
+Write a cover letter that will make a hiring manager stop scrolling and think "I need to interview this person."
 
+CRITICAL RULES TO SOUND HUMAN (NOT AI):
 
-Task:
-Step 1: find list of skills/experience/keywords/education in resume only => S1,T1,U1,V1
-Step 2: find list of skills/experience/keywords/education in job-description only =>S2,T2,U2,V2
-Step 3: find the list of skills/experience/keywords/education that are both in resume and job description =>S3,T3,U3,V3
-Step 4: find the list of skills/experience/keywords/education that are in job description but not in resume =>S4,T4,U4,V4
+1. **Opening** - NO generic greetings. Start with something that shows you actually read the job posting:
+   - Reference a specific detail about the company, their product, or the role
+   - If possible, mention why THIS role at THIS company (not just any job)
+   - Keep it authentic - no "I am thrilled" or "I am excited to apply" clichés
 
+2. **Body (2-3 paragraphs max, 250-300 words total)**:
+   - Pick 2-3 SPECIFIC experiences from my resume that directly solve their problems
+   - Use concrete examples with numbers/outcomes when possible (e.g., "reduced API latency by 40%" not "improved performance")
+   - Match my writing style from the resume - if I'm technical and direct, write that way
+   - Connect the dots: "You need X → I've done Y which proves I can deliver X"
+   - NO buzzwords like "leverage," "synergize," "dynamic professional" - write like a real person talks
 
+3. **Show genuine interest**:
+   - If the job description mentions specific challenges, acknowledge them
+   - Demonstrate you understand what success looks like in this role
+   - Make it clear why I'd want THIS job (growth, tech stack, mission, team size, etc.)
 
+4. **Closing**:
+   - Skip "Thank you for your consideration" - it's filler
+   - Simple call to action: "I'd love to discuss how my experience with [specific thing] could help with [their specific need]."
+   - Sign off with just my name (format: "Best,\n[My Name]" or "Thanks,\n[My Name]")
 
-Step 5 : Calculate category match scores:
-   - Skills Match Score (S3)
- -   Experience Match Score (T3)
-   
-Step 6 :Normalize and compute the overall fit score using ATS weighting:
-   - Skills: 40%
-   - Experience: 30%
-   - Keywords: 20%
-   - Education: 10%
-- Highlight matched and missing items.
-- Provide a short ATS-style evaluation summary (2–4 sentences).
-- Suggest actionable recommendations to improve the resume.
+5. **Tone & Voice**:
+   - Mirror MY personality from the resume (casual vs formal, concise vs detailed)
+   - Write like you're explaining to a friend why you're a good fit
+   - Use "I" statements but don't make every sentence about "I did this, I did that"
+   - Vary sentence length - some short, some longer. Humans don't write in perfect patterns.
+   - Use contractions where natural (I've, you're, they're) - robots don't
 
-Output format (JSON):
-{
-  "overall_fit_score": <weighted score 0-100>,
-  "category_scores": {
-    "skills_match_score": <0-100>,
-    "experience_match_score": <0-100>,
-    
-  },
-  "skills in resume": [S1],
-  "skills in JD": [S2],
-  "matched skills": [S3],
-  "missing skills": [S4],
-  "KEYWORDS in resume": [U1],
-  "KEYWORDS in JD": [U2],
-  "matched_keywords": [U3],
-  "missing_keywords": [U4],
-  "evaluation_summary": "string",
-  "recommendations": [list of resume improvement suggestions]
+6. **What to AVOID** (dead giveaways of AI writing):
+   - ❌ "I am writing to express my interest in..."
+   - ❌ "Throughout my career..."
+   - ❌ "I am confident that my skills and experience make me an ideal candidate"
+   - ❌ Perfect parallel structure in every paragraph
+   - ❌ Overly polished, corporate-speak language
+   - ❌ Listing every qualification from the job description
+   - ❌ Three perfectly balanced paragraphs of equal length
+
+7. **LinkedIn Auto-Apply Context**:
+   - This will be submitted through LinkedIn's application system
+   - Keep formatting simple (no special characters, stick to plain text)
+   - No "Attached please find my resume" - it's already uploaded
+   - No need for full address header (Dear Hiring Manager is fine if no name)
+
+STRUCTURE:
+```
+[Greeting - use "Dear Hiring Manager" or name if found in job description]
+
+[Opening hook - 1-2 sentences showing you read the JD and why this role]
+
+[Paragraph 1: Your most relevant experience/achievement that matches their top need]
+
+[Paragraph 2: Another key qualification or unique angle that sets you apart]
+
+[Brief closing - why you're interested + simple CTA]
+
+[Sign-off]
+[My Name from resume]
+```
+
+FINAL CHECK BEFORE OUTPUT:
+- Does this sound like a real person wrote it?
+- Would you send this to a hiring manager if your career depended on it?
+- Did you avoid all the cliché AI phrases?
+- Is it under 350 words?
+- Does it connect MY specific background to THEIR specific needs?
+
+Now write the cover letter. Make it sound like ME, not a chatbot.

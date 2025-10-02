@@ -46,7 +46,7 @@
     </div>
 
     <!-- Main navigation for authenticated users -->
-    <nav class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-2xl mx-auto">
+    <nav class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
       <a href="/files" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary">
         <div class="card-body items-center text-center">
           <span class="text-6xl mb-4">🗄️</span>
@@ -76,6 +76,30 @@
           <span class="text-6xl mb-4">❓</span>
           <h3 class="card-title text-2xl mb-2">Q&A</h3>
           <p class="text-base-content/70">Employer screening answers</p>
+        </div>
+      </a>
+
+      <a href="/job-analysis" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary">
+        <div class="card-body items-center text-center">
+          <span class="text-6xl mb-4">🎯</span>
+          <h3 class="card-title text-2xl mb-2">Job Analysis</h3>
+          <p class="text-base-content/70">Analyze job requirements</p>
+        </div>
+      </a>
+
+      <a href="/resume-enhancement" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary">
+        <div class="card-body items-center text-center">
+          <span class="text-6xl mb-4">✨</span>
+          <h3 class="card-title text-2xl mb-2">Resume Enhancement</h3>
+          <p class="text-base-content/70">ATS optimization & improvements</p>
+        </div>
+      </a>
+
+      <a href="/resume-comparison" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary">
+        <div class="card-body items-center text-center">
+          <span class="text-6xl mb-4">🔄</span>
+          <h3 class="card-title text-2xl mb-2">Resume Comparison</h3>
+          <p class="text-base-content/70">Compare original vs enhanced</p>
         </div>
       </a>
     </nav>

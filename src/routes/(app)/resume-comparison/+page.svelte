@@ -16,6 +16,8 @@
   let initialLoaded = false;
   let isSidebarCollapsed = false;
   let isPromptExpanded = false;
+  let isPromptModified = false;
+  let defaultPrompt = '';
 
   onMount(async () => {
     const storedUser = localStorage.getItem('google_user');
@@ -26,24 +28,61 @@
 
     // Load prompt from the server
     try {
-      const response = await apiRequest('/api/prompts/cover-letter');
+      const response = await apiRequest('/api/prompts/resume-comparison');
       const data = await response.json();
       coverLetterPrompt = data.content;
       lastSavedPrompt = data.content || '';
+      isPromptModified = data.isModified || false;
       initialLoaded = true;
+
+      // Load default prompt
+      const defaultResponse = await apiRequest('/api/prompts/resume-comparison?default=true');
+      const defaultData = await defaultResponse.json();
+      defaultPrompt = defaultData.content || '';
     } catch (error) {
       console.error('Failed to load prompt:', error);
       // Fallback to default if loading fails
-      coverLetterPrompt = `Write a compelling cover letter for this position: [Job Details]
+      coverLetterPrompt = `You are an expert resume analyst. I will provide you with a job description, my original resume, and an enhanced version of my resume. Your task is to create a detailed side-by-side comparison highlighting the improvements and changes made.
 
-Use my background from the resume and user info to:
-- Address their specific pain points mentioned in the job posting
-- Highlight 2-3 most relevant experiences
-- Match their company tone/culture if discernible
-- Keep it under 300 words
-- End with a strong call to action
+Instructions:
+1. Analyze both resume versions against the job description to assess:
+   - Keyword optimization improvements
+   - ATS compatibility enhancements
+   - Impact statement strengthening
+   - Relevance to the specific role
+   - Overall presentation improvements
 
-Please format as a professional cover letter with proper greeting and closing.`;
+2. Create a comprehensive comparison that includes:
+   - Section-by-section analysis (Summary, Skills, Experience, etc.)
+   - Specific changes made to each bullet point
+   - Keywords added or optimized
+   - Metrics and quantifiable achievements added
+   - Formatting improvements for ATS parsing
+
+3. For each major change, explain:
+   - What was changed (Original → Enhanced)
+   - Why it was changed
+   - How it better aligns with the job requirements
+   - Impact on ATS scoring (if applicable)
+
+4. Structure your output as:
+   - Executive Summary (overall improvements at a glance)
+   - Detailed Comparison by Section:
+     * Professional Summary
+     * Key Skills
+     * Work Experience (bullet-by-bullet)
+     * Education & Certifications
+   - ATS Optimization Score (Original vs Enhanced)
+   - Key Improvements Summary (top 5-7 changes)
+   - Recommendations (any additional suggestions)
+
+5. Use clear formatting:
+   - Use "ORIGINAL:" and "ENHANCED:" labels
+   - Highlight keyword additions in **bold**
+   - Mark quantifiable metrics with [METRIC]
+   - Indicate ATS-critical changes with [ATS]
+
+Provide actionable insights that help understand the value of each enhancement and how it improves candidacy for this specific role.`;
     }
   });
 
@@ -52,9 +91,9 @@ Please format as a professional cover letter with proper greeting and closing.`;
     if (content === lastSavedPrompt) {
       return;
     }
-    
+
     try {
-      const response = await apiRequest('/api/prompts/cover-letter', {
+      const response = await apiRequest('/api/prompts/resume-comparison', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -64,10 +103,18 @@ Please format as a professional cover letter with proper greeting and closing.`;
       const result = await response.json().catch(() => ({}));
       if (result && result.success === true) {
         lastSavedPrompt = content;
+        isPromptModified = content !== defaultPrompt;
         console.log('Prompt saved successfully');
       }
     } catch (error) {
       console.error('Failed to save prompt:', error);
+    }
+  }
+
+  async function resetPrompt() {
+    if (confirm('Reset prompt to default? This will overwrite your current prompt.')) {
+      coverLetterPrompt = defaultPrompt;
+      await savePrompt(defaultPrompt);
     }
   }
 
@@ -82,6 +129,11 @@ Please format as a professional cover letter with proper greeting and closing.`;
       if (data.success) {
         // Filter to only jobs with descriptions (for cover letters)
         jobs = (data.data.jobs || []).filter(job => job.hasJobDetails);
+
+        // Auto-load first job
+        if (jobs.length > 0 && !selectedJob) {
+          await selectJob(jobs[0]);
+        }
       } else {
         alert('Failed to load jobs: ' + data.error);
       }
@@ -177,6 +229,11 @@ Please format as a professional cover letter with proper greeting and closing.`;
         <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
           🤖 AI Prompt Editor
         </h3>
+        {#if isPromptModified}
+          <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
+            ↺ Reset
+          </button>
+        {/if}
       </div>
       <div class="prompt-container">
         <div class="prompt-area">
@@ -279,8 +336,8 @@ Please format as a professional cover letter with proper greeting and closing.`;
       {#if !selectedJob}
         <div class="no-selection">
           <div class="placeholder-icon">✍️</div>
-          <h2>Select a job to generate cover letter</h2>
-          <p>Choose from the job descriptions on the left to start generating a personalized cover letter</p>
+          <h2>Select a job for resume comparison</h2>
+          <p>Choose from the job descriptions on the left to compare resumes</p>
         </div>
       {:else}
         <div class="job-header-section">
@@ -299,9 +356,9 @@ Please format as a professional cover letter with proper greeting and closing.`;
               disabled={isGenerating || !jobContent}
             >
               {#if isGenerating}
-                ⏳ Generating Cover Letter...
+                ⏳ Comparing...
               {:else}
-                ✍️ Generate Cover Letter
+                🔄 Compare Resumes
               {/if}
             </button>
           </div>
@@ -317,9 +374,6 @@ Please format as a professional cover letter with proper greeting and closing.`;
                   <div class="actions">
                     <button class="copy-btn" on:click={() => copyToClipboard(generatedCoverLetter)}>
                       📋 Copy
-                    </button>
-                    <button class="regenerate-btn" on:click={generateCoverLetter} disabled={isGenerating}>
-                      🔄 Regenerate
                     </button>
                   </div>
                 </div>
@@ -818,24 +872,19 @@ Please format as a professional cover letter with proper greeting and closing.`;
     background: #138496;
   }
 
-  .regenerate-btn {
-    background: #ffc107;
-    color: #212529;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-
-  .regenerate-btn:hover:not(:disabled) {
-    background: #e0a800;
-  }
-
-  .regenerate-btn:disabled {
+  .reset-btn-small {
     background: #6c757d;
     color: white;
-    cursor: not-allowed;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+  }
+
+  .reset-btn-small:hover {
+    background: #5a6268;
   }
 
   .generated-content {

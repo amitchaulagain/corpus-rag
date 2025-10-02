@@ -16,6 +16,8 @@
   let initialLoaded = false;
   let isSidebarCollapsed = false;
   let isPromptExpanded = false;
+  let isPromptModified = false;
+  let defaultPrompt = '';
 
   onMount(async () => {
     const storedUser = localStorage.getItem('google_user');
@@ -26,24 +28,62 @@
 
     // Load prompt from the server
     try {
-      const response = await apiRequest('/api/prompts/cover-letter');
+      const response = await apiRequest('/api/prompts/resume-enhancement');
       const data = await response.json();
       coverLetterPrompt = data.content;
       lastSavedPrompt = data.content || '';
+      isPromptModified = data.isModified || false;
       initialLoaded = true;
+
+      // Load default prompt
+      const defaultResponse = await apiRequest('/api/prompts/resume-enhancement?default=true');
+      const defaultData = await defaultResponse.json();
+      defaultPrompt = defaultData.content;
     } catch (error) {
       console.error('Failed to load prompt:', error);
       // Fallback to default if loading fails
-      coverLetterPrompt = `Write a compelling cover letter for this position: [Job Details]
+      coverLetterPrompt = `You are an expert resume optimizer and ATS specialist. I will provide you with a job description and my current resume. Your task is to enhance my resume to maximize ATS compatibility and appeal to hiring managers for this specific role.
 
-Use my background from the resume and user info to:
-- Address their specific pain points mentioned in the job posting
-- Highlight 2-3 most relevant experiences
-- Match their company tone/culture if discernible
-- Keep it under 300 words
-- End with a strong call to action
+Instructions:
+1. Analyze the job description to identify:
+   - Required and preferred skills
+   - Key responsibilities and qualifications
+   - Industry-specific keywords and terminology
+   - Technical requirements and tools mentioned
+   - Soft skills and competencies valued
 
-Please format as a professional cover letter with proper greeting and closing.`;
+2. Review my current resume to assess:
+   - Relevant experiences that align with the role
+   - Skills and achievements to emphasize
+   - Gaps or weaknesses to address
+   - Areas that need stronger impact statements
+   - ATS optimization opportunities
+
+3. Provide an enhanced resume that:
+   - Incorporates relevant keywords naturally throughout
+   - Reformats experience bullet points for maximum impact
+   - Uses strong action verbs and quantifiable achievements
+   - Aligns skills section with job requirements
+   - Optimizes section headers for ATS parsing
+   - Highlights transferable skills when applicable
+   - Maintains truthfulness while maximizing presentation
+   - Uses industry-standard formatting
+
+4. Structure your output with:
+   - Professional Summary (2-3 sentences tailored to this role)
+   - Key Skills (prioritized based on job requirements)
+   - Work Experience (enhanced bullet points with metrics)
+   - Education and Certifications
+   - Any relevant additional sections
+
+5. ATS Optimization Guidelines:
+   - Use standard section headers
+   - Avoid tables, graphics, or complex formatting
+   - Include exact keyword matches from job description
+   - Use both acronyms and full terms (e.g., "AI (Artificial Intelligence)")
+   - Ensure consistent date formatting
+
+Focus on making the resume both ATS-friendly and compelling to human readers. Highlight achievements over responsibilities.`;
     }
   });
 
@@ -54,7 +94,7 @@ Please format as a professional cover letter with proper greeting and closing.`;
     }
     
     try {
-      const response = await apiRequest('/api/prompts/cover-letter', {
+      const response = await apiRequest('/api/prompts/resume-enhancement', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -64,10 +104,18 @@ Please format as a professional cover letter with proper greeting and closing.`;
       const result = await response.json().catch(() => ({}));
       if (result && result.success === true) {
         lastSavedPrompt = content;
+        isPromptModified = content !== defaultPrompt;
         console.log('Prompt saved successfully');
       }
     } catch (error) {
       console.error('Failed to save prompt:', error);
+    }
+  }
+
+  async function resetPrompt() {
+    if (confirm('Reset prompt to default? This will overwrite your current prompt.')) {
+      coverLetterPrompt = defaultPrompt;
+      await savePrompt(defaultPrompt);
     }
   }
 
@@ -82,6 +130,11 @@ Please format as a professional cover letter with proper greeting and closing.`;
       if (data.success) {
         // Filter to only jobs with descriptions (for cover letters)
         jobs = (data.data.jobs || []).filter(job => job.hasJobDetails);
+
+        // Auto-load first job
+        if (jobs.length > 0 && !selectedJob) {
+          await selectJob(jobs[0]);
+        }
       } else {
         alert('Failed to load jobs: ' + data.error);
       }
@@ -177,6 +230,11 @@ Please format as a professional cover letter with proper greeting and closing.`;
         <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
           🤖 AI Prompt Editor
         </h3>
+        {#if isPromptModified}
+          <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
+            ↺ Reset
+          </button>
+        {/if}
       </div>
       <div class="prompt-container">
         <div class="prompt-area">
@@ -279,8 +337,8 @@ Please format as a professional cover letter with proper greeting and closing.`;
       {#if !selectedJob}
         <div class="no-selection">
           <div class="placeholder-icon">✍️</div>
-          <h2>Select a job to generate cover letter</h2>
-          <p>Choose from the job descriptions on the left to start generating a personalized cover letter</p>
+          <h2>Select a job for resume enhancement</h2>
+          <p>Choose from the job descriptions on the left to enhance your resume</p>
         </div>
       {:else}
         <div class="job-header-section">
@@ -299,9 +357,9 @@ Please format as a professional cover letter with proper greeting and closing.`;
               disabled={isGenerating || !jobContent}
             >
               {#if isGenerating}
-                ⏳ Generating Cover Letter...
+                ⏳ Enhancing...
               {:else}
-                ✍️ Generate Cover Letter
+                ✨ Enhance Resume
               {/if}
             </button>
           </div>
@@ -317,9 +375,6 @@ Please format as a professional cover letter with proper greeting and closing.`;
                   <div class="actions">
                     <button class="copy-btn" on:click={() => copyToClipboard(generatedCoverLetter)}>
                       📋 Copy
-                    </button>
-                    <button class="regenerate-btn" on:click={generateCoverLetter} disabled={isGenerating}>
-                      🔄 Regenerate
                     </button>
                   </div>
                 </div>
@@ -524,6 +579,21 @@ Please format as a professional cover letter with proper greeting and closing.`;
   }
 
   .reset-btn:hover {
+    background: #5a6268;
+  }
+
+  .reset-btn-small {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+  }
+
+  .reset-btn-small:hover {
     background: #5a6268;
   }
 
@@ -816,26 +886,6 @@ Please format as a professional cover letter with proper greeting and closing.`;
 
   .copy-btn:hover {
     background: #138496;
-  }
-
-  .regenerate-btn {
-    background: #ffc107;
-    color: #212529;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-
-  .regenerate-btn:hover:not(:disabled) {
-    background: #e0a800;
-  }
-
-  .regenerate-btn:disabled {
-    background: #6c757d;
-    color: white;
-    cursor: not-allowed;
   }
 
   .generated-content {

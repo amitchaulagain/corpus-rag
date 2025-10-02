@@ -16,6 +16,8 @@
   let initialLoaded = false;
   let isSidebarCollapsed = false;
   let isPromptExpanded = false;
+  let isPromptModified = false;
+  let defaultPrompt = '';
 
   onMount(async () => {
     const storedUser = localStorage.getItem('google_user');
@@ -26,24 +28,79 @@
 
     // Load prompt from the server
     try {
-      const response = await apiRequest('/api/prompts/cover-letter');
+      const response = await apiRequest('/api/prompts/job-analysis');
       const data = await response.json();
       coverLetterPrompt = data.content;
       lastSavedPrompt = data.content || '';
+      isPromptModified = data.isModified || false;
       initialLoaded = true;
+
+      // Load default prompt
+      const defaultResponse = await apiRequest('/api/prompts/job-analysis?default=true');
+      const defaultData = await defaultResponse.json();
+      defaultPrompt = defaultData.content || '';
     } catch (error) {
       console.error('Failed to load prompt:', error);
       // Fallback to default if loading fails
-      coverLetterPrompt = `Write a compelling cover letter for this position: [Job Details]
+      coverLetterPrompt = `You are an expert career coach and job market analyst. I will provide you with a job description and my resume. Your task is to conduct a comprehensive analysis of how well I match the position and provide actionable insights.
 
-Use my background from the resume and user info to:
-- Address their specific pain points mentioned in the job posting
-- Highlight 2-3 most relevant experiences
-- Match their company tone/culture if discernible
-- Keep it under 300 words
-- End with a strong call to action
+Instructions:
+1. Analyze the job description thoroughly:
+   - Job title and seniority level
+   - Key responsibilities and day-to-day duties
+   - Required skills (technical and soft skills)
+   - Preferred qualifications
+   - Company culture indicators
+   - Growth opportunities mentioned
+   - Compensation signals (if any)
 
-Please format as a professional cover letter with proper greeting and closing.`;
+2. Evaluate my resume against the job requirements:
+   - Direct skill matches
+   - Transferable skills and experiences
+   - Gaps in qualifications
+   - Overqualified areas
+   - Relevant achievements and metrics
+   - Cultural fit indicators
+
+3. Provide a detailed analysis report including:
+
+   **Overall Fit Score:** Rate 0-100 with justification
+
+   **Strengths (What Makes Me a Great Fit):**
+   - List 5-7 key strengths with specific examples from my resume
+   - Connect each strength to specific job requirements
+   - Highlight unique qualifications that set me apart
+
+   **Gaps & Concerns:**
+   - Required skills/experience I'm missing
+   - Potential red flags from employer perspective
+   - Areas where I may be underqualified
+
+   **Transferable Skills & Experiences:**
+   - Skills from other roles that apply here
+   - How to frame unrelated experience as relevant
+   - Hidden strengths the employer might miss
+
+   **Interview Preparation:**
+   - Top 5 questions they're likely to ask based on the job description
+   - Key talking points to emphasize
+   - Stories/examples to prepare (STAR format suggestions)
+   - Potential concerns to proactively address
+
+   **Application Strategy:**
+   - Should I apply? (Yes/No with reasoning)
+   - Priority level (High/Medium/Low)
+   - How to position myself in application materials
+   - Networking opportunities to leverage
+   - Timeline considerations
+
+   **Resume Optimization Suggestions:**
+   - Top 3-5 specific changes to make
+   - Keywords to incorporate
+   - Achievements to highlight
+   - How to address gaps
+
+Be honest, specific, and actionable. Include concrete examples from both the job description and my resume to support all points.`;
     }
   });
 
@@ -52,9 +109,9 @@ Please format as a professional cover letter with proper greeting and closing.`;
     if (content === lastSavedPrompt) {
       return;
     }
-    
+
     try {
-      const response = await apiRequest('/api/prompts/cover-letter', {
+      const response = await apiRequest('/api/prompts/job-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -64,10 +121,18 @@ Please format as a professional cover letter with proper greeting and closing.`;
       const result = await response.json().catch(() => ({}));
       if (result && result.success === true) {
         lastSavedPrompt = content;
+        isPromptModified = content !== defaultPrompt;
         console.log('Prompt saved successfully');
       }
     } catch (error) {
       console.error('Failed to save prompt:', error);
+    }
+  }
+
+  async function resetPrompt() {
+    if (confirm('Reset prompt to default? This will overwrite your current prompt.')) {
+      coverLetterPrompt = defaultPrompt;
+      await savePrompt(defaultPrompt);
     }
   }
 
@@ -82,6 +147,11 @@ Please format as a professional cover letter with proper greeting and closing.`;
       if (data.success) {
         // Filter to only jobs with descriptions (for cover letters)
         jobs = (data.data.jobs || []).filter(job => job.hasJobDetails);
+
+        // Auto-load first job
+        if (jobs.length > 0 && !selectedJob) {
+          await selectJob(jobs[0]);
+        }
       } else {
         alert('Failed to load jobs: ' + data.error);
       }
@@ -177,6 +247,11 @@ Please format as a professional cover letter with proper greeting and closing.`;
         <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
           🤖 AI Prompt Editor
         </h3>
+        {#if isPromptModified}
+          <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
+            ↺ Reset
+          </button>
+        {/if}
       </div>
       <div class="prompt-container">
         <div class="prompt-area">
@@ -279,8 +354,8 @@ Please format as a professional cover letter with proper greeting and closing.`;
       {#if !selectedJob}
         <div class="no-selection">
           <div class="placeholder-icon">✍️</div>
-          <h2>Select a job to generate cover letter</h2>
-          <p>Choose from the job descriptions on the left to start generating a personalized cover letter</p>
+          <h2>Select a job for analysis</h2>
+          <p>Choose from the job descriptions on the left to start analyzing job requirements</p>
         </div>
       {:else}
         <div class="job-header-section">
@@ -299,9 +374,9 @@ Please format as a professional cover letter with proper greeting and closing.`;
               disabled={isGenerating || !jobContent}
             >
               {#if isGenerating}
-                ⏳ Generating Cover Letter...
+                ⏳ Analyzing...
               {:else}
-                ✍️ Generate Cover Letter
+                🎯 Analyze Job
               {/if}
             </button>
           </div>
@@ -317,9 +392,6 @@ Please format as a professional cover letter with proper greeting and closing.`;
                   <div class="actions">
                     <button class="copy-btn" on:click={() => copyToClipboard(generatedCoverLetter)}>
                       📋 Copy
-                    </button>
-                    <button class="regenerate-btn" on:click={generateCoverLetter} disabled={isGenerating}>
-                      🔄 Regenerate
                     </button>
                   </div>
                 </div>
@@ -527,7 +599,20 @@ Please format as a professional cover letter with proper greeting and closing.`;
     background: #5a6268;
   }
 
+  .reset-btn-small {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+  }
 
+  .reset-btn-small:hover {
+    background: #5a6268;
+  }
 
   .main-content {
     display: grid;
@@ -818,25 +903,6 @@ Please format as a professional cover letter with proper greeting and closing.`;
     background: #138496;
   }
 
-  .regenerate-btn {
-    background: #ffc107;
-    color: #212529;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-
-  .regenerate-btn:hover:not(:disabled) {
-    background: #e0a800;
-  }
-
-  .regenerate-btn:disabled {
-    background: #6c757d;
-    color: white;
-    cursor: not-allowed;
-  }
 
   .generated-content {
     background: #f8f9fa;

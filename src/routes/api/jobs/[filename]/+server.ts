@@ -13,24 +13,13 @@ export const OPTIONS: RequestHandler = () => {
 
 // GET /api/jobs/[filename] - Get specific job file content
 export const GET: RequestHandler = async (event) => {
-  const auth = await authenticateRequest(event);
-  if (auth instanceof Response) {
-    return addCorsHeaders(auth);
-  }
-
-  if (!requireScope(auth, 'files:read')) {
-    return addCorsHeaders(new Response(JSON.stringify({ success: false, error: 'Insufficient permissions' }), {
-      status: 403,
-      headers: { 'Content-Type': 'application/json' }
-    }));
-  }
-
+  // Internal UI endpoint - no auth required (just reading local files)
   const filename = event.params.filename;
   if (!filename) {
-    return addCorsHeaders(new Response(JSON.stringify({ success: false, error: 'Filename is required' }), {
+    return new Response(JSON.stringify({ success: false, error: 'Filename is required' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
-    }));
+    });
   }
 
   const response = await handleApiRequest(async () => {
@@ -61,5 +50,5 @@ export const GET: RequestHandler = async (event) => {
     }
   });
 
-  return addCorsHeaders(response);
+  return response;
 };
