@@ -14,6 +14,8 @@
   let jobDescriptionStates = {}; // Track checkbox state per job filename
 
   let debounceTimeout;
+  let isSidebarCollapsed = false;
+  let isPromptExpanded = false;
 
   // $: makes this a reactive statement that runs when employerQuestionsPrompt changes
   $: if (employerQuestionsPrompt) {
@@ -251,16 +253,29 @@ Questions: [Questions List]`;
 
     <!-- Always Visible Prompt Section -->
     <div class="prompt-section">
-      <h3>🤖 AI Prompt Editor</h3>
+      <div class="prompt-header">
+        <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
+          🤖 AI Prompt Editor
+        </h3>
+      </div>
       <div class="prompt-container">
         <div class="prompt-area">
-          <textarea
-            class="prompt-editor"
-            bind:value={employerQuestionsPrompt}
-            placeholder="Enter your AI prompt here..."
-            rows="10"
-            on:blur={() => savePrompt(employerQuestionsPrompt)}
-          ></textarea>
+          {#if isPromptExpanded}
+            <pre
+              class="prompt-display"
+              contenteditable="true"
+              bind:textContent={employerQuestionsPrompt}
+              on:blur={() => savePrompt(employerQuestionsPrompt)}
+            >{employerQuestionsPrompt}</pre>
+          {:else}
+            <textarea
+              class="prompt-editor"
+              bind:value={employerQuestionsPrompt}
+              placeholder="Enter your AI prompt here..."
+              rows="10"
+              on:blur={() => savePrompt(employerQuestionsPrompt)}
+            ></textarea>
+          {/if}
         </div>
       </div>
     </div>
@@ -268,12 +283,20 @@ Questions: [Questions List]`;
 
   <div class="main-content">
     <!-- Jobs List -->
-    <div class="jobs-sidebar">
+    <div class="jobs-sidebar" class:collapsed={isSidebarCollapsed}>
       <div class="sidebar-header">
-        <h2>❓ Jobs with Questions ({jobs.length})</h2>
-        <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
-          {#if isLoading}⏳{:else}🔄{/if}
-        </button>
+        <h2 on:click={() => isSidebarCollapsed = !isSidebarCollapsed} style="cursor: pointer;">
+          {#if isSidebarCollapsed}
+            ❓
+          {:else}
+            💼 Jobs with Questions
+          {/if}
+        </h2>
+        {#if !isSidebarCollapsed}
+          <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
+            {#if isLoading}⏳{:else}🔄{/if}
+          </button>
+        {/if}
       </div>
 
       {#if isLoading}
@@ -285,27 +308,38 @@ Questions: [Questions List]`;
         </div>
       {:else}
         <div class="jobs-list">
-          {#each jobs as job}
-            <div
-              class="job-item"
-              class:selected={selectedJob?.filename === job.filename}
-              on:click={() => selectJob(job)}
-            >
-              <div class="job-header">
-                <span class="job-type">
-                  ❓ {job.questionCount} Questions
-                </span>
-                <span class="job-size">{formatFileSize(job.size)}</span>
+          {#each jobs as job, index}
+            {#if isSidebarCollapsed}
+              <button
+                class="job-icon"
+                class:selected={selectedJob?.filename === job.filename}
+                on:click={() => selectJob(job)}
+                title="{job.company} - {job.title}"
+              >
+                {index + 1}
+              </button>
+            {:else}
+              <div
+                class="job-item"
+                class:selected={selectedJob?.filename === job.filename}
+                on:click={() => selectJob(job)}
+              >
+                <div class="job-header">
+                  <span class="job-type">
+                    ❓ {job.questionCount} Questions
+                  </span>
+                  <span class="job-size">{formatFileSize(job.size)}</span>
+                </div>
+                <h3 class="job-company">{job.company}</h3>
+                <p class="job-title">{job.title}</p>
+                {#if job.location}
+                  <p class="job-location">📍 {job.location}</p>
+                {/if}
+                {#if job.hasJobDetails}
+                  <p class="job-questions">💼 Has job description too</p>
+                {/if}
               </div>
-              <h3 class="job-company">{job.company}</h3>
-              <p class="job-title">{job.title}</p>
-              {#if job.location}
-                <p class="job-location">📍 {job.location}</p>
-              {/if}
-              {#if job.hasJobDetails}
-                <p class="job-questions">💼 Has job description too</p>
-              {/if}
-            </div>
+            {/if}
           {/each}
         </div>
       {/if}
@@ -443,10 +477,22 @@ Questions: [Questions List]`;
     max-width: none;
   }
 
+  .prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
   .prompt-section h3 {
-    margin: 0 0 15px 0;
+    margin: 0;
     color: #333;
     font-size: 1.1rem;
+    user-select: none;
+  }
+
+  .prompt-section h3:hover {
+    color: #007acc;
   }
 
   .prompt-container {
@@ -480,11 +526,40 @@ Questions: [Questions List]`;
     box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
   }
 
+  .prompt-display {
+    width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.5;
+    background: white;
+    color: #333;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    min-height: 200px;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .prompt-display:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+  }
+
   .main-content {
     display: grid;
     grid-template-columns: 400px 1fr;
     gap: 30px;
     min-height: 700px;
+    transition: grid-template-columns 0.3s ease;
+  }
+
+  .main-content:has(.jobs-sidebar.collapsed) {
+    grid-template-columns: 60px 1fr;
   }
 
   /* Jobs Sidebar */
@@ -493,6 +568,12 @@ Questions: [Questions List]`;
     border-radius: 8px;
     padding: 20px;
     border: 1px solid #e5e5e5;
+    transition: all 0.3s ease;
+  }
+
+  .jobs-sidebar.collapsed {
+    padding: 10px 5px;
+    width: 60px;
   }
 
   .sidebar-header {
@@ -508,6 +589,17 @@ Questions: [Questions List]`;
     margin: 0;
     font-size: 1.2rem;
     color: #495057;
+    user-select: none;
+    flex: 1;
+  }
+
+  .sidebar-header h2:hover {
+    color: #007bff;
+  }
+
+  .jobs-sidebar.collapsed .sidebar-header h2 {
+    font-size: 1.5rem;
+    text-align: center;
   }
 
   .refresh-btn {
@@ -734,5 +826,34 @@ Questions: [Questions List]`;
     border-radius: 12px;
     font-size: 0.8rem;
     font-weight: 500;
+  }
+
+  .job-icon {
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+    width: 100%;
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .job-icon:hover {
+    border-color: #007bff;
+    background: #f8f9ff;
+  }
+
+  .job-icon.selected {
+    border-color: #007bff;
+    background: #007bff;
+    color: white;
   }
 </style>

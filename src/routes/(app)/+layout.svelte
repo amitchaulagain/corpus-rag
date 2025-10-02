@@ -6,6 +6,7 @@
   let isAuthenticated = false;
   let user: any = null;
   let currentTheme = 'corporate';
+  let isSidebarCollapsed = false;
 
   onMount(() => {
     const storedToken = localStorage.getItem('google_access_token');
@@ -94,82 +95,130 @@
     <!-- Sidebar -->
     <div class="drawer-side">
       <label for="drawer-toggle" class="drawer-overlay"></label>
-      <aside class="w-64 min-h-full bg-base-200">
-        <!-- Logo -->
-        <div class="p-4 border-b border-base-300">
-          <button class="text-2xl font-bold hover:text-primary transition-colors" on:click={goToWelcome}>🚀 RAG System</button>
+      <aside class="min-h-full bg-base-200 transition-all duration-300" class:w-64={!isSidebarCollapsed} class:w-20={isSidebarCollapsed}>
+        <!-- Logo & Collapse Button -->
+        <div class="p-4 border-b border-base-300 flex items-center justify-between">
+          {#if !isSidebarCollapsed}
+            <button class="text-2xl font-bold hover:text-primary transition-colors" on:click={goToWelcome}>🚀 RAG System</button>
+          {/if}
+          <button
+            class="btn btn-ghost btn-sm flex items-center justify-center"
+            class:btn-circle={isSidebarCollapsed}
+            class:w-full={isSidebarCollapsed}
+            on:click={() => isSidebarCollapsed = !isSidebarCollapsed}
+            title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <span class="text-xl">
+              {#if isSidebarCollapsed}
+                ▶
+              {:else}
+                ◀
+              {/if}
+            </span>
+          </button>
         </div>
 
         <!-- Navigation Menu -->
         <ul class="menu p-4 space-y-2">
           <li>
-            <a href="/files" class="flex items-center gap-3" class:active={currentPath === '/files'}>
-              🗄️ Files
+            <a href="/files" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/files'} title={isSidebarCollapsed ? 'Files' : ''}>
+              <span class="text-xl">🗄️</span>
+              {#if !isSidebarCollapsed}<span>Files</span>{/if}
             </a>
           </li>
           <li>
-            <a href="/search" class="flex items-center gap-3" class:active={currentPath === '/search'}>
-              🔍 Search
+            <a href="/search" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/search'} title={isSidebarCollapsed ? 'Search' : ''}>
+              <span class="text-xl">🔍</span>
+              {#if !isSidebarCollapsed}<span>Search</span>{/if}
             </a>
           </li>
           <li>
-            <a href="/cover-letters" class="flex items-center gap-3" class:active={currentPath === '/cover-letters'}>
-              ✍️ Cover Letters
+            <a href="/cover-letters" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/cover-letters'} title={isSidebarCollapsed ? 'Cover Letters' : ''}>
+              <span class="text-xl">✍️</span>
+              {#if !isSidebarCollapsed}<span>Cover Letters</span>{/if}
             </a>
           </li>
           <li>
-            <a href="/employer-questions" class="flex items-center gap-3" class:active={currentPath === '/employer-questions'}>
-              ❓ Q&A
+            <a href="/employer-questions" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/employer-questions'} title={isSidebarCollapsed ? 'Q&A' : ''}>
+              <span class="text-xl">❓</span>
+              {#if !isSidebarCollapsed}<span>Q&A</span>{/if}
             </a>
           </li>
-          
+
           <!-- Divider -->
-          <li><hr class="my-2" /></li>
-          
+          {#if !isSidebarCollapsed}
+            <li><hr class="my-2" /></li>
+          {/if}
+
           <!-- New Resume Analysis Section -->
-          <li class="menu-title">
-            <span class="text-xs text-base-content/60">Resume Analysis</span>
-          </li>
+          {#if !isSidebarCollapsed}
+            <li class="menu-title">
+              <span class="text-xs text-base-content/60">Resume Analysis</span>
+            </li>
+          {/if}
           <li>
-            <a href="/job-analysis" class="flex items-center gap-3" class:active={currentPath === '/job-analysis'}>
-              🎯 Job Analysis
+            <a href="/job-analysis" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/job-analysis'} title={isSidebarCollapsed ? 'Job Analysis' : ''}>
+              <span class="text-xl">🎯</span>
+              {#if !isSidebarCollapsed}<span>Job Analysis</span>{/if}
             </a>
           </li>
           <li>
-            <a href="/resume-enhancement" class="flex items-center gap-3" class:active={currentPath === '/resume-enhancement'}>
-              ✨ Resume Enhancement
+            <a href="/resume-enhancement" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/resume-enhancement'} title={isSidebarCollapsed ? 'Resume Enhancement' : ''}>
+              <span class="text-xl">✨</span>
+              {#if !isSidebarCollapsed}<span>Resume Enhancement</span>{/if}
             </a>
           </li>
           <li>
-            <a href="/resume-comparison" class="flex items-center gap-3" class:active={currentPath === '/resume-comparison'}>
-              🔄 Resume Comparison
+            <a href="/resume-comparison" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/resume-comparison'} title={isSidebarCollapsed ? 'Resume Comparison' : ''}>
+              <span class="text-xl">🔄</span>
+              {#if !isSidebarCollapsed}<span>Resume Comparison</span>{/if}
             </a>
           </li>
         </ul>
 
         <!-- User info (desktop only) -->
         <div class="hidden lg:block absolute bottom-0 w-full p-4 border-t border-base-300">
-          <div class="flex items-center gap-3 mb-3">
-            <div class="avatar">
-              <div class="w-10 rounded-full">
-                <img src={user.picture} alt={user.name} />
+          {#if !isSidebarCollapsed}
+            <div class="flex items-center gap-3 mb-3">
+              <div class="avatar">
+                <div class="w-10 rounded-full">
+                  <img src={user.picture} alt={user.name} />
+                </div>
               </div>
+              <div class="flex-1 min-w-0">
+                <div class="font-medium truncate text-base-content">{user.name}</div>
+                <div class="text-sm opacity-70 truncate text-base-content">{user.email}</div>
+              </div>
+              <button class="btn btn-ghost btn-circle btn-sm" on:click={toggleTheme} title="Toggle theme">
+                {#if currentTheme === 'light'}
+                  🌙
+                {:else}
+                  ☀️
+                {/if}
+              </button>
             </div>
-            <div class="flex-1 min-w-0">
-              <div class="font-medium truncate text-base-content">{user.name}</div>
-              <div class="text-sm opacity-70 truncate text-base-content">{user.email}</div>
-            </div>
-            <button class="btn btn-ghost btn-circle btn-sm" on:click={toggleTheme} title="Toggle theme">
-              {#if currentTheme === 'light'}
-                🌙
-              {:else}
-                ☀️
-              {/if}
+            <button class="btn btn-outline btn-sm w-full" on:click={logout}>
+              🚪 Sign Out
             </button>
-          </div>
-          <button class="btn btn-outline btn-sm w-full" on:click={logout}>
-            🚪 Sign Out
-          </button>
+          {:else}
+            <div class="flex flex-col items-center gap-2">
+              <div class="avatar">
+                <div class="w-10 rounded-full">
+                  <img src={user.picture} alt={user.name} />
+                </div>
+              </div>
+              <button class="btn btn-ghost btn-circle btn-sm" on:click={toggleTheme} title="Toggle theme">
+                {#if currentTheme === 'light'}
+                  🌙
+                {:else}
+                  ☀️
+                {/if}
+              </button>
+              <button class="btn btn-ghost btn-circle btn-sm" on:click={logout} title="Sign Out">
+                🚪
+              </button>
+            </div>
+          {/if}
         </div>
       </aside>
     </div>

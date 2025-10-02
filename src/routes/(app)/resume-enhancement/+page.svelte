@@ -1,50 +1,75 @@
-<script lang="ts">
+<script>
   import { onMount } from 'svelte';
   import { apiRequest } from '$lib/api-client.js';
 
-  interface Enhancement {
-    section: string;
-    original: string;
-    enhanced: string;
-    reason: string;
-    impact: 'high' | 'medium' | 'low';
-  }
-
-  interface EnhancementResult {
-    originalFitScore: number;
-    enhancedFitScore: number;
-    improvements: Enhancement[];
-    atsKeywords: {
-      added: string[];
-      optimized: string[];
-    };
-    summary: string;
-    enhancedResume: string;
-  }
-
-  let user: any = null;
-  let jobs: any[] = [];
-  let selectedJob: any = null;
-  let jobContent: any = null;
-  let enhancement: EnhancementResult | null = null;
+  // all variables
+  let user = null;
+  let jobs = [];
+  let selectedJob = null;
+  let jobContent = null;
   let isLoading = false;
-  let isEnhancing = false;
-  let enhancementFocus = 'ats';
+  let isGenerating = false;
+  let generatedCoverLetter = '';
+  let coverLetterPrompt = '';
 
-  const focusOptions = [
-    { value: 'ats', label: '🤖 ATS Optimization', description: 'Optimize for Applicant Tracking Systems' },
-    { value: 'skills', label: '🎯 Skills Matching', description: 'Highlight relevant skills and experience' },
-    { value: 'keywords', label: '🔑 Keyword Enhancement', description: 'Add industry-specific keywords' },
-    { value: 'experience', label: '💼 Experience Boost', description: 'Strengthen experience descriptions' }
-  ];
+  let lastSavedPrompt = '';
+  let initialLoaded = false;
+  let isSidebarCollapsed = false;
+  let isPromptExpanded = false;
 
-  onMount(() => {
+  onMount(async () => {
     const storedUser = localStorage.getItem('google_user');
     if (storedUser) {
       user = JSON.parse(storedUser);
       loadJobs();
     }
+
+    // Load prompt from the server
+    try {
+      const response = await apiRequest('/api/prompts/cover-letter');
+      const data = await response.json();
+      coverLetterPrompt = data.content;
+      lastSavedPrompt = data.content || '';
+      initialLoaded = true;
+    } catch (error) {
+      console.error('Failed to load prompt:', error);
+      // Fallback to default if loading fails
+      coverLetterPrompt = `Write a compelling cover letter for this position: [Job Details]
+
+Use my background from the resume and user info to:
+- Address their specific pain points mentioned in the job posting
+- Highlight 2-3 most relevant experiences
+- Match their company tone/culture if discernible
+- Keep it under 300 words
+- End with a strong call to action
+
+Please format as a professional cover letter with proper greeting and closing.`;
+    }
   });
+
+  async function savePrompt(content) {
+    // Only save if content has actually changed
+    if (content === lastSavedPrompt) {
+      return;
+    }
+    
+    try {
+      const response = await apiRequest('/api/prompts/cover-letter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ content })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (result && result.success === true) {
+        lastSavedPrompt = content;
+        console.log('Prompt saved successfully');
+      }
+    } catch (error) {
+      console.error('Failed to save prompt:', error);
+    }
+  }
 
   async function loadJobs() {
     if (!user) return;
@@ -55,23 +80,25 @@
       const data = await response.json();
 
       if (data.success) {
-        jobs = (data.data.jobs || []).filter((job: any) => job.hasJobDetails);
+        // Filter to only jobs with descriptions (for cover letters)
+        jobs = (data.data.jobs || []).filter(job => job.hasJobDetails);
       } else {
-        console.error('Failed to load jobs:', data.error);
+        alert('Failed to load jobs: ' + data.error);
       }
     } catch (error) {
       console.error('Failed to load jobs:', error);
+      alert('Failed to load jobs: ' + error.message);
     } finally {
       isLoading = false;
     }
   }
 
-  async function selectJob(job: any) {
+  async function selectJob(job) {
     if (job.type === 'error') return;
 
     selectedJob = job;
     jobContent = null;
-    enhancement = null;
+    generatedCoverLetter = '';
 
     try {
       const response = await apiRequest(`/api/jobs/${job.filename}`);
@@ -80,144 +107,48 @@
       if (data.success) {
         jobContent = data.data.content;
       } else {
-        console.error('Failed to load job details:', data.error);
+        alert('Failed to load job details: ' + data.error);
       }
     } catch (error) {
       console.error('Failed to load job details:', error);
+      alert('Failed to load job details: ' + error.message);
     }
   }
 
-  async function enhanceResume() {
-    if (!selectedJob || !jobContent || !user) return;
+  async function generateCoverLetter() {
+    if (!selectedJob || !jobContent) return;
 
-    isEnhancing = true;
+    isGenerating = true;
     try {
-      const focusOption = focusOptions.find(opt => opt.value === enhancementFocus);
       const response = await apiRequest('/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          type: 'resume_enhancement',
+          type: 'cover_letter',
           jobDetails: jobContent,
           userEmail: user.email,
-          enhancementFocus: enhancementFocus,
-          customPrompt: `Enhance my resume for this specific job posting with focus on ${focusOption?.label}.
-
-Please provide:
-
-1. **Original vs Enhanced Fit Score**: Calculate fit scores before and after enhancement (0-100%)
-
-2. **Specific Improvements**: For each section that needs enhancement, provide:
-   - Section name (Summary, Experience, Skills, etc.)
-   - Original text
-   - Enhanced version
-   - Reason for change
-   - Impact level (high/medium/low)
-
-3. **ATS Optimization**:
-   - Keywords added for ATS scanning
-   - Formatting improvements
-   - Skills alignment with job requirements
-
-4. **Enhanced Resume**: Complete enhanced resume text
-
-Focus areas based on selection:
-- ATS Optimization: Keyword density, formatting, ATS-friendly structure
-- Skills Matching: Highlight relevant technical and soft skills
-- Keyword Enhancement: Industry-specific terminology and buzzwords
-- Experience Boost: Quantify achievements, use action verbs, show impact
-
-Provide specific, actionable enhancements with clear before/after comparisons.`
+          customPrompt: coverLetterPrompt
         })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        enhancement = parseEnhancementResponse(data.data.generatedText);
+        generatedCoverLetter = data.data.generatedText;
       } else {
-        console.error('Failed to enhance resume:', data.error);
+        alert('Failed to generate cover letter: ' + data.error);
       }
     } catch (error) {
-      console.error('Failed to enhance resume:', error);
+      console.error('Failed to generate cover letter:', error);
+      alert('Failed to generate cover letter: ' + error.message);
     } finally {
-      isEnhancing = false;
+      isGenerating = false;
     }
   }
 
-  function parseEnhancementResponse(text: string): EnhancementResult {
-    try {
-      const originalScoreMatch = text.match(/original[^0-9]*(\d+)%?/i);
-      const enhancedScoreMatch = text.match(/enhanced[^0-9]*(\d+)%?/i);
-
-      const originalFitScore = originalScoreMatch ? parseInt(originalScoreMatch[1]) : 0;
-      const enhancedFitScore = enhancedScoreMatch ? parseInt(enhancedScoreMatch[1]) : 0;
-
-      const improvements: Enhancement[] = [];
-
-      const sectionMatches = text.matchAll(/(?:section|improvement)[:\s]*([^:]+)[:\s]*\n(?:original|before)[:\s]*([^\n]+)\n(?:enhanced|after)[:\s]*([^\n]+)\n(?:reason|why)[:\s]*([^\n]+)/gi);
-      for (const match of sectionMatches) {
-        improvements.push({
-          section: match[1].trim(),
-          original: match[2].trim(),
-          enhanced: match[3].trim(),
-          reason: match[4].trim(),
-          impact: 'medium' as const
-        });
-      }
-
-      const atsKeywords = {
-        added: [] as string[],
-        optimized: [] as string[]
-      };
-
-      const keywordMatches = text.matchAll(/(?:keyword|ats)[:\s]*([^\n]+)/gi);
-      for (const match of keywordMatches) {
-        const keywords = match[1].split(',').map(k => k.trim()).filter(k => k.length > 0);
-        atsKeywords.added.push(...keywords);
-      }
-
-      let enhancedResume = '';
-      const resumeMatch = text.match(/(?:enhanced resume|complete resume)[:\s]*\n([\s\S]+?)(?:\n\n|\n##|\n###|$)/i);
-      if (resumeMatch) {
-        enhancedResume = resumeMatch[1].trim();
-      }
-
-      let summary = '';
-      const summaryMatch = text.match(/(?:summary|overview)[:\s]*\n([^\n]+)/i);
-      if (summaryMatch) {
-        summary = summaryMatch[1].trim();
-      }
-
-      if (improvements.length === 0 && !enhancedResume) {
-        enhancedResume = text;
-        summary = 'AI-generated resume enhancement based on job requirements';
-      }
-
-      return {
-        originalFitScore,
-        enhancedFitScore,
-        improvements,
-        atsKeywords,
-        summary,
-        enhancedResume
-      };
-    } catch (error) {
-      console.warn('Failed to parse enhancement response, using raw text:', error);
-      return {
-        originalFitScore: 0,
-        enhancedFitScore: 0,
-        improvements: [],
-        atsKeywords: { added: [], optimized: [] },
-        summary: 'AI-generated resume enhancement',
-        enhancedResume: text
-      };
-    }
-  }
-
-  function formatFileSize(bytes: number): string {
+  function formatFileSize(bytes) {
     if (bytes === 0) return '0 KB';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB'];
@@ -225,7 +156,7 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
     return Math.round(bytes / Math.pow(k, i)) + ' ' + sizes[i];
   }
 
-  function copyToClipboard(text: string) {
+  function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
       alert('Copied to clipboard!');
     }).catch(err => {
@@ -233,99 +164,123 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
       alert('Failed to copy to clipboard');
     });
   }
-
-  function downloadEnhancedResume() {
-    if (!enhancement) return;
-
-    const blob = new Blob([enhancement.enhancedResume], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `enhanced-resume-${selectedJob?.company || 'job'}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
 </script>
 
 <main class="container mx-auto max-w-6xl p-6">
   <div class="mb-8">
     <h1 class="text-4xl font-bold mb-4 text-primary">✨ Resume Enhancement</h1>
-    <p class="text-base-content/70">ATS optimization and tailored resume improvements for specific jobs</p>
+    <p class="text-base-content/70">ATS optimization and tailored resume improvements</p>
+
+    <!-- Always Visible Prompt Section -->
+    <div class="prompt-section">
+      <div class="prompt-header">
+        <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
+          🤖 AI Prompt Editor
+        </h3>
+      </div>
+      <div class="prompt-container">
+        <div class="prompt-area">
+          {#if isPromptExpanded}
+            <pre
+              class="prompt-display"
+              contenteditable="true"
+              bind:textContent={coverLetterPrompt}
+              on:blur={() => savePrompt(coverLetterPrompt)}
+            >{coverLetterPrompt}</pre>
+          {:else}
+            <textarea
+              class="prompt-editor"
+              bind:value={coverLetterPrompt}
+              placeholder="Enter your AI prompt here..."
+              rows="10"
+              on:blur={() => savePrompt(coverLetterPrompt)}
+            ></textarea>
+          {/if}
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="main-content">
-    <!-- Jobs Sidebar -->
-    <div class="jobs-sidebar">
+    <!-- Jobs List -->
+    <div class="jobs-sidebar" class:collapsed={isSidebarCollapsed}>
       <div class="sidebar-header">
-        <h2>💼 Jobs with Descriptions ({jobs.length})</h2>
-        <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
-          {#if isLoading}⏳{:else}🔄{/if}
-        </button>
+        <h2 on:click={() => isSidebarCollapsed = !isSidebarCollapsed} style="cursor: pointer;">
+          {#if isSidebarCollapsed}
+            💼
+          {:else}
+            💼 Jobs with Descriptions
+          {/if}
+        </h2>
+        {#if !isSidebarCollapsed}
+          <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
+            {#if isLoading}⏳{:else}🔄{/if}
+          </button>
+        {/if}
       </div>
 
-      {#if isLoading}
-        <div class="loading">Loading jobs...</div>
-      {:else if jobs.length === 0}
-        <div class="empty-state">
-          <p>No job descriptions found</p>
-        </div>
-      {:else}
-        <div class="jobs-list">
-          {#each jobs as job}
-            <div
-              class="job-item"
-              class:selected={selectedJob?.filename === job.filename}
-              on:click={() => selectJob(job)}
-              role="button"
-              tabindex="0"
-              on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectJob(job); } }}
-            >
-              <div class="job-header">
-                <span class="job-type">💼 Job</span>
-                <span class="job-size">{formatFileSize(job.size)}</span>
-              </div>
-              <h3 class="job-company">{job.company}</h3>
-              <p class="job-title">{job.title}</p>
-              {#if job.location}
-                <p class="job-location">📍 {job.location}</p>
-              {/if}
-            </div>
-          {/each}
-        </div>
-      {/if}
-
-      <!-- Enhancement Focus -->
-      {#if selectedJob}
-        <div class="focus-section">
-          <h3>🎯 Enhancement Focus</h3>
-          <div class="focus-options">
-            {#each focusOptions as option}
-              <label class="focus-option">
-                <input
-                  type="radio"
-                  bind:group={enhancementFocus}
-                  value={option.value}
-                />
-                <div class="focus-label">
-                  <div class="focus-title">{option.label}</div>
-                  <div class="focus-desc">{option.description}</div>
+      {#if !isSidebarCollapsed}
+        {#if isLoading}
+          <div class="loading">Loading jobs...</div>
+        {:else if jobs.length === 0}
+          <div class="empty-state">
+            <p>No job descriptions found</p>
+            <small>Only jobs with detailed descriptions can generate cover letters</small>
+          </div>
+        {:else}
+          <div class="jobs-list">
+            {#each jobs as job}
+              <div
+                class="job-item"
+                class:selected={selectedJob?.filename === job.filename}
+                on:click={() => selectJob(job)}
+              >
+                <div class="job-header">
+                  <span class="job-type">
+                    {#if job.hasQuestions}
+                      💼❓ Job + Q&A
+                    {:else}
+                      💼 Job Only
+                    {/if}
+                  </span>
+                  <span class="job-size">{formatFileSize(job.size)}</span>
                 </div>
-              </label>
+                <h3 class="job-company">{job.company}</h3>
+                <p class="job-title">{job.title}</p>
+                {#if job.location}
+                  <p class="job-location">📍 {job.location}</p>
+                {/if}
+                {#if job.hasQuestions}
+                  <p class="job-questions">❓ {job.questionCount} questions</p>
+                {/if}
+              </div>
             {/each}
           </div>
+        {/if}
+      {:else}
+        <!-- Collapsed view: Numbered list -->
+        <div class="jobs-list-collapsed">
+          {#each jobs as job, index}
+            <button
+              class="job-icon"
+              class:selected={selectedJob?.filename === job.filename}
+              on:click={() => selectJob(job)}
+              title="{job.company} - {job.title}"
+            >
+              {index + 1}
+            </button>
+          {/each}
         </div>
       {/if}
     </div>
 
-    <!-- Enhancement Panel -->
+    <!-- Cover Letter Generation -->
     <div class="cover-letter-panel">
       {#if !selectedJob}
         <div class="no-selection">
-          <div class="placeholder-icon">✨</div>
-          <h2>Select a job to enhance resume</h2>
-          <p>Choose from the jobs on the left to start optimizing</p>
+          <div class="placeholder-icon">✍️</div>
+          <h2>Select a job to generate cover letter</h2>
+          <p>Choose from the job descriptions on the left to start generating a personalized cover letter</p>
         </div>
       {:else}
         <div class="job-header-section">
@@ -338,18 +293,15 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
           </div>
 
           <div class="generate-section">
-            <div class="focus-badge">
-              Focus: {focusOptions.find(opt => opt.value === enhancementFocus)?.label}
-            </div>
             <button
               class="generate-btn"
-              on:click={enhanceResume}
-              disabled={isEnhancing || !jobContent}
+              on:click={generateCoverLetter}
+              disabled={isGenerating || !jobContent}
             >
-              {#if isEnhancing}
-                ⏳ Enhancing...
+              {#if isGenerating}
+                ⏳ Generating Cover Letter...
               {:else}
-                ✨ Enhance Resume
+                ✍️ Generate Cover Letter
               {/if}
             </button>
           </div>
@@ -357,111 +309,77 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
 
         {#if jobContent}
           <div class="content-section">
-            {#if enhancement}
-              <!-- Score Improvement -->
-              <div class="score-section">
-                <h3>📈 Improvement Score</h3>
-                <div class="score-grid">
-                  <div class="score-card">
-                    <div class="score-title">Original Score</div>
-                    <div class="score-value original">{enhancement.originalFitScore}%</div>
-                  </div>
-                  <div class="score-arrow">➡️</div>
-                  <div class="score-card">
-                    <div class="score-title">Enhanced Score</div>
-                    <div class="score-value enhanced">{enhancement.enhancedFitScore}%</div>
-                    <div class="score-desc success">
-                      +{enhancement.enhancedFitScore - enhancement.originalFitScore}% improvement
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Improvements -->
-              {#if enhancement.improvements.length > 0}
-                <div class="improvements-section">
-                  <h3>🔧 Specific Improvements</h3>
-                  <div class="improvements-list">
-                    {#each enhancement.improvements as improvement}
-                      <div class="improvement-item">
-                        <div class="improvement-header">
-                          <h4>{improvement.section}</h4>
-                          <span class="badge {improvement.impact}">{improvement.impact} impact</span>
-                        </div>
-
-                        <div class="improvement-content-grid">
-                          <div>
-                            <p class="label">Before:</p>
-                            <div class="text-box">{improvement.original}</div>
-                          </div>
-                          <div>
-                            <p class="label success">After:</p>
-                            <div class="text-box success">{improvement.enhanced}</div>
-                          </div>
-                        </div>
-
-                        <div class="improvement-reason">
-                          <strong>Why:</strong> {improvement.reason}
-                        </div>
-                      </div>
-                    {/each}
-                  </div>
-                </div>
-              {/if}
-
-              <!-- ATS Keywords -->
-              {#if enhancement.atsKeywords.added.length > 0 || enhancement.atsKeywords.optimized.length > 0}
-                <div class="keywords-section">
-                  <h3>🤖 ATS Keywords Enhancement</h3>
-                  <div class="keywords-grid">
-                    {#if enhancement.atsKeywords.added.length > 0}
-                      <div class="keywords-col">
-                        <h4>✅ Keywords Added</h4>
-                        <div class="keywords-tags">
-                          {#each enhancement.atsKeywords.added as keyword}
-                            <span class="keyword-tag added">{keyword}</span>
-                          {/each}
-                        </div>
-                      </div>
-                    {/if}
-                    {#if enhancement.atsKeywords.optimized.length > 0}
-                      <div class="keywords-col">
-                        <h4>🔧 Keywords Optimized</h4>
-                        <div class="keywords-tags">
-                          {#each enhancement.atsKeywords.optimized as keyword}
-                            <span class="keyword-tag optimized">{keyword}</span>
-                          {/each}
-                        </div>
-                      </div>
-                    {/if}
-                  </div>
-                </div>
-              {/if}
-
-              <!-- Enhanced Resume -->
-              <div class="resume-section">
-                <div class="resume-header">
-                  <h3>📄 Enhanced Resume</h3>
+            <!-- Generated Cover Letter -->
+            {#if generatedCoverLetter}
+              <div class="cover-letter-section">
+                <div class="section-header">
+                  <h3>📝 Your Cover Letter</h3>
                   <div class="actions">
-                    <button class="copy-btn" on:click={() => copyToClipboard(enhancement?.enhancedResume || '')}>
+                    <button class="copy-btn" on:click={() => copyToClipboard(generatedCoverLetter)}>
                       📋 Copy
                     </button>
-                    <button class="download-btn" on:click={downloadEnhancedResume}>
-                      💾 Download
+                    <button class="regenerate-btn" on:click={generateCoverLetter} disabled={isGenerating}>
+                      🔄 Regenerate
                     </button>
                   </div>
                 </div>
-                <div class="resume-content">
-                  <pre>{enhancement.enhancedResume}</pre>
+                <div class="generated-content">
+                  <pre class="cover-letter-text">{generatedCoverLetter}</pre>
                 </div>
               </div>
-            {:else if isEnhancing}
-              <div class="enhancing-state">
-                <div class="loading-spinner">⏳</div>
-                <h3>Enhancing Your Resume</h3>
-                <p>Optimizing for {focusOptions.find(opt => opt.value === enhancementFocus)?.label}...</p>
-              </div>
             {/if}
+
+            <!-- Job Description -->
+            <div class="job-description-section">
+              <h3>📋 Job Description</h3>
+              <div class="job-details-card">
+                <div class="job-meta">
+                  {#if jobContent.company}
+                    <span class="meta-item">🏢 {jobContent.company}</span>
+                  {/if}
+                  {#if jobContent.location}
+                    <span class="meta-item">📍 {jobContent.location}</span>
+                  {/if}
+                  {#if jobContent.work_type}
+                    <span class="meta-item">💼 {jobContent.work_type}</span>
+                  {/if}
+                  {#if jobContent.salary_note}
+                    <span class="meta-item">💰 {jobContent.salary_note}</span>
+                  {/if}
+                  {#if jobContent.posted}
+                    <span class="meta-item">📅 Posted {jobContent.posted}</span>
+                  {/if}
+                  {#if jobContent.application_volume}
+                    <span class="meta-item">📊 {jobContent.application_volume} applications</span>
+                  {/if}
+                </div>
+                <div class="job-description-content">
+                  <div class="job-details">
+                    <h4>📋 Job Details</h4>
+                    <pre class="job-text">{jobContent.details || 'No details available'}</pre>
+                  </div>
+                  {#if jobContent.questions && jobContent.questions.length > 0}
+                    <div class="job-questions-preview">
+                      <h4>❓ Screening Questions ({jobContent.questions.length})</h4>
+                      <ul class="questions-list">
+                        {#each jobContent.questions as question, index}
+                          <li class="question-preview">
+                            <strong>Q{index + 1}:</strong> {question.q}
+                          </li>
+                        {/each}
+                      </ul>
+                    </div>
+                  {/if}
+                  {#if jobContent.url}
+                    <div class="job-link">
+                      <a href={jobContent.url} target="_blank" rel="noopener noreferrer">
+                        🔗 View Original Job Posting
+                      </a>
+                    </div>
+                  {/if}
+                </div>
+              </div>
+            </div>
           </div>
         {:else}
           <div class="loading">Loading job details...</div>
@@ -479,11 +397,148 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
+  .page-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  .page-header h1 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 2.2rem;
+  }
+
+  .page-header p {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 0 0 20px 0;
+  }
+
+  .prompt-section {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    max-width: none;
+  }
+
+  .prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .prompt-section h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.1rem;
+    user-select: none;
+  }
+
+  .prompt-section h3:hover {
+    color: #007acc;
+  }
+
+  .prompt-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .prompt-area {
+    width: 100%;
+  }
+
+  .prompt-editor {
+    width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.5;
+    resize: vertical;
+    background: white;
+    color: #333;
+    height: auto;
+  }
+
+  .prompt-editor:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+  }
+
+  .prompt-display {
+    width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.5;
+    background: white;
+    color: #333;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: none;
+    overflow-y: auto;
+  }
+
+  .prompt-display:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+  }
+
+  .prompt-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-start;
+  }
+
+  .save-btn, .reset-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+
+  .save-btn:hover {
+    background: #218838;
+  }
+
+  .reset-btn {
+    background: #6c757d;
+  }
+
+  .reset-btn:hover {
+    background: #5a6268;
+  }
+
+
+
   .main-content {
     display: grid;
     grid-template-columns: 400px 1fr;
     gap: 30px;
     min-height: 700px;
+    transition: grid-template-columns 0.3s ease;
+  }
+
+  .main-content:has(.jobs-sidebar.collapsed) {
+    grid-template-columns: 60px 1fr;
   }
 
   /* Jobs Sidebar */
@@ -492,6 +547,13 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
     border-radius: 8px;
     padding: 20px;
     border: 1px solid #e5e5e5;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .jobs-sidebar.collapsed {
+    padding: 10px 5px;
+    width: 60px;
   }
 
   .sidebar-header {
@@ -503,10 +565,27 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
     border-bottom: 1px solid #dee2e6;
   }
 
+  .jobs-sidebar.collapsed .sidebar-header {
+    flex-direction: column;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+  }
+
   .sidebar-header h2 {
     margin: 0;
     font-size: 1.2rem;
     color: #495057;
+    user-select: none;
+    flex: 1;
+  }
+
+  .sidebar-header h2:hover {
+    color: #007bff;
+  }
+
+  .jobs-sidebar.collapsed .sidebar-header h2 {
+    font-size: 1.5rem;
+    text-align: center;
   }
 
   .refresh-btn {
@@ -523,9 +602,8 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
   }
 
   .jobs-list {
-    max-height: 400px;
+    height: 100%;
     overflow-y: auto;
-    margin-bottom: 20px;
   }
 
   .job-item {
@@ -583,68 +661,54 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
     line-height: 1.3;
   }
 
-  .job-location {
-    margin: 0;
+  .job-location, .job-questions {
+    margin: 0 0 3px 0;
     font-size: 0.8rem;
     color: #666;
   }
 
-  /* Focus Section */
-  .focus-section {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 15px;
-    margin-top: 15px;
-  }
-
-  .focus-section h3 {
-    margin: 0 0 12px 0;
-    font-size: 1rem;
-    color: #333;
-  }
-
-  .focus-options {
+  /* Collapsed Jobs List */
+  .jobs-list-collapsed {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    padding: 5px 0;
   }
 
-  .focus-option {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 4px;
-    transition: background 0.2s;
-  }
-
-  .focus-option:hover {
-    background: #f8f9fa;
-  }
-
-  .focus-option input[type="radio"] {
-    margin-top: 2px;
-  }
-
-  .focus-label {
-    flex: 1;
-  }
-
-  .focus-title {
-    font-size: 0.85rem;
+  .job-icon {
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 1rem;
     font-weight: 600;
-    color: #333;
-    margin-bottom: 2px;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 45px;
   }
 
-  .focus-desc {
-    font-size: 0.75rem;
-    color: #666;
+  .job-icon:hover {
+    border-color: #007bff;
+    background: #f8f9ff;
+    color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.15);
+    transform: translateX(2px);
   }
 
-  /* Main Panel */
+  .job-icon.selected {
+    border-color: #007bff;
+    background: #007bff;
+    color: white;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    font-weight: 700;
+  }
+
+  /* Cover Letter Panel */
   .cover-letter-panel {
     background: white;
     border-radius: 8px;
@@ -694,16 +758,6 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
     color: #666;
   }
 
-  .generate-section {
-    text-align: right;
-  }
-
-  .focus-badge {
-    font-size: 0.85rem;
-    color: #666;
-    margin-bottom: 8px;
-  }
-
   .generate-btn {
     background: #28a745;
     color: white;
@@ -713,7 +767,7 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
     cursor: pointer;
     font-size: 1rem;
     font-weight: 500;
-    transition: background-color 0.2s;
+    transition: background 0.2s;
   }
 
   .generate-btn:hover:not(:disabled) {
@@ -721,7 +775,7 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
   }
 
   .generate-btn:disabled {
-    opacity: 0.6;
+    background: #6c757d;
     cursor: not-allowed;
   }
 
@@ -729,228 +783,18 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
     padding: 25px;
   }
 
-  /* Score Section */
-  .score-section {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 25px;
-    margin-bottom: 25px;
+  .cover-letter-section {
+    margin-bottom: 30px;
   }
 
-  .score-section h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-  }
-
-  .score-grid {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 30px;
-    align-items: center;
-  }
-
-  .score-card {
-    text-align: center;
-  }
-
-  .score-title {
-    font-size: 0.9rem;
-    color: #666;
-    margin-bottom: 10px;
-  }
-
-  .score-value {
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
-
-  .score-value.original {
-    color: #6c757d;
-  }
-
-  .score-value.enhanced {
-    color: #28a745;
-  }
-
-  .score-desc {
-    font-size: 0.85rem;
-    color: #666;
-  }
-
-  .score-desc.success {
-    color: #28a745;
-  }
-
-  .score-arrow {
-    font-size: 2rem;
-  }
-
-  /* Improvements Section */
-  .improvements-section {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 25px;
-    margin-bottom: 25px;
-  }
-
-  .improvements-section h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-  }
-
-  .improvements-list {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .improvement-item {
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 20px;
-  }
-
-  .improvement-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-  }
-
-  .improvement-header h4 {
-    margin: 0;
-    font-size: 1rem;
-    color: #333;
-  }
-
-  .badge {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-  }
-
-  .badge.high {
-    background: #d4edda;
-    color: #155724;
-  }
-
-  .badge.medium {
-    background: #fff3cd;
-    color: #856404;
-  }
-
-  .badge.low {
-    background: #d1ecf1;
-    color: #0c5460;
-  }
-
-  .improvement-content-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    margin-bottom: 15px;
-  }
-
-  .label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin: 0 0 8px 0;
-    color: #666;
-  }
-
-  .label.success {
-    color: #28a745;
-  }
-
-  .text-box {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 12px;
-    font-size: 0.9rem;
-  }
-
-  .text-box.success {
-    background: #f0fff4;
-    border-color: #28a745;
-  }
-
-  .improvement-reason {
-    font-size: 0.85rem;
-    color: #666;
-  }
-
-  /* Keywords Section */
-  .keywords-section {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 25px;
-    margin-bottom: 25px;
-  }
-
-  .keywords-section h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-  }
-
-  .keywords-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-
-  .keywords-col h4 {
-    margin: 0 0 12px 0;
-    font-size: 0.95rem;
-    color: #333;
-  }
-
-  .keywords-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .keyword-tag {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 500;
-  }
-
-  .keyword-tag.added {
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
-  }
-
-  .keyword-tag.optimized {
-    background: #d1ecf1;
-    color: #0c5460;
-    border: 1px solid #bee5eb;
-  }
-
-  /* Resume Section */
-  .resume-section {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 25px;
-  }
-
-  .resume-header {
+  .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
   }
 
-  .resume-header h3 {
+  .section-header h3 {
     margin: 0;
     color: #333;
   }
@@ -960,7 +804,7 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
     gap: 10px;
   }
 
-  .copy-btn, .download-btn {
+  .copy-btn {
     background: #17a2b8;
     color: white;
     border: none;
@@ -970,43 +814,142 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
     font-size: 0.9rem;
   }
 
-  .copy-btn:hover, .download-btn:hover {
+  .copy-btn:hover {
     background: #138496;
   }
 
-  .resume-content {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 20px;
-    max-height: 400px;
-    overflow-y: auto;
+  .regenerate-btn {
+    background: #ffc107;
+    color: #212529;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
   }
 
-  .resume-content pre {
+  .regenerate-btn:hover:not(:disabled) {
+    background: #e0a800;
+  }
+
+  .regenerate-btn:disabled {
+    background: #6c757d;
+    color: white;
+    cursor: not-allowed;
+  }
+
+  .generated-content {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 25px;
+    margin-bottom: 30px;
+  }
+
+  .cover-letter-text {
     margin: 0;
     white-space: pre-wrap;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    font-size: 0.9rem;
-    line-height: 1.5;
+    word-wrap: break-word;
+    font-family: Georgia, serif;
+    line-height: 1.7;
+    color: #333;
+    font-size: 1.05rem;
   }
 
-  /* Enhancing State */
-  .enhancing-state {
-    text-align: center;
-    padding: 60px 40px;
-    color: #666;
-  }
-
-  .loading-spinner {
-    font-size: 3rem;
+  .job-description-section h3 {
+    margin-top: 0;
+    color: #495057;
     margin-bottom: 20px;
   }
 
-  .enhancing-state h3 {
-    font-size: 1.3rem;
+  .job-details-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .job-meta {
+    background: #f8f9fa;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .meta-item {
+    background: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    border: 1px solid #dee2e6;
+    color: #495057;
+  }
+
+  .job-description-content {
+    padding: 20px;
+  }
+
+  .job-details h4 {
+    color: #495057;
+    margin: 0 0 15px 0;
+    font-size: 1rem;
+  }
+
+  .job-questions-preview {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .job-questions-preview h4 {
+    color: #495057;
+    margin: 0 0 15px 0;
+    font-size: 1rem;
+  }
+
+  .questions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .question-preview {
+    padding: 8px 0;
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .question-preview strong {
+    color: #495057;
+  }
+
+  .job-link {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .job-link a {
+    color: #007acc;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .job-link a:hover {
+    text-decoration: underline;
+  }
+
+  .job-text {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.5;
     color: #333;
-    margin-bottom: 10px;
   }
 
   .loading {
@@ -1021,13 +964,39 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
     color: #666;
   }
 
+  .empty-state small {
+    display: block;
+    margin-top: 5px;
+    color: #999;
+  }
+
+  .login-required {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  .login-required a {
+    color: #007bff;
+    text-decoration: none;
+  }
+
+  .login-required a:hover {
+    text-decoration: underline;
+  }
+
   @media (max-width: 1024px) {
     .main-content {
       grid-template-columns: 1fr;
+      gap: 20px;
     }
 
-    .keywords-grid, .improvement-content-grid {
-      grid-template-columns: 1fr;
+    .job-header-section {
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .container {
+      padding: 15px;
     }
   }
 </style>

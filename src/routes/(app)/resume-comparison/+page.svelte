@@ -1,50 +1,75 @@
-<script lang="ts">
+<script>
   import { onMount } from 'svelte';
   import { apiRequest } from '$lib/api-client.js';
 
-  interface ComparisonData {
-    original: {
-      content: string;
-      fitScore: number;
-      keywordCount: number;
-      sections: string[];
-    };
-    enhanced: {
-      content: string;
-      fitScore: number;
-      keywordCount: number;
-      sections: string[];
-    };
-    changes: {
-      section: string;
-      type: 'added' | 'modified' | 'removed';
-      before: string;
-      after: string;
-      impact: 'high' | 'medium' | 'low';
-    }[];
-    improvements: {
-      category: string;
-      improvement: string;
-      impact: number;
-    }[];
-  }
-
-  let user: any = null;
-  let jobs: any[] = [];
-  let selectedJob: any = null;
-  let jobContent: any = null;
-  let comparison: ComparisonData | null = null;
+  // all variables
+  let user = null;
+  let jobs = [];
+  let selectedJob = null;
+  let jobContent = null;
   let isLoading = false;
   let isGenerating = false;
-  let viewMode: 'side-by-side' | 'diff' | 'highlights' = 'side-by-side';
+  let generatedCoverLetter = '';
+  let coverLetterPrompt = '';
 
-  onMount(() => {
+  let lastSavedPrompt = '';
+  let initialLoaded = false;
+  let isSidebarCollapsed = false;
+  let isPromptExpanded = false;
+
+  onMount(async () => {
     const storedUser = localStorage.getItem('google_user');
     if (storedUser) {
       user = JSON.parse(storedUser);
       loadJobs();
     }
+
+    // Load prompt from the server
+    try {
+      const response = await apiRequest('/api/prompts/cover-letter');
+      const data = await response.json();
+      coverLetterPrompt = data.content;
+      lastSavedPrompt = data.content || '';
+      initialLoaded = true;
+    } catch (error) {
+      console.error('Failed to load prompt:', error);
+      // Fallback to default if loading fails
+      coverLetterPrompt = `Write a compelling cover letter for this position: [Job Details]
+
+Use my background from the resume and user info to:
+- Address their specific pain points mentioned in the job posting
+- Highlight 2-3 most relevant experiences
+- Match their company tone/culture if discernible
+- Keep it under 300 words
+- End with a strong call to action
+
+Please format as a professional cover letter with proper greeting and closing.`;
+    }
   });
+
+  async function savePrompt(content) {
+    // Only save if content has actually changed
+    if (content === lastSavedPrompt) {
+      return;
+    }
+    
+    try {
+      const response = await apiRequest('/api/prompts/cover-letter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ content })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (result && result.success === true) {
+        lastSavedPrompt = content;
+        console.log('Prompt saved successfully');
+      }
+    } catch (error) {
+      console.error('Failed to save prompt:', error);
+    }
+  }
 
   async function loadJobs() {
     if (!user) return;
@@ -55,23 +80,25 @@
       const data = await response.json();
 
       if (data.success) {
+        // Filter to only jobs with descriptions (for cover letters)
         jobs = (data.data.jobs || []).filter(job => job.hasJobDetails);
       } else {
-        console.error('Failed to load jobs:', data.error);
+        alert('Failed to load jobs: ' + data.error);
       }
     } catch (error) {
       console.error('Failed to load jobs:', error);
+      alert('Failed to load jobs: ' + error.message);
     } finally {
       isLoading = false;
     }
   }
 
-  async function selectJob(job: any) {
+  async function selectJob(job) {
     if (job.type === 'error') return;
 
     selectedJob = job;
     jobContent = null;
-    comparison = null;
+    generatedCoverLetter = '';
 
     try {
       const response = await apiRequest(`/api/jobs/${job.filename}`);
@@ -80,15 +107,16 @@
       if (data.success) {
         jobContent = data.data.content;
       } else {
-        console.error('Failed to load job details:', data.error);
+        alert('Failed to load job details: ' + data.error);
       }
     } catch (error) {
       console.error('Failed to load job details:', error);
+      alert('Failed to load job details: ' + error.message);
     }
   }
 
-  async function generateComparison() {
-    if (!selectedJob || !jobContent || !user) return;
+  async function generateCoverLetter() {
+    if (!selectedJob || !jobContent) return;
 
     isGenerating = true;
     try {
@@ -98,161 +126,29 @@
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          type: 'resume_comparison',
+          type: 'cover_letter',
           jobDetails: jobContent,
           userEmail: user.email,
-          customPrompt: `Generate a detailed before/after comparison of my resume for this job posting.
-
-Please provide:
-
-1. **Original Resume Analysis**:
-   - Current resume content from RAG system
-   - Fit score for the job (0-100%)
-   - Count of matching keywords
-   - Key sections present
-
-2. **Enhanced Resume**:
-   - Optimized version tailored for this job
-   - New fit score after improvements
-   - Additional keywords incorporated
-   - New/improved sections
-
-3. **Detailed Changes**:
-   - Section-by-section comparison
-   - What was added, modified, or removed
-   - Why each change was made
-   - Impact level of each change
-
-4. **Improvement Metrics**:
-   - Specific areas improved (keywords, skills, experience descriptions)
-   - Quantified improvements (% increase in keyword matches, etc.)
-   - ATS optimization score improvement
-
-5. **Highlighted Changes**:
-   - Mark specific text additions with [ADDED: text]
-   - Mark modifications with [CHANGED: old text → new text]
-   - Mark removals with [REMOVED: text]
-
-Focus on concrete, measurable improvements that will help with ATS systems and human reviewers.`
+          customPrompt: coverLetterPrompt
         })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        comparison = parseComparisonResponse(data.data.generatedText);
+        generatedCoverLetter = data.data.generatedText;
       } else {
-        console.error('Failed to generate comparison:', data.error);
+        alert('Failed to generate cover letter: ' + data.error);
       }
     } catch (error) {
-      console.error('Failed to generate comparison:', error);
+      console.error('Failed to generate cover letter:', error);
+      alert('Failed to generate cover letter: ' + error.message);
     } finally {
       isGenerating = false;
     }
   }
 
-  function parseComparisonResponse(text: string): ComparisonData {
-    const originalFitScore = Math.floor(Math.random() * 30) + 50;
-    const enhancedFitScore = Math.min(originalFitScore + Math.floor(Math.random() * 25) + 15, 95);
-
-    return {
-      original: {
-        content: `JOHN DOE
-Software Developer
-
-EXPERIENCE
-Software Developer at Tech Corp (2020-2023)
-- Developed web applications
-- Worked with team on various projects
-- Used JavaScript and React
-
-SKILLS
-JavaScript, React, HTML, CSS
-
-EDUCATION
-Bachelor's in Computer Science`,
-        fitScore: originalFitScore,
-        keywordCount: 8,
-        sections: ['Experience', 'Skills', 'Education']
-      },
-      enhanced: {
-        content: `JOHN DOE
-Senior Full Stack Developer
-
-PROFESSIONAL SUMMARY
-Results-driven Full Stack Developer with 3+ years of experience building scalable web applications using React, Node.js, and cloud technologies. Proven track record of delivering high-quality solutions that improve user engagement and system performance.
-
-TECHNICAL EXPERIENCE
-Senior Software Developer | Tech Corp | 2020-2023
-• Architected and developed 5+ full-stack web applications using React.js and Node.js, serving 10,000+ daily active users
-• Implemented RESTful APIs and microservices architecture, reducing response time by 40%
-• Collaborated with cross-functional teams in Agile environment to deliver features on time
-• Utilized AWS services (EC2, S3, Lambda) for cloud deployment and scalability
-
-TECHNICAL SKILLS
-Frontend: JavaScript (ES6+), React.js, TypeScript, HTML5, CSS3, Redux
-Backend: Node.js, Express.js, RESTful APIs, GraphQL
-Database: MongoDB, PostgreSQL, MySQL
-Cloud & DevOps: AWS, Docker, CI/CD, Git
-Methodologies: Agile, Scrum, Test-Driven Development
-
-EDUCATION
-Bachelor of Science in Computer Science | University Name | 2020`,
-        fitScore: enhancedFitScore,
-        keywordCount: 25,
-        sections: ['Professional Summary', 'Technical Experience', 'Technical Skills', 'Education']
-      },
-      changes: [
-        {
-          section: 'Header',
-          type: 'modified',
-          before: 'Software Developer',
-          after: 'Senior Full Stack Developer',
-          impact: 'high'
-        },
-        {
-          section: 'Professional Summary',
-          type: 'added',
-          before: '',
-          after: 'Results-driven Full Stack Developer with 3+ years of experience...',
-          impact: 'high'
-        },
-        {
-          section: 'Experience',
-          type: 'modified',
-          before: 'Developed web applications',
-          after: 'Architected and developed 5+ full-stack web applications using React.js and Node.js, serving 10,000+ daily active users',
-          impact: 'high'
-        },
-        {
-          section: 'Skills',
-          type: 'modified',
-          before: 'JavaScript, React, HTML, CSS',
-          after: 'Frontend: JavaScript (ES6+), React.js, TypeScript, HTML5, CSS3, Redux...',
-          impact: 'medium'
-        }
-      ],
-      improvements: [
-        {
-          category: 'ATS Keywords',
-          improvement: 'Added 17 relevant keywords including "Full Stack", "RESTful APIs", "Microservices"',
-          impact: 212
-        },
-        {
-          category: 'Quantified Achievements',
-          improvement: 'Added specific metrics: 10,000+ users, 40% response time reduction',
-          impact: 85
-        },
-        {
-          category: 'Technical Depth',
-          improvement: 'Expanded skill categories and added modern technologies',
-          impact: 150
-        }
-      ]
-    };
-  }
-
-  function formatFileSize(bytes: number): string {
+  function formatFileSize(bytes) {
     if (bytes === 0) return '0 KB';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB'];
@@ -260,7 +156,7 @@ Bachelor of Science in Computer Science | University Name | 2020`,
     return Math.round(bytes / Math.pow(k, i)) + ' ' + sizes[i];
   }
 
-  function copyToClipboard(text: string) {
+  function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
       alert('Copied to clipboard!');
     }).catch(err => {
@@ -268,95 +164,123 @@ Bachelor of Science in Computer Science | University Name | 2020`,
       alert('Failed to copy to clipboard');
     });
   }
-
-  function downloadComparison() {
-    if (!comparison) return;
-
-    const content = `RESUME COMPARISON REPORT
-======================
-
-JOB: ${selectedJob?.company} - ${selectedJob?.title}
-
-ORIGINAL RESUME:
-${comparison.original.content}
-
-ENHANCED RESUME:
-${comparison.enhanced.content}
-
-IMPROVEMENTS:
-${comparison.improvements.map(imp => `- ${imp.category}: ${imp.improvement} (+${imp.impact}%)`).join('\n')}
-
-CHANGES:
-${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${change.before} → ${change.after}`).join('\n')}
-`;
-
-    const blob = new Blob([content], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `resume-comparison-${selectedJob?.company || 'job'}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
 </script>
 
 <main class="container mx-auto max-w-6xl p-6">
   <div class="mb-8">
     <h1 class="text-4xl font-bold mb-4 text-primary">🔄 Resume Comparison</h1>
-    <p class="text-base-content/70">Side-by-side comparison of your original resume vs enhanced version</p>
+    <p class="text-base-content/70">Side-by-side comparison of original vs enhanced resume</p>
+
+    <!-- Always Visible Prompt Section -->
+    <div class="prompt-section">
+      <div class="prompt-header">
+        <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
+          🤖 AI Prompt Editor
+        </h3>
+      </div>
+      <div class="prompt-container">
+        <div class="prompt-area">
+          {#if isPromptExpanded}
+            <pre
+              class="prompt-display"
+              contenteditable="true"
+              bind:textContent={coverLetterPrompt}
+              on:blur={() => savePrompt(coverLetterPrompt)}
+            >{coverLetterPrompt}</pre>
+          {:else}
+            <textarea
+              class="prompt-editor"
+              bind:value={coverLetterPrompt}
+              placeholder="Enter your AI prompt here..."
+              rows="10"
+              on:blur={() => savePrompt(coverLetterPrompt)}
+            ></textarea>
+          {/if}
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="main-content">
-    <!-- Jobs Sidebar -->
-    <div class="jobs-sidebar">
+    <!-- Jobs List -->
+    <div class="jobs-sidebar" class:collapsed={isSidebarCollapsed}>
       <div class="sidebar-header">
-        <h2>💼 Jobs with Descriptions ({jobs.length})</h2>
-        <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
-          {#if isLoading}⏳{:else}🔄{/if}
-        </button>
+        <h2 on:click={() => isSidebarCollapsed = !isSidebarCollapsed} style="cursor: pointer;">
+          {#if isSidebarCollapsed}
+            💼
+          {:else}
+            💼 Jobs with Descriptions
+          {/if}
+        </h2>
+        {#if !isSidebarCollapsed}
+          <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
+            {#if isLoading}⏳{:else}🔄{/if}
+          </button>
+        {/if}
       </div>
 
-      {#if isLoading}
-        <div class="loading">Loading jobs...</div>
-      {:else if jobs.length === 0}
-        <div class="empty-state">
-          <p>No job descriptions found</p>
-        </div>
+      {#if !isSidebarCollapsed}
+        {#if isLoading}
+          <div class="loading">Loading jobs...</div>
+        {:else if jobs.length === 0}
+          <div class="empty-state">
+            <p>No job descriptions found</p>
+            <small>Only jobs with detailed descriptions can generate cover letters</small>
+          </div>
+        {:else}
+          <div class="jobs-list">
+            {#each jobs as job}
+              <div
+                class="job-item"
+                class:selected={selectedJob?.filename === job.filename}
+                on:click={() => selectJob(job)}
+              >
+                <div class="job-header">
+                  <span class="job-type">
+                    {#if job.hasQuestions}
+                      💼❓ Job + Q&A
+                    {:else}
+                      💼 Job Only
+                    {/if}
+                  </span>
+                  <span class="job-size">{formatFileSize(job.size)}</span>
+                </div>
+                <h3 class="job-company">{job.company}</h3>
+                <p class="job-title">{job.title}</p>
+                {#if job.location}
+                  <p class="job-location">📍 {job.location}</p>
+                {/if}
+                {#if job.hasQuestions}
+                  <p class="job-questions">❓ {job.questionCount} questions</p>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        {/if}
       {:else}
-        <div class="jobs-list">
-          {#each jobs as job}
-            <div
-              class="job-item"
+        <!-- Collapsed view: Numbered list -->
+        <div class="jobs-list-collapsed">
+          {#each jobs as job, index}
+            <button
+              class="job-icon"
               class:selected={selectedJob?.filename === job.filename}
               on:click={() => selectJob(job)}
-              role="button"
-              tabindex="0"
-              on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectJob(job); } }}
+              title="{job.company} - {job.title}"
             >
-              <div class="job-header">
-                <span class="job-type">💼 Job</span>
-                <span class="job-size">{formatFileSize(job.size)}</span>
-              </div>
-              <h3 class="job-company">{job.company}</h3>
-              <p class="job-title">{job.title}</p>
-              {#if job.location}
-                <p class="job-location">📍 {job.location}</p>
-              {/if}
-            </div>
+              {index + 1}
+            </button>
           {/each}
         </div>
       {/if}
     </div>
 
-    <!-- Comparison Panel -->
+    <!-- Cover Letter Generation -->
     <div class="cover-letter-panel">
       {#if !selectedJob}
         <div class="no-selection">
-          <div class="placeholder-icon">🔄</div>
-          <h2>Select a job to generate comparison</h2>
-          <p>Choose from the jobs on the left to compare your resume</p>
+          <div class="placeholder-icon">✍️</div>
+          <h2>Select a job to generate cover letter</h2>
+          <p>Choose from the job descriptions on the left to start generating a personalized cover letter</p>
         </div>
       {:else}
         <div class="job-header-section">
@@ -371,13 +295,13 @@ ${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${chan
           <div class="generate-section">
             <button
               class="generate-btn"
-              on:click={generateComparison}
+              on:click={generateCoverLetter}
               disabled={isGenerating || !jobContent}
             >
               {#if isGenerating}
-                ⏳ Generating...
+                ⏳ Generating Cover Letter...
               {:else}
-                🔄 Generate Comparison
+                ✍️ Generate Cover Letter
               {/if}
             </button>
           </div>
@@ -385,140 +309,77 @@ ${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${chan
 
         {#if jobContent}
           <div class="content-section">
-            {#if comparison}
-              <!-- View Mode & Actions -->
-              <div class="view-mode-section">
-                <div class="view-mode-header">
-                  <h3>👀 View Mode</h3>
+            <!-- Generated Cover Letter -->
+            {#if generatedCoverLetter}
+              <div class="cover-letter-section">
+                <div class="section-header">
+                  <h3>📝 Your Cover Letter</h3>
                   <div class="actions">
-                    <button class="copy-btn" on:click={() => copyToClipboard(comparison.enhanced.content)}>
-                      📋 Copy Enhanced
+                    <button class="copy-btn" on:click={() => copyToClipboard(generatedCoverLetter)}>
+                      📋 Copy
                     </button>
-                    <button class="download-btn" on:click={downloadComparison}>
-                      💾 Download
+                    <button class="regenerate-btn" on:click={generateCoverLetter} disabled={isGenerating}>
+                      🔄 Regenerate
                     </button>
                   </div>
                 </div>
-                <div class="view-tabs">
-                  <button
-                    class="tab-btn"
-                    class:active={viewMode === 'side-by-side'}
-                    on:click={() => viewMode = 'side-by-side'}
-                  >
-                    📊 Side-by-Side
-                  </button>
-                  <button
-                    class="tab-btn"
-                    class:active={viewMode === 'diff'}
-                    on:click={() => viewMode = 'diff'}
-                  >
-                    🔍 Changes
-                  </button>
-                  <button
-                    class="tab-btn"
-                    class:active={viewMode === 'highlights'}
-                    on:click={() => viewMode = 'highlights'}
-                  >
-                    ⭐ Improvements
-                  </button>
+                <div class="generated-content">
+                  <pre class="cover-letter-text">{generatedCoverLetter}</pre>
                 </div>
               </div>
-
-              <!-- Score Comparison -->
-              <div class="score-section">
-                <h3>📈 Score Improvement</h3>
-                <div class="score-grid">
-                  <div class="score-card">
-                    <div class="score-title">Original Fit Score</div>
-                    <div class="score-value original">{comparison.original.fitScore}%</div>
-                    <div class="score-desc">{comparison.original.keywordCount} keywords</div>
-                  </div>
-                  <div class="score-arrow">➡️</div>
-                  <div class="score-card">
-                    <div class="score-title">Enhanced Fit Score</div>
-                    <div class="score-value enhanced">{comparison.enhanced.fitScore}%</div>
-                    <div class="score-desc success">
-                      +{comparison.enhanced.fitScore - comparison.original.fitScore}% improvement<br>
-                      {comparison.enhanced.keywordCount} keywords (+{comparison.enhanced.keywordCount - comparison.original.keywordCount})
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Content Based on View Mode -->
-              {#if viewMode === 'side-by-side'}
-                <div class="comparison-section">
-                  <h3>📄 Side-by-Side Comparison</h3>
-                  <div class="comparison-grid">
-                    <div class="comparison-col">
-                      <h4>📝 Original Resume</h4>
-                      <div class="resume-content original">
-                        <pre>{comparison.original.content}</pre>
-                      </div>
-                    </div>
-                    <div class="comparison-col">
-                      <h4>✨ Enhanced Resume</h4>
-                      <div class="resume-content enhanced">
-                        <pre>{comparison.enhanced.content}</pre>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              {:else if viewMode === 'diff'}
-                <div class="changes-section">
-                  <h3>🔍 Detailed Changes</h3>
-                  <div class="changes-list">
-                    {#each comparison.changes as change}
-                      <div class="change-item">
-                        <div class="change-header">
-                          <h4>{change.section}</h4>
-                          <div class="badges">
-                            <span class="badge {change.type}">{change.type}</span>
-                            <span class="badge {change.impact}">{change.impact} impact</span>
-                          </div>
-                        </div>
-
-                        {#if change.type === 'added'}
-                          <div class="change-content">
-                            <p class="label success">Added:</p>
-                            <div class="text-box success">{change.after}</div>
-                          </div>
-                        {:else if change.type === 'removed'}
-                          <div class="change-content">
-                            <p class="label error">Removed:</p>
-                            <div class="text-box error strikethrough">{change.before}</div>
-                          </div>
-                        {:else}
-                          <div class="change-content-grid">
-                            <div>
-                              <p class="label">Before:</p>
-                              <div class="text-box">{change.before}</div>
-                            </div>
-                            <div>
-                              <p class="label success">After:</p>
-                              <div class="text-box success">{change.after}</div>
-                            </div>
-                          </div>
-                        {/if}
-                      </div>
-                    {/each}
-                  </div>
-                </div>
-              {:else if viewMode === 'highlights'}
-                <div class="improvements-section">
-                  <h3>⭐ Key Improvements</h3>
-                  <div class="improvements-grid">
-                    {#each comparison.improvements as improvement}
-                      <div class="improvement-card">
-                        <h4>{improvement.category}</h4>
-                        <p>{improvement.improvement}</p>
-                        <div class="impact-badge">+{improvement.impact}%</div>
-                      </div>
-                    {/each}
-                  </div>
-                </div>
-              {/if}
             {/if}
+
+            <!-- Job Description -->
+            <div class="job-description-section">
+              <h3>📋 Job Description</h3>
+              <div class="job-details-card">
+                <div class="job-meta">
+                  {#if jobContent.company}
+                    <span class="meta-item">🏢 {jobContent.company}</span>
+                  {/if}
+                  {#if jobContent.location}
+                    <span class="meta-item">📍 {jobContent.location}</span>
+                  {/if}
+                  {#if jobContent.work_type}
+                    <span class="meta-item">💼 {jobContent.work_type}</span>
+                  {/if}
+                  {#if jobContent.salary_note}
+                    <span class="meta-item">💰 {jobContent.salary_note}</span>
+                  {/if}
+                  {#if jobContent.posted}
+                    <span class="meta-item">📅 Posted {jobContent.posted}</span>
+                  {/if}
+                  {#if jobContent.application_volume}
+                    <span class="meta-item">📊 {jobContent.application_volume} applications</span>
+                  {/if}
+                </div>
+                <div class="job-description-content">
+                  <div class="job-details">
+                    <h4>📋 Job Details</h4>
+                    <pre class="job-text">{jobContent.details || 'No details available'}</pre>
+                  </div>
+                  {#if jobContent.questions && jobContent.questions.length > 0}
+                    <div class="job-questions-preview">
+                      <h4>❓ Screening Questions ({jobContent.questions.length})</h4>
+                      <ul class="questions-list">
+                        {#each jobContent.questions as question, index}
+                          <li class="question-preview">
+                            <strong>Q{index + 1}:</strong> {question.q}
+                          </li>
+                        {/each}
+                      </ul>
+                    </div>
+                  {/if}
+                  {#if jobContent.url}
+                    <div class="job-link">
+                      <a href={jobContent.url} target="_blank" rel="noopener noreferrer">
+                        🔗 View Original Job Posting
+                      </a>
+                    </div>
+                  {/if}
+                </div>
+              </div>
+            </div>
           </div>
         {:else}
           <div class="loading">Loading job details...</div>
@@ -536,11 +397,148 @@ ${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${chan
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
+  .page-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  .page-header h1 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 2.2rem;
+  }
+
+  .page-header p {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 0 0 20px 0;
+  }
+
+  .prompt-section {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    max-width: none;
+  }
+
+  .prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .prompt-section h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.1rem;
+    user-select: none;
+  }
+
+  .prompt-section h3:hover {
+    color: #007acc;
+  }
+
+  .prompt-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .prompt-area {
+    width: 100%;
+  }
+
+  .prompt-editor {
+    width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.5;
+    resize: vertical;
+    background: white;
+    color: #333;
+    height: auto;
+  }
+
+  .prompt-editor:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+  }
+
+  .prompt-display {
+    width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.5;
+    background: white;
+    color: #333;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: none;
+    overflow-y: auto;
+  }
+
+  .prompt-display:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+  }
+
+  .prompt-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-start;
+  }
+
+  .save-btn, .reset-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+
+  .save-btn:hover {
+    background: #218838;
+  }
+
+  .reset-btn {
+    background: #6c757d;
+  }
+
+  .reset-btn:hover {
+    background: #5a6268;
+  }
+
+
+
   .main-content {
     display: grid;
     grid-template-columns: 400px 1fr;
     gap: 30px;
     min-height: 700px;
+    transition: grid-template-columns 0.3s ease;
+  }
+
+  .main-content:has(.jobs-sidebar.collapsed) {
+    grid-template-columns: 60px 1fr;
   }
 
   /* Jobs Sidebar */
@@ -549,6 +547,13 @@ ${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${chan
     border-radius: 8px;
     padding: 20px;
     border: 1px solid #e5e5e5;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .jobs-sidebar.collapsed {
+    padding: 10px 5px;
+    width: 60px;
   }
 
   .sidebar-header {
@@ -560,10 +565,27 @@ ${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${chan
     border-bottom: 1px solid #dee2e6;
   }
 
+  .jobs-sidebar.collapsed .sidebar-header {
+    flex-direction: column;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+  }
+
   .sidebar-header h2 {
     margin: 0;
     font-size: 1.2rem;
     color: #495057;
+    user-select: none;
+    flex: 1;
+  }
+
+  .sidebar-header h2:hover {
+    color: #007bff;
+  }
+
+  .jobs-sidebar.collapsed .sidebar-header h2 {
+    font-size: 1.5rem;
+    text-align: center;
   }
 
   .refresh-btn {
@@ -639,13 +661,54 @@ ${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${chan
     line-height: 1.3;
   }
 
-  .job-location {
-    margin: 0;
+  .job-location, .job-questions {
+    margin: 0 0 3px 0;
     font-size: 0.8rem;
     color: #666;
   }
 
-  /* Main Panel */
+  /* Collapsed Jobs List */
+  .jobs-list-collapsed {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 5px 0;
+  }
+
+  .job-icon {
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 45px;
+  }
+
+  .job-icon:hover {
+    border-color: #007bff;
+    background: #f8f9ff;
+    color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.15);
+    transform: translateX(2px);
+  }
+
+  .job-icon.selected {
+    border-color: #007bff;
+    background: #007bff;
+    color: white;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    font-weight: 700;
+  }
+
+  /* Cover Letter Panel */
   .cover-letter-panel {
     background: white;
     border-radius: 8px;
@@ -704,7 +767,7 @@ ${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${chan
     cursor: pointer;
     font-size: 1rem;
     font-weight: 500;
-    transition: background-color 0.2s;
+    transition: background 0.2s;
   }
 
   .generate-btn:hover:not(:disabled) {
@@ -712,7 +775,7 @@ ${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${chan
   }
 
   .generate-btn:disabled {
-    opacity: 0.6;
+    background: #6c757d;
     cursor: not-allowed;
   }
 
@@ -720,23 +783,18 @@ ${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${chan
     padding: 25px;
   }
 
-  /* View Mode Section */
-  .view-mode-section {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 25px;
+  .cover-letter-section {
+    margin-bottom: 30px;
   }
 
-  .view-mode-header {
+  .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
   }
 
-  .view-mode-header h3 {
+  .section-header h3 {
     margin: 0;
     color: #333;
   }
@@ -746,7 +804,7 @@ ${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${chan
     gap: 10px;
   }
 
-  .copy-btn, .download-btn {
+  .copy-btn {
     background: #17a2b8;
     color: white;
     border: none;
@@ -756,313 +814,142 @@ ${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${chan
     font-size: 0.9rem;
   }
 
-  .copy-btn:hover, .download-btn:hover {
+  .copy-btn:hover {
     background: #138496;
   }
 
-  .view-tabs {
-    display: flex;
-    gap: 10px;
-  }
-
-  .tab-btn {
-    background: white;
-    border: 1px solid #dee2e6;
+  .regenerate-btn {
+    background: #ffc107;
+    color: #212529;
+    border: none;
     padding: 8px 16px;
-    border-radius: 6px;
+    border-radius: 4px;
     cursor: pointer;
     font-size: 0.9rem;
-    transition: all 0.2s;
   }
 
-  .tab-btn:hover {
-    border-color: #007bff;
+  .regenerate-btn:hover:not(:disabled) {
+    background: #e0a800;
   }
 
-  .tab-btn.active {
-    background: #007bff;
+  .regenerate-btn:disabled {
+    background: #6c757d;
     color: white;
-    border-color: #007bff;
+    cursor: not-allowed;
   }
 
-  /* Score Section */
-  .score-section {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 25px;
-    margin-bottom: 25px;
-  }
-
-  .score-section h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-  }
-
-  .score-grid {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: 30px;
-    align-items: center;
-  }
-
-  .score-card {
-    text-align: center;
-  }
-
-  .score-title {
-    font-size: 0.9rem;
-    color: #666;
-    margin-bottom: 10px;
-  }
-
-  .score-value {
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
-
-  .score-value.original {
-    color: #6c757d;
-  }
-
-  .score-value.enhanced {
-    color: #28a745;
-  }
-
-  .score-desc {
-    font-size: 0.85rem;
-    color: #666;
-  }
-
-  .score-desc.success {
-    color: #28a745;
-  }
-
-  .score-arrow {
-    font-size: 2rem;
-  }
-
-  /* Comparison Section */
-  .comparison-section {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 25px;
-    margin-bottom: 25px;
-  }
-
-  .comparison-section h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-  }
-
-  .comparison-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-
-  .comparison-col h4 {
-    margin: 0 0 15px 0;
-    font-size: 1rem;
-    font-weight: 600;
-  }
-
-  .resume-content {
-    border-radius: 6px;
-    padding: 20px;
-    height: 400px;
-    overflow-y: auto;
-  }
-
-  .resume-content.original {
+  .generated-content {
     background: #f8f9fa;
-    border: 1px solid #dee2e6;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 25px;
+    margin-bottom: 30px;
   }
 
-  .resume-content.enhanced {
-    background: #f0fff4;
-    border: 1px solid #28a745;
-  }
-
-  .resume-content pre {
+  .cover-letter-text {
     margin: 0;
     white-space: pre-wrap;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    font-size: 0.9rem;
-    line-height: 1.5;
+    word-wrap: break-word;
+    font-family: Georgia, serif;
+    line-height: 1.7;
+    color: #333;
+    font-size: 1.05rem;
   }
 
-  /* Changes Section */
-  .changes-section {
+  .job-description-section h3 {
+    margin-top: 0;
+    color: #495057;
+    margin-bottom: 20px;
+  }
+
+  .job-details-card {
     background: white;
     border: 1px solid #e9ecef;
     border-radius: 8px;
-    padding: 25px;
+    overflow: hidden;
   }
 
-  .changes-section h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-  }
-
-  .changes-list {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .change-item {
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 20px;
-  }
-
-  .change-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-  }
-
-  .change-header h4 {
-    margin: 0;
-    font-size: 1rem;
-    color: #333;
-  }
-
-  .badges {
-    display: flex;
-    gap: 8px;
-  }
-
-  .badge {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-  }
-
-  .badge.added {
-    background: #d4edda;
-    color: #155724;
-  }
-
-  .badge.modified {
-    background: #fff3cd;
-    color: #856404;
-  }
-
-  .badge.removed {
-    background: #f8d7da;
-    color: #721c24;
-  }
-
-  .badge.high {
-    background: #d4edda;
-    color: #155724;
-  }
-
-  .badge.medium {
-    background: #fff3cd;
-    color: #856404;
-  }
-
-  .badge.low {
-    background: #d1ecf1;
-    color: #0c5460;
-  }
-
-  .change-content .label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin: 0 0 8px 0;
-  }
-
-  .label.success {
-    color: #28a745;
-  }
-
-  .label.error {
-    color: #dc3545;
-  }
-
-  .text-box {
+  .job-meta {
     background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 12px;
-    font-size: 0.9rem;
-  }
-
-  .text-box.success {
-    background: #f0fff4;
-    border-color: #28a745;
-  }
-
-  .text-box.error {
-    background: #fff5f5;
-    border-color: #dc3545;
-  }
-
-  .text-box.strikethrough {
-    text-decoration: line-through;
-  }
-
-  .change-content-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    flex-wrap: wrap;
     gap: 15px;
   }
 
-  /* Improvements Section */
-  .improvements-section {
+  .meta-item {
     background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 25px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    border: 1px solid #dee2e6;
+    color: #495057;
   }
 
-  .improvements-section h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-  }
-
-  .improvements-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-  }
-
-  .improvement-card {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
+  .job-description-content {
     padding: 20px;
   }
 
-  .improvement-card h4 {
-    margin: 0 0 12px 0;
-    font-size: 0.95rem;
-    color: #333;
+  .job-details h4 {
+    color: #495057;
+    margin: 0 0 15px 0;
+    font-size: 1rem;
   }
 
-  .improvement-card p {
+  .job-questions-preview {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .job-questions-preview h4 {
+    color: #495057;
     margin: 0 0 15px 0;
-    font-size: 0.85rem;
+    font-size: 1rem;
+  }
+
+  .questions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .question-preview {
+    padding: 8px 0;
     color: #666;
+    font-size: 0.9rem;
     line-height: 1.4;
   }
 
-  .impact-badge {
-    background: #28a745;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    display: inline-block;
+  .question-preview strong {
+    color: #495057;
+  }
+
+  .job-link {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .job-link a {
+    color: #007acc;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .job-link a:hover {
+    text-decoration: underline;
+  }
+
+  .job-text {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #333;
   }
 
   .loading {
@@ -1077,13 +964,39 @@ ${comparison.changes.map(change => `- ${change.section}: ${change.type} - ${chan
     color: #666;
   }
 
+  .empty-state small {
+    display: block;
+    margin-top: 5px;
+    color: #999;
+  }
+
+  .login-required {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  .login-required a {
+    color: #007bff;
+    text-decoration: none;
+  }
+
+  .login-required a:hover {
+    text-decoration: underline;
+  }
+
   @media (max-width: 1024px) {
     .main-content {
       grid-template-columns: 1fr;
+      gap: 20px;
     }
 
-    .comparison-grid, .change-content-grid {
-      grid-template-columns: 1fr;
+    .job-header-section {
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .container {
+      padding: 15px;
     }
   }
 </style>

@@ -14,6 +14,8 @@
 
   let lastSavedPrompt = '';
   let initialLoaded = false;
+  let isSidebarCollapsed = false;
+  let isPromptExpanded = false;
 
   onMount(async () => {
     const storedUser = localStorage.getItem('google_user');
@@ -171,66 +173,102 @@ Please format as a professional cover letter with proper greeting and closing.`;
 
     <!-- Always Visible Prompt Section -->
     <div class="prompt-section">
-      <h3>🤖 AI Prompt Editor</h3>
+      <div class="prompt-header">
+        <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
+          🤖 AI Prompt Editor
+        </h3>
+      </div>
       <div class="prompt-container">
         <div class="prompt-area">
-          <textarea
-            class="prompt-editor"
-            bind:value={coverLetterPrompt}
-            placeholder="Enter your AI prompt here..."
-            rows="10"
-            on:blur={() => savePrompt(coverLetterPrompt)}
-          ></textarea>
+          {#if isPromptExpanded}
+            <pre
+              class="prompt-display"
+              contenteditable="true"
+              bind:textContent={coverLetterPrompt}
+              on:blur={() => savePrompt(coverLetterPrompt)}
+            >{coverLetterPrompt}</pre>
+          {:else}
+            <textarea
+              class="prompt-editor"
+              bind:value={coverLetterPrompt}
+              placeholder="Enter your AI prompt here..."
+              rows="10"
+              on:blur={() => savePrompt(coverLetterPrompt)}
+            ></textarea>
+          {/if}
         </div>
-
       </div>
     </div>
   </div>
 
   <div class="main-content">
     <!-- Jobs List -->
-    <div class="jobs-sidebar">
+    <div class="jobs-sidebar" class:collapsed={isSidebarCollapsed}>
       <div class="sidebar-header">
-        <h2>💼 Jobs with Descriptions ({jobs.length})</h2>
-        <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
-          {#if isLoading}⏳{:else}🔄{/if}
-        </button>
+        <h2 on:click={() => isSidebarCollapsed = !isSidebarCollapsed} style="cursor: pointer;">
+          {#if isSidebarCollapsed}
+            💼
+          {:else}
+            💼 Jobs with Descriptions
+          {/if}
+        </h2>
+        {#if !isSidebarCollapsed}
+          <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
+            {#if isLoading}⏳{:else}🔄{/if}
+          </button>
+        {/if}
       </div>
 
-      {#if isLoading}
-        <div class="loading">Loading jobs...</div>
-      {:else if jobs.length === 0}
-        <div class="empty-state">
-          <p>No job descriptions found</p>
-          <small>Only jobs with detailed descriptions can generate cover letters</small>
-        </div>
+      {#if !isSidebarCollapsed}
+        {#if isLoading}
+          <div class="loading">Loading jobs...</div>
+        {:else if jobs.length === 0}
+          <div class="empty-state">
+            <p>No job descriptions found</p>
+            <small>Only jobs with detailed descriptions can generate cover letters</small>
+          </div>
+        {:else}
+          <div class="jobs-list">
+            {#each jobs as job}
+              <div
+                class="job-item"
+                class:selected={selectedJob?.filename === job.filename}
+                on:click={() => selectJob(job)}
+              >
+                <div class="job-header">
+                  <span class="job-type">
+                    {#if job.hasQuestions}
+                      💼❓ Job + Q&A
+                    {:else}
+                      💼 Job Only
+                    {/if}
+                  </span>
+                  <span class="job-size">{formatFileSize(job.size)}</span>
+                </div>
+                <h3 class="job-company">{job.company}</h3>
+                <p class="job-title">{job.title}</p>
+                {#if job.location}
+                  <p class="job-location">📍 {job.location}</p>
+                {/if}
+                {#if job.hasQuestions}
+                  <p class="job-questions">❓ {job.questionCount} questions</p>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        {/if}
       {:else}
-        <div class="jobs-list">
-          {#each jobs as job}
-            <div
-              class="job-item"
+        <!-- Collapsed view: Numbered list -->
+        <div class="jobs-list-collapsed">
+          {#each jobs as job, index}
+            <button
+              class="job-icon"
               class:selected={selectedJob?.filename === job.filename}
               on:click={() => selectJob(job)}
+              title="{job.company} - {job.title}"
             >
-              <div class="job-header">
-                <span class="job-type">
-                  {#if job.hasQuestions}
-                    💼❓ Job + Q&A
-                  {:else}
-                    💼 Job Only
-                  {/if}
-                </span>
-                <span class="job-size">{formatFileSize(job.size)}</span>
-              </div>
-              <h3 class="job-company">{job.company}</h3>
-              <p class="job-title">{job.title}</p>
-              {#if job.location}
-                <p class="job-location">📍 {job.location}</p>
-              {/if}
-              {#if job.hasQuestions}
-                <p class="job-questions">❓ {job.questionCount} questions</p>
-              {/if}
-            </div>
+              {index + 1}
+            </button>
           {/each}
         </div>
       {/if}
@@ -387,10 +425,22 @@ Please format as a professional cover letter with proper greeting and closing.`;
     max-width: none;
   }
 
+  .prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
   .prompt-section h3 {
-    margin: 0 0 15px 0;
+    margin: 0;
     color: #333;
     font-size: 1.1rem;
+    user-select: none;
+  }
+
+  .prompt-section h3:hover {
+    color: #007acc;
   }
 
   .prompt-container {
@@ -419,6 +469,29 @@ Please format as a professional cover letter with proper greeting and closing.`;
   }
 
   .prompt-editor:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+  }
+
+  .prompt-display {
+    width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.5;
+    background: white;
+    color: #333;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: none;
+    overflow-y: auto;
+  }
+
+  .prompt-display:focus {
     outline: none;
     border-color: #007acc;
     box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
@@ -461,6 +534,11 @@ Please format as a professional cover letter with proper greeting and closing.`;
     grid-template-columns: 400px 1fr;
     gap: 30px;
     min-height: 700px;
+    transition: grid-template-columns 0.3s ease;
+  }
+
+  .main-content:has(.jobs-sidebar.collapsed) {
+    grid-template-columns: 60px 1fr;
   }
 
   /* Jobs Sidebar */
@@ -469,6 +547,13 @@ Please format as a professional cover letter with proper greeting and closing.`;
     border-radius: 8px;
     padding: 20px;
     border: 1px solid #e5e5e5;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .jobs-sidebar.collapsed {
+    padding: 10px 5px;
+    width: 60px;
   }
 
   .sidebar-header {
@@ -480,10 +565,27 @@ Please format as a professional cover letter with proper greeting and closing.`;
     border-bottom: 1px solid #dee2e6;
   }
 
+  .jobs-sidebar.collapsed .sidebar-header {
+    flex-direction: column;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+  }
+
   .sidebar-header h2 {
     margin: 0;
     font-size: 1.2rem;
     color: #495057;
+    user-select: none;
+    flex: 1;
+  }
+
+  .sidebar-header h2:hover {
+    color: #007bff;
+  }
+
+  .jobs-sidebar.collapsed .sidebar-header h2 {
+    font-size: 1.5rem;
+    text-align: center;
   }
 
   .refresh-btn {
@@ -563,6 +665,47 @@ Please format as a professional cover letter with proper greeting and closing.`;
     margin: 0 0 3px 0;
     font-size: 0.8rem;
     color: #666;
+  }
+
+  /* Collapsed Jobs List */
+  .jobs-list-collapsed {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 5px 0;
+  }
+
+  .job-icon {
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 45px;
+  }
+
+  .job-icon:hover {
+    border-color: #007bff;
+    background: #f8f9ff;
+    color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.15);
+    transform: translateX(2px);
+  }
+
+  .job-icon.selected {
+    border-color: #007bff;
+    background: #007bff;
+    color: white;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    font-weight: 700;
   }
 
   /* Cover Letter Panel */

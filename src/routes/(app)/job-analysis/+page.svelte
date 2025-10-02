@@ -1,99 +1,104 @@
-<script lang="ts">
+<script>
   import { onMount } from 'svelte';
   import { apiRequest } from '$lib/api-client.js';
-  import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
 
-  // Types
-  interface Job {
-    filename: string;
-    company: string;
-    title: string;
-    location?: string;
-    size: number;
-    hasJobDetails: boolean;
-    hasQuestions: boolean;
-    preview?: string;
-  }
-
-  interface AnalysisResult {
-    overallScore: number;
-    categories: {
-      name: string;
-      score: number;
-      skills: string[];
-    }[];
-    strengths: string[];
-    weaknesses: string[];
-    recommendations: string[];
-    keywords: string[];
-    requiredSkills: string[];
-    qualifications: string[];
-    detailedBreakdown: {
-      skillsMatch: number;
-      experienceMatch: number;
-      keywordMatch: number;
-      educationMatch: number;
-    };
-  }
-
-  // State
-  let user: any = null;
-  let jobs: Job[] = [];
-  let selectedJob: Job | null = null;
-  let jobContent: any = null;
-  let analysis: AnalysisResult | null = null;
+  // all variables
+  let user = null;
+  let jobs = [];
+  let selectedJob = null;
+  let jobContent = null;
   let isLoading = false;
-  let isAnalyzing = false;
-  let error: string | null = null;
+  let isGenerating = false;
+  let generatedCoverLetter = '';
+  let coverLetterPrompt = '';
 
-  // Load user session
+  let lastSavedPrompt = '';
+  let initialLoaded = false;
+  let isSidebarCollapsed = false;
+  let isPromptExpanded = false;
+
   onMount(async () => {
-    try {
-      const storedToken = localStorage.getItem('google_access_token');
     const storedUser = localStorage.getItem('google_user');
-
-      if (storedToken && storedUser) {
+    if (storedUser) {
       user = JSON.parse(storedUser);
-        console.log('User loaded from localStorage:', user);
-        await loadJobs();
-      } else {
-        console.log('No user found in localStorage, redirecting to home');
-        goto('/');
-      }
-    } catch (err) {
-      console.error('Failed to load user:', err);
-      goto('/');
+      loadJobs();
+    }
+
+    // Load prompt from the server
+    try {
+      const response = await apiRequest('/api/prompts/cover-letter');
+      const data = await response.json();
+      coverLetterPrompt = data.content;
+      lastSavedPrompt = data.content || '';
+      initialLoaded = true;
+    } catch (error) {
+      console.error('Failed to load prompt:', error);
+      // Fallback to default if loading fails
+      coverLetterPrompt = `Write a compelling cover letter for this position: [Job Details]
+
+Use my background from the resume and user info to:
+- Address their specific pain points mentioned in the job posting
+- Highlight 2-3 most relevant experiences
+- Match their company tone/culture if discernible
+- Keep it under 300 words
+- End with a strong call to action
+
+Please format as a professional cover letter with proper greeting and closing.`;
     }
   });
 
-  // Load available jobs
-  async function loadJobs() {
-    isLoading = true;
-    error = null;
+  async function savePrompt(content) {
+    // Only save if content has actually changed
+    if (content === lastSavedPrompt) {
+      return;
+    }
     
+    try {
+      const response = await apiRequest('/api/prompts/cover-letter', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ content })
+      });
+      const result = await response.json().catch(() => ({}));
+      if (result && result.success === true) {
+        lastSavedPrompt = content;
+        console.log('Prompt saved successfully');
+      }
+    } catch (error) {
+      console.error('Failed to save prompt:', error);
+    }
+  }
+
+  async function loadJobs() {
+    if (!user) return;
+
+    isLoading = true;
     try {
       const response = await apiRequest('/api/jobs');
       const data = await response.json();
 
       if (data.success) {
-        jobs = (data.data.jobs || []).filter((job: Job) => job.hasJobDetails);
+        // Filter to only jobs with descriptions (for cover letters)
+        jobs = (data.data.jobs || []).filter(job => job.hasJobDetails);
       } else {
-        error = 'Failed to load jobs';
+        alert('Failed to load jobs: ' + data.error);
       }
-    } catch (err) {
-      console.error('Failed to load jobs:', err);
-      error = 'Failed to load jobs';
+    } catch (error) {
+      console.error('Failed to load jobs:', error);
+      alert('Failed to load jobs: ' + error.message);
     } finally {
       isLoading = false;
     }
   }
 
-  // Select a job
-  async function selectJob(job: Job) {
+  async function selectJob(job) {
+    if (job.type === 'error') return;
+
     selectedJob = job;
-    analysis = null;
-    error = null;
+    jobContent = null;
+    generatedCoverLetter = '';
 
     try {
       const response = await apiRequest(`/api/jobs/${job.filename}`);
@@ -102,713 +107,896 @@
       if (data.success) {
         jobContent = data.data.content;
       } else {
-        error = 'Failed to load job details';
+        alert('Failed to load job details: ' + data.error);
       }
-    } catch (err) {
-      console.error('Failed to load job details:', err);
-      error = 'Failed to load job details';
+    } catch (error) {
+      console.error('Failed to load job details:', error);
+      alert('Failed to load job details: ' + error.message);
     }
   }
 
-  // Analyze job fit
-  async function analyzeJob() {
-    console.log('Analyze job called with:', { selectedJob, jobContent, user });
-    
-    if (!selectedJob || !jobContent || !user?.email) {
-      error = `Please ensure you are logged in and have selected a job. Current state: selectedJob=${!!selectedJob}, jobContent=${!!jobContent}, user=${!!user}, userEmail=${user?.email}`;
-      return;
-    }
+  async function generateCoverLetter() {
+    if (!selectedJob || !jobContent) return;
 
-    isAnalyzing = true;
-    error = null;
-    
+    isGenerating = true;
     try {
       const response = await apiRequest('/api/generate', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
-          type: 'job_analysis',
-          filename: selectedJob.filename,
-          jobId: selectedJob.filename.replace('.json', ''),
-          jobTitle: selectedJob.title,
-          userEmail: user?.email,
-          customPrompt: `Analyze this job description and my resume to provide a comprehensive fit analysis.
-
-Return your answer as a single JSON object with the following fields:
-{
-  "requiredSkills": string[],
-  "qualifications": string[],
-  "overallScore": number, // 0-100
-  "detailedBreakdown": {
-    "skillsMatch": number, // 0-100
-    "experienceMatch": number, // 0-100
-    "educationMatch": number // 0-100
-  },
-  "categories": [
-    { "name": string, "score": number, "skills": string[] }
-  ],
-  "strengths": string[],
-  "weaknesses": string[],
-  "recommendations": string[]
-}
-
-Be concise and accurate. Do not include any text before or after the JSON.`,
+          type: 'cover_letter',
+          jobDetails: jobContent,
+          userEmail: user.email,
+          customPrompt: coverLetterPrompt
         })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        console.log('AI Response:', data.data.generatedText);
-        // Parse the analysis response
-        analysis = parseAnalysis(data.data.generatedText);
-        console.log('Parsed Analysis:', analysis);
+        generatedCoverLetter = data.data.generatedText;
       } else {
-        error = data.error || 'Analysis failed';
+        alert('Failed to generate cover letter: ' + data.error);
       }
-    } catch (err) {
-      console.error('Analysis failed:', err);
-      error = 'Analysis failed. Please try again.';
-    } finally {
-      isAnalyzing = false;
-    }
-  }
-
-  // Parse analysis text into structured data
-  function parseAnalysis(text: string): AnalysisResult {
-    try {
-      // Try to extract JSON block
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const obj = JSON.parse(jsonMatch[0]);
-        // Fill missing fields with defaults for compatibility
-        return {
-          overallScore: obj.overallScore ?? 0,
-          categories: obj.categories ?? [],
-          strengths: obj.strengths ?? [],
-          weaknesses: obj.weaknesses ?? [],
-          recommendations: obj.recommendations ?? [],
-          keywords: [],
-          requiredSkills: obj.requiredSkills ?? [],
-          qualifications: obj.qualifications ?? [],
-          detailedBreakdown: {
-            skillsMatch: obj.detailedBreakdown?.skillsMatch ?? 0,
-            experienceMatch: obj.detailedBreakdown?.experienceMatch ?? 0,
-            keywordMatch: 0,
-            educationMatch: obj.detailedBreakdown?.educationMatch ?? 0
-          }
-        };
-      }
-      // Extract overall score
-      const overallScoreMatch = text.match(/overall\s*fit\s*score[:\s]*(\d+)%?/i);
-      const overallScore = overallScoreMatch ? parseInt(overallScoreMatch[1]) : 0;
-
-      // Extract required skills - try multiple patterns
-      const requiredSkills: string[] = [];
-      const skillPatterns = [
-        /✅\s*required\s*skills[:\s]*\n((?:[0-9]+:"[^"]+"\s*\n?)*)/gi,
-        /required\s*skills[:\s]*\n((?:[0-9]+:"[^"]+"\s*\n?)*)/gi,
-        /skills[:\s]*\n((?:[0-9]+:"[^"]+"\s*\n?)*)/gi,
-        /✅\s*([^\n✅❌]+)/g
-      ];
-      
-      for (const pattern of skillPatterns) {
-        const matches = text.matchAll(pattern);
-        for (const match of matches) {
-          if (pattern.source.includes('\\d+:"')) {
-            // Array format
-            const arrayMatches = match[1]?.match(/\d+:"([^"]+)"/g);
-            if (arrayMatches) {
-              arrayMatches.forEach(item => {
-                const skill = item.match(/\d+:"([^"]+)"/)?.[1];
-                if (skill) requiredSkills.push(skill);
-              });
-            }
-          } else {
-            // Simple format
-            const skill = match[1].trim();
-            if (skill && skill.length > 0 && skill.length < 100) {
-              requiredSkills.push(skill);
-            }
-          }
-        }
-        if (requiredSkills.length > 0) break;
-      }
-
-      // Extract qualifications - try multiple patterns
-      let qualifications: string[] = [];
-      const qualPatterns = [
-        /📚\s*qualifications[:\s]*\n([\s\S]+?)(?=\n\s*\n|\n[A-Z\u{1F300}-\u{1F6FF}])/giu, // multi-line until next section or blank line
-        /qualifications[:\s]*\n([\s\S]+?)(?=\n\s*\n|\n[A-Z\u{1F300}-\u{1F6FF}])/giu,
-        /education[:\s]*\n([\s\S]+?)(?=\n\s*\n|\n[A-Z\u{1F300}-\u{1F6FF}])/giu,
-        /📚\s*([^\n📚🔑]+)/g
-      ];
-      for (const pattern of qualPatterns) {
-        const matches = text.matchAll(pattern);
-        for (const match of matches) {
-          // Split by line or bullet
-          let lines = match[1]?.split(/\n|•|\*/).map(l => l.trim()).filter(l => l.length > 0);
-          if (lines && lines.length > 0) {
-            qualifications.push(...lines);
-          }
-        }
-        if (qualifications.length > 0) break;
-      }
-      // Fallback: If still empty, try to extract from category breakdown
-      if (qualifications.length === 0 && Array.isArray(categories)) {
-        const eduCat = categories.find(c => /education|certification/i.test(c.name));
-        if (eduCat && eduCat.skills && eduCat.skills.length > 0) {
-          qualifications = eduCat.skills;
-        }
-      }
-
-
-      // Extract detailed breakdown scores
-      const skillsMatch = text.match(/skills\s*match[:\s]*(\d+)%?/i);
-      const experienceMatch = text.match(/experience\s*match[:\s]*(\d+)%?/i);
-      const educationMatch = text.match(/education\s*match[:\s]*(\d+)%?/i);
-
-      // Extract categories with color indicators
-      const allowedCategories = [
-        'Technical Skills',
-        'Soft Skills',
-        'Experience Level',
-        'Education & Certifications',
-        'Education',
-        'Certifications'
-      ];
-      const categories = [];
-      const categoryMatches = text.matchAll(/[🟢🟡🔴]\s*([^:]+):\s*(\d+)%/g);
-      for (const match of categoryMatches) {
-        const name = match[1].trim();
-        if (allowedCategories.some(cat => name.toLowerCase().includes(cat.toLowerCase()))) {
-          categories.push({
-            name,
-            score: parseInt(match[2]),
-            skills: []
-          });
-        }
-      }
-
-      // Extract strong matches
-      const strengths = [];
-      const strongMatches = text.matchAll(/💪\s*Strong\s*Matches[:\s]*\n((?:✅\s*[^\n]+\n?)*)/gi);
-      for (const match of strongMatches) {
-        const strengthMatches = match[1].matchAll(/✅\s*([^\n]+)/g);
-        for (const strengthMatch of strengthMatches) {
-          strengths.push(strengthMatch[1].trim());
-        }
-      }
-
-      // Extract missing skills - try multiple patterns
-      const weaknesses: string[] = [];
-      const weaknessPatterns = [
-        /⚠️\s*missing\s*skills[:\s]*\n((?:❌\s*[^\n]+\n?)*)/gi,
-        /missing\s*skills[:\s]*\n((?:❌\s*[^\n]+\n?)*)/gi,
-        /areas\s*for\s*improvement[:\s]*\n((?:❌\s*[^\n]+\n?)*)/gi,
-        /❌\s*([^\n❌✅]+)/g
-      ];
-      
-      for (const pattern of weaknessPatterns) {
-        const matches = text.matchAll(pattern);
-        for (const match of matches) {
-          if (pattern.source.includes('❌\\s*[^\\n]+')) {
-            // Structured format
-            const weaknessMatches = match[1]?.matchAll(/❌\s*([^\n]+)/g);
-            if (weaknessMatches) {
-              for (const weaknessMatch of weaknessMatches) {
-                weaknesses.push(weaknessMatch[1].trim());
-              }
-            }
-          } else {
-            // Simple format
-            const weakness = match[1].trim();
-            if (weakness && weakness.length > 0 && weakness.length < 100) {
-              weaknesses.push(weakness);
-            }
-          }
-        }
-        if (weaknesses.length > 0) break;
-      }
-
-      // Extract recommendations - try multiple patterns
-      let recommendations: string[] = [];
-      const recPatterns = [
-        /💡\s*recommendations[:\s]*\n((?:[^\n]+\n?)*)/gi,
-        /recommendations[:\s]*\n((?:[^\n]+\n?)*)/gi,
-        /suggestions[:\s]*\n((?:[^\n]+\n?)*)/gi,
-        /💡\s*([^\n💡]+)/g
-      ];
-      for (const pattern of recPatterns) {
-        const matches = text.matchAll(pattern);
-        for (const match of matches) {
-          if (pattern.source.includes('\\n')) {
-            // Multi-line format
-            let lines = match[1]?.split(/\n|•|\*/).map(l => l.trim()).filter(l => l.length > 0);
-            if (lines) {
-              recommendations.push(...lines);
-            }
-          } else {
-            // Single line format
-            const rec = match[1].trim();
-            if (rec && rec.length > 0 && rec.length < 200) {
-              recommendations.push(rec);
-            }
-          }
-        }
-        if (recommendations.length > 0) break;
-      }
-      // Filter out generic or repeated recommendations
-      const genericPhrases = [
-        'continue building relevant skills',
-        'gain more experience',
-        'keep improving',
-        'good luck',
-        'no recommendations',
-        'none',
-        'n/a',
-        'not applicable',
-        'no further recommendations',
-        'no additional recommendations'
-      ];
-      recommendations = recommendations.filter((rec, idx, arr) =>
-        rec.length > 5 &&
-        !genericPhrases.some(phrase => rec.toLowerCase().includes(phrase)) &&
-        arr.findIndex(r => r.toLowerCase() === rec.toLowerCase()) === idx
-      );
-
-      // If no structured data found, create a fallback
-      if (overallScore === 0 && categories.length === 0 && strengths.length === 0) {
-        console.log('No structured data found, creating fallback');
-        return {
-          overallScore: 75,
-          categories: [
-            { name: 'Technical Skills', score: 80, skills: [] },
-            { name: 'Experience', score: 70, skills: [] },
-            { name: 'Education', score: 85, skills: [] }
-          ],
-          strengths: ['Strong technical background', 'Relevant experience'],
-          weaknesses: ['Some skills may need development'],
-          recommendations: ['Continue building relevant skills', 'Gain more experience in key areas'],
-          keywords: [],
-          requiredSkills: ['Programming', 'Problem Solving', 'Teamwork'],
-          qualifications: ['Bachelor\'s degree or equivalent experience'],
-          detailedBreakdown: {
-            skillsMatch: 78,
-            experienceMatch: 70,
-            keywordMatch: 0,
-            educationMatch: 85
-          }
-        };
-      }
-
-      return {
-        overallScore,
-        categories,
-        strengths,
-        weaknesses,
-        recommendations,
-        keywords: [],
-        requiredSkills: requiredSkills.slice(0, 10),
-        qualifications,
-        detailedBreakdown: {
-          skillsMatch: skillsMatch ? parseInt(skillsMatch[1]) : 0,
-          experienceMatch: experienceMatch ? parseInt(experienceMatch[1]) : 0,
-          keywordMatch: 0,
-          educationMatch: educationMatch ? parseInt(educationMatch[1]) : 0
-        }
-      };
     } catch (error) {
-      console.warn('Failed to parse analysis, using fallback:', error);
-      return {
-        overallScore: 75,
-        categories: [
-          { name: 'Technical Skills', score: 80, skills: [] },
-          { name: 'Experience', score: 70, skills: [] },
-          { name: 'Education', score: 85, skills: [] }
-        ],
-        strengths: ['Strong technical background', 'Relevant experience'],
-        weaknesses: ['Some skills may need development'],
-        recommendations: ['Continue building relevant skills', 'Gain more experience in key areas'],
-        keywords: [],
-        requiredSkills: ['Programming', 'Problem Solving', 'Teamwork'],
-        qualifications: ['Bachelor\'s degree or equivalent experience'],
-        detailedBreakdown: {
-          skillsMatch: 78,
-          experienceMatch: 70,
-          keywordMatch: 0,
-          educationMatch: 85
-        }
-      };
+      console.error('Failed to generate cover letter:', error);
+      alert('Failed to generate cover letter: ' + error.message);
+    } finally {
+      isGenerating = false;
     }
   }
 
-  // Utility functions
-  function getScoreColor(score: number): string {
-    if (score >= 80) return 'text-success';
-    if (score >= 60) return 'text-warning';
-    return 'text-error';
-  }
-
-  function getScoreBadgeClass(score: number): string {
-    if (score >= 80) return 'badge-success';
-    if (score >= 60) return 'badge-warning';
-    return 'badge-error';
-  }
-
-  function formatFileSize(bytes: number): string {
+  function formatFileSize(bytes) {
     if (bytes === 0) return '0 KB';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i)) + ' ' + sizes[i];
   }
+
+  function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Copied to clipboard!');
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+      alert('Failed to copy to clipboard');
+    });
+  }
 </script>
 
-<main class="min-h-screen bg-base-200">
-  <div class="container mx-auto px-4 py-8">
-    <!-- Header -->
-    <div class="text-center mb-8">
-      <h1 class="text-4xl font-bold text-primary mb-4">🎯 Job Analysis</h1>
-      <p class="text-lg text-base-content/70">Analyze job requirements and assess your resume fit</p>
-      {#if user}
-        <div class="badge badge-success badge-sm mt-2">Logged in as: {user.email}</div>
-      {:else}
-        <div class="badge badge-error badge-sm mt-2">Not logged in</div>
-      {/if}
-    </div>
+<main class="container mx-auto max-w-6xl p-6">
+  <div class="mb-8">
+    <h1 class="text-4xl font-bold mb-4 text-primary">🎯 Job Analysis</h1>
+    <p class="text-base-content/70">Analyze job requirements and assess your resume fit</p>
 
-    <!-- Main Content -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Jobs Sidebar -->
-    <div class="lg:col-span-1">
-      <div class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-            <h2 class="card-title mb-4">💼 Available Jobs</h2>
-
-          {#if isLoading}
-            <div class="flex justify-center py-8">
-              <span class="loading loading-spinner loading-lg"></span>
-            </div>
-            {:else if error}
-              <div class="alert alert-error">
-                <span>{error}</span>
-                <button class="btn btn-sm btn-outline" on:click={loadJobs}>Retry</button>
-            </div>
-          {:else if jobs.length === 0}
-            <div class="text-center py-8">
-              <span class="text-4xl block mb-2">📋</span>
-                <p class="text-base-content/70">No jobs available</p>
-            </div>
+    <!-- Always Visible Prompt Section -->
+    <div class="prompt-section">
+      <div class="prompt-header">
+        <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
+          🤖 AI Prompt Editor
+        </h3>
+      </div>
+      <div class="prompt-container">
+        <div class="prompt-area">
+          {#if isPromptExpanded}
+            <pre
+              class="prompt-display"
+              contenteditable="true"
+              bind:textContent={coverLetterPrompt}
+              on:blur={() => savePrompt(coverLetterPrompt)}
+            >{coverLetterPrompt}</pre>
           {:else}
-            <div class="space-y-3 max-h-96 overflow-y-auto">
-              {#each jobs as job}
-                <div
-                    class="p-4 border rounded-lg cursor-pointer transition-all hover:border-primary hover:shadow-md
-                           {selectedJob?.filename === job.filename ? 'border-primary bg-primary bg-opacity-5' : ''}"
-                    role="button"
-                    tabindex="0"
-                  on:click={() => selectJob(job)}
-                    on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectJob(job); } }}
-                >
-                  <div class="flex justify-between items-start mb-2">
-                    <div class="badge badge-sm badge-primary">
-                        {job.hasQuestions ? '💼❓' : '💼'}
-                    </div>
-                    <span class="text-xs text-base-content/50">{formatFileSize(job.size)}</span>
-                  </div>
-                    <h3 class="font-semibold text-sm mb-1 break-words">{job.company}</h3>
-                    <p class="text-sm text-base-content/70 mb-1 break-words">{job.title}</p>
-                  {#if job.location}
-                      <p class="text-xs text-base-content/50 break-words">📍 {job.location}</p>
-                    {/if}
-                    {#if job.preview}
-                      <div class="text-xs text-base-content/60 mt-2 line-clamp-2 break-words">
-                        {job.preview}
-                      </div>
-                  {/if}
-                </div>
-              {/each}
-            </div>
+            <textarea
+              class="prompt-editor"
+              bind:value={coverLetterPrompt}
+              placeholder="Enter your AI prompt here..."
+              rows="10"
+              on:blur={() => savePrompt(coverLetterPrompt)}
+            ></textarea>
           {/if}
         </div>
       </div>
     </div>
+  </div>
 
-      <!-- Analysis Content -->
-    <div class="lg:col-span-2">
-      {#if !selectedJob}
-        <div class="card bg-base-100 shadow-xl">
-          <div class="card-body text-center py-16">
-            <span class="text-6xl block mb-4">🎯</span>
-              <h3 class="text-xl font-semibold mb-2">Select a Job to Analyze</h3>
-              <p class="text-base-content/70">Choose a job from the sidebar to start your analysis</p>
+  <div class="main-content">
+    <!-- Jobs List -->
+    <div class="jobs-sidebar" class:collapsed={isSidebarCollapsed}>
+      <div class="sidebar-header">
+        <h2 on:click={() => isSidebarCollapsed = !isSidebarCollapsed} style="cursor: pointer;">
+          {#if isSidebarCollapsed}
+            💼
+          {:else}
+            💼 Jobs with Descriptions
+          {/if}
+        </h2>
+        {#if !isSidebarCollapsed}
+          <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
+            {#if isLoading}⏳{:else}🔄{/if}
+          </button>
+        {/if}
+      </div>
+
+      {#if !isSidebarCollapsed}
+        {#if isLoading}
+          <div class="loading">Loading jobs...</div>
+        {:else if jobs.length === 0}
+          <div class="empty-state">
+            <p>No job descriptions found</p>
+            <small>Only jobs with detailed descriptions can generate cover letters</small>
           </div>
+        {:else}
+          <div class="jobs-list">
+            {#each jobs as job}
+              <div
+                class="job-item"
+                class:selected={selectedJob?.filename === job.filename}
+                on:click={() => selectJob(job)}
+              >
+                <div class="job-header">
+                  <span class="job-type">
+                    {#if job.hasQuestions}
+                      💼❓ Job + Q&A
+                    {:else}
+                      💼 Job Only
+                    {/if}
+                  </span>
+                  <span class="job-size">{formatFileSize(job.size)}</span>
+                </div>
+                <h3 class="job-company">{job.company}</h3>
+                <p class="job-title">{job.title}</p>
+                {#if job.location}
+                  <p class="job-location">📍 {job.location}</p>
+                {/if}
+                {#if job.hasQuestions}
+                  <p class="job-questions">❓ {job.questionCount} questions</p>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        {/if}
+      {:else}
+        <!-- Collapsed view: Numbered list -->
+        <div class="jobs-list-collapsed">
+          {#each jobs as job, index}
+            <button
+              class="job-icon"
+              class:selected={selectedJob?.filename === job.filename}
+              on:click={() => selectJob(job)}
+              title="{job.company} - {job.title}"
+            >
+              {index + 1}
+            </button>
+          {/each}
         </div>
-      {:else if !jobContent}
-        <div class="card bg-base-100 shadow-xl">
-          <div class="card-body text-center py-16">
-            <span class="loading loading-spinner loading-lg mb-4"></span>
-              <h3 class="text-xl font-semibold mb-2">Loading Job Details</h3>
-              <p class="text-base-content/70">Please wait while we load the job information</p>
-          </div>
+      {/if}
+    </div>
+
+    <!-- Cover Letter Generation -->
+    <div class="cover-letter-panel">
+      {#if !selectedJob}
+        <div class="no-selection">
+          <div class="placeholder-icon">✍️</div>
+          <h2>Select a job to generate cover letter</h2>
+          <p>Choose from the job descriptions on the left to start generating a personalized cover letter</p>
         </div>
       {:else}
-          <!-- Job Header -->
-          <div class="card bg-base-100 shadow-xl mb-6">
-            <div class="card-body">
-              <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
-                <div class="flex-1 min-w-0">
-                  <h2 class="text-2xl font-bold mb-2 break-words">{selectedJob.company}</h2>
-                  <h3 class="text-lg font-semibold mb-2 break-words">{selectedJob.title}</h3>
-                  {#if selectedJob.location}
-                    <p class="text-base-content/70 break-words">📍 {selectedJob.location}</p>
+        <div class="job-header-section">
+          <div class="job-info">
+            <h2>{selectedJob.company}</h2>
+            <h3>{selectedJob.title}</h3>
+            {#if selectedJob.location}
+              <p class="location">📍 {selectedJob.location}</p>
+            {/if}
+          </div>
+
+          <div class="generate-section">
+            <button
+              class="generate-btn"
+              on:click={generateCoverLetter}
+              disabled={isGenerating || !jobContent}
+            >
+              {#if isGenerating}
+                ⏳ Generating Cover Letter...
+              {:else}
+                ✍️ Generate Cover Letter
+              {/if}
+            </button>
+          </div>
+        </div>
+
+        {#if jobContent}
+          <div class="content-section">
+            <!-- Generated Cover Letter -->
+            {#if generatedCoverLetter}
+              <div class="cover-letter-section">
+                <div class="section-header">
+                  <h3>📝 Your Cover Letter</h3>
+                  <div class="actions">
+                    <button class="copy-btn" on:click={() => copyToClipboard(generatedCoverLetter)}>
+                      📋 Copy
+                    </button>
+                    <button class="regenerate-btn" on:click={generateCoverLetter} disabled={isGenerating}>
+                      🔄 Regenerate
+                    </button>
+                  </div>
+                </div>
+                <div class="generated-content">
+                  <pre class="cover-letter-text">{generatedCoverLetter}</pre>
+                </div>
+              </div>
+            {/if}
+
+            <!-- Job Description -->
+            <div class="job-description-section">
+              <h3>📋 Job Description</h3>
+              <div class="job-details-card">
+                <div class="job-meta">
+                  {#if jobContent.company}
+                    <span class="meta-item">🏢 {jobContent.company}</span>
+                  {/if}
+                  {#if jobContent.location}
+                    <span class="meta-item">📍 {jobContent.location}</span>
+                  {/if}
+                  {#if jobContent.work_type}
+                    <span class="meta-item">💼 {jobContent.work_type}</span>
+                  {/if}
+                  {#if jobContent.salary_note}
+                    <span class="meta-item">💰 {jobContent.salary_note}</span>
+                  {/if}
+                  {#if jobContent.posted}
+                    <span class="meta-item">📅 Posted {jobContent.posted}</span>
+                  {/if}
+                  {#if jobContent.application_volume}
+                    <span class="meta-item">📊 {jobContent.application_volume} applications</span>
                   {/if}
                 </div>
-                <button
-                  class="btn btn-primary btn-lg"
-                  on:click={analyzeJob}
-                  disabled={isAnalyzing}
-                >
-                  {#if isAnalyzing}
-                    <span class="loading loading-spinner loading-sm"></span>
-                    Analyzing...
-                  {:else}
-                    🎯 Analyze Fit
+                <div class="job-description-content">
+                  <div class="job-details">
+                    <h4>📋 Job Details</h4>
+                    <pre class="job-text">{jobContent.details || 'No details available'}</pre>
+                  </div>
+                  {#if jobContent.questions && jobContent.questions.length > 0}
+                    <div class="job-questions-preview">
+                      <h4>❓ Screening Questions ({jobContent.questions.length})</h4>
+                      <ul class="questions-list">
+                        {#each jobContent.questions as question, index}
+                          <li class="question-preview">
+                            <strong>Q{index + 1}:</strong> {question.q}
+                          </li>
+                        {/each}
+                      </ul>
+                    </div>
                   {/if}
-                </button>
+                  {#if jobContent.url}
+                    <div class="job-link">
+                      <a href={jobContent.url} target="_blank" rel="noopener noreferrer">
+                        🔗 View Original Job Posting
+                      </a>
+                    </div>
+                  {/if}
+                </div>
               </div>
             </div>
           </div>
-
-          <!-- Job Description -->
-          {#if jobContent.details}
-            <div class="card bg-base-100 shadow-xl mb-6">
-              <div class="card-body">
-                <h3 class="card-title mb-4">📄 Job Description</h3>
-                <div class="prose prose-sm max-w-none">
-                  <div class="whitespace-pre-wrap text-sm leading-relaxed max-h-64 overflow-y-auto break-words bg-base-200 p-4 rounded-lg">
-                    {jobContent.details}
-                  </div>
-                </div>
-              </div>
-            </div>
-          {/if}
-
-          <!-- Analysis Results -->
-          {#if analysis}
-            <!-- Overall Score -->
-            <div class="card bg-base-100 shadow-xl mb-6">
-              <div class="card-body">
-                <h3 class="card-title mb-4">📊 Overall Fit Score</h3>
-                <div class="flex flex-col sm:flex-row items-center gap-6">
-                  <div class="radial-progress {getScoreColor(analysis.overallScore)} flex-shrink-0" style="--value:{analysis.overallScore};">
-                    <span class="text-3xl font-bold">{analysis.overallScore}%</span>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="text-lg font-semibold break-words">Resume Fit Score</p>
-                    <p class="text-base-content/70 break-words leading-relaxed">
-                      {#if analysis.overallScore >= 80}
-                        Excellent match! You're highly qualified for this position.
-                      {:else if analysis.overallScore >= 60}
-                        Good match with some areas for improvement.
-                      {:else}
-                        Moderate match. Consider enhancing your qualifications.
-                      {/if}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Required Skills -->
-            {#if analysis.requiredSkills && analysis.requiredSkills.length > 0}
-              <div class="card bg-base-100 shadow-xl mb-6">
-              <div class="card-body">
-                  <h3 class="card-title mb-4">✅ Required Skills</h3>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                    {#each analysis.requiredSkills as skill}
-                      <div class="flex items-center gap-2 p-2 bg-success bg-opacity-10 rounded-lg">
-                        <span class="text-success">✅</span>
-                        <span class="text-sm break-words">{skill}</span>
-                      </div>
-                    {/each}
-                  </div>
-                </div>
-              </div>
-            {/if}
-
-            <!-- Qualifications -->
-            {#if false}
-            {/if}
-
-
-            <!-- Detailed Breakdown -->
-            {#if analysis.detailedBreakdown && (analysis.detailedBreakdown.skillsMatch > 0 || analysis.detailedBreakdown.experienceMatch > 0)}
-              <div class="card bg-base-100 shadow-xl mb-6">
-                <div class="card-body">
-                  <h3 class="card-title mb-4">📈 Detailed Breakdown</h3>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-3">
-                      <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium">Skills Match</span>
-                        <span class="badge badge-primary">{analysis.detailedBreakdown.skillsMatch}%</span>
-                      </div>
-                      <div class="progress progress-primary w-full h-2">
-                        <div class="progress-bar" style="width: {analysis.detailedBreakdown.skillsMatch}%"></div>
-                      </div>
-                    </div>
-                    <div class="space-y-3">
-                      <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium">Experience Match</span>
-                        <span class="badge badge-primary">{analysis.detailedBreakdown.experienceMatch}%</span>
-                      </div>
-                      <div class="progress progress-primary w-full h-2">
-                        <div class="progress-bar" style="width: {analysis.detailedBreakdown.experienceMatch}%"></div>
-                      </div>
-                    </div>
-                    <div class="space-y-3">
-                      <div class="flex justify-between items-center">
-                        <span class="text-sm font-medium">Education Match</span>
-                        <span class="badge badge-primary">{analysis.detailedBreakdown.educationMatch}%</span>
-                      </div>
-                      <div class="progress progress-primary w-full h-2">
-                        <div class="progress-bar" style="width: {analysis.detailedBreakdown.educationMatch}%"></div>
-                      </div>
-                    </div>
-                  </div>
-                            </div>
-                          </div>
-                        {/if}
-
-            <!-- Category Breakdown -->
-            {#if analysis.categories.length > 0}
-              <div class="card bg-base-100 shadow-xl mb-6">
-                <div class="card-body">
-                  <h3 class="card-title mb-4">🔍 Category Breakdown</h3>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {#each analysis.categories as category}
-                      <div class="p-4 bg-base-200 rounded-lg">
-                        <div class="flex justify-between items-center mb-2">
-                          <h4 class="font-semibold text-sm break-words">{category.name}</h4>
-                          <span class="badge {category.score >= 80 ? 'badge-success' : category.score >= 60 ? 'badge-warning' : 'badge-error'}">{category.score}%</span>
-                        </div>
-                        <div class="progress {category.score >= 80 ? 'progress-success' : category.score >= 60 ? 'progress-warning' : 'progress-error'} w-full h-3">
-                          <div class="progress-bar" style="width: {category.score}%"></div>
-                        </div>
-                        {#if category.skills && category.skills.length > 0}
-                          <div class="mt-2 text-xs text-base-content/70">
-                            Skills: {category.skills.join(', ')}
-                          </div>
-                        {/if}
-                      </div>
-                    {/each}
-                    </div>
-                </div>
-              </div>
-            {/if}
-
-            <!-- Strengths and Weaknesses -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <!-- Strengths -->
-              {#if analysis.strengths.length > 0}
-                <div class="card bg-base-100 shadow-xl">
-                  <div class="card-body">
-                    <h3 class="card-title text-success mb-4">💪 Strong Matches</h3>
-                    <div class="space-y-2">
-                      {#each analysis.strengths as strength}
-                        <div class="flex items-start gap-2 p-2 bg-success bg-opacity-10 rounded-lg">
-                          <span class="text-success">✅</span>
-                          <span class="text-sm break-words leading-relaxed">{strength}</span>
-                        </div>
-                      {/each}
-                    </div>
-                  </div>
-                </div>
-              {/if}
-
-              <!-- Weaknesses -->
-              {#if analysis.weaknesses.length > 0}
-                <div class="card bg-base-100 shadow-xl">
-                  <div class="card-body">
-                    <h3 class="card-title text-error mb-4">⚠️ Missing Skills</h3>
-                    <div class="space-y-2">
-                      {#each analysis.weaknesses as weakness}
-                        <div class="flex items-start gap-2 p-2 bg-error bg-opacity-10 rounded-lg">
-                          <span class="text-error">❌</span>
-                          <span class="text-sm break-words leading-relaxed">{weakness}</span>
-                        </div>
-                      {/each}
-                    </div>
-                  </div>
-                </div>
-              {/if}
-            </div>
-
-            <!-- Recommendations -->
-            {#if analysis.recommendations.length > 0}
-              <div class="card bg-base-100 shadow-xl mb-6">
-                <div class="card-body">
-                  <h3 class="card-title text-info mb-4">💡 Recommendations</h3>
-                  <div class="space-y-2">
-                    {#each analysis.recommendations as recommendation}
-                      <div class="flex items-start gap-2 p-3 bg-info bg-opacity-10 rounded-lg">
-                        <span class="text-info">💡</span>
-                        <span class="text-sm break-words leading-relaxed">{recommendation}</span>
-                      </div>
-                    {/each}
-                  </div>
-                </div>
-              </div>
-            {/if}
-
-            <!-- Keywords -->
-            {#if analysis.keywords.length > 0}
-              <div class="card bg-base-100 shadow-xl">
-                <div class="card-body">
-                  <h3 class="card-title mb-4">🔑 Important Keywords</h3>
-                  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                    {#each analysis.keywords as keyword}
-                      <span class="badge badge-primary badge-outline badge-sm text-xs text-center truncate" title={keyword}>{keyword}</span>
-                      {/each}
-                  </div>
-                </div>
-              </div>
-            {/if}
-          {:else if isAnalyzing}
-            <div class="card bg-base-100 shadow-xl">
-              <div class="card-body text-center py-16">
-                <span class="loading loading-spinner loading-lg mb-4"></span>
-                <h3 class="text-xl font-semibold mb-2">Analyzing Job Requirements</h3>
-                <p class="text-base-content/70">Comparing job requirements with your resume...</p>
-              </div>
-            </div>
-          {:else if error}
-            <div class="card bg-base-100 shadow-xl">
-              <div class="card-body text-center py-16">
-                <span class="text-4xl block mb-4">⚠️</span>
-                <h3 class="text-xl font-semibold mb-2">Analysis Failed</h3>
-                <p class="text-base-content/70 mb-4">{error}</p>
-                <button class="btn btn-primary" on:click={analyzeJob}>Try Again</button>
-              </div>
-            </div>
-          {/if}
-          {/if}
-        </div>
+        {:else}
+          <div class="loading">Loading job details...</div>
+        {/if}
+      {/if}
     </div>
   </div>
 </main>
 
 <style>
-  .progress {
-    height: 8px;
-    background-color: hsl(var(--b2));
-    border-radius: 4px;
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  .page-header h1 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 2.2rem;
+  }
+
+  .page-header p {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 0 0 20px 0;
+  }
+
+  .prompt-section {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    max-width: none;
+  }
+
+  .prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .prompt-section h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.1rem;
+    user-select: none;
+  }
+
+  .prompt-section h3:hover {
+    color: #007acc;
+  }
+
+  .prompt-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .prompt-area {
+    width: 100%;
+  }
+
+  .prompt-editor {
+    width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.5;
+    resize: vertical;
+    background: white;
+    color: #333;
+    height: auto;
+  }
+
+  .prompt-editor:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+  }
+
+  .prompt-display {
+    width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.5;
+    background: white;
+    color: #333;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: none;
+    overflow-y: auto;
+  }
+
+  .prompt-display:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+  }
+
+  .prompt-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-start;
+  }
+
+  .save-btn, .reset-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+
+  .save-btn:hover {
+    background: #218838;
+  }
+
+  .reset-btn {
+    background: #6c757d;
+  }
+
+  .reset-btn:hover {
+    background: #5a6268;
+  }
+
+
+
+  .main-content {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 30px;
+    min-height: 700px;
+    transition: grid-template-columns 0.3s ease;
+  }
+
+  .main-content:has(.jobs-sidebar.collapsed) {
+    grid-template-columns: 60px 1fr;
+  }
+
+  /* Jobs Sidebar */
+  .jobs-sidebar {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e5e5e5;
+    transition: all 0.3s ease;
     overflow: hidden;
   }
-  
-  .progress-bar {
+
+  .jobs-sidebar.collapsed {
+    padding: 10px 5px;
+    width: 60px;
+  }
+
+  .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .jobs-sidebar.collapsed .sidebar-header {
+    flex-direction: column;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+  }
+
+  .sidebar-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #495057;
+    user-select: none;
+    flex: 1;
+  }
+
+  .sidebar-header h2:hover {
+    color: #007bff;
+  }
+
+  .jobs-sidebar.collapsed .sidebar-header h2 {
+    font-size: 1.5rem;
+    text-align: center;
+  }
+
+  .refresh-btn {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+
+  .refresh-btn:hover {
+    background: #e9ecef;
+  }
+
+  .jobs-list {
     height: 100%;
-    background-color: hsl(var(--p));
-    transition: width 0.3s ease;
+    overflow-y: auto;
+  }
+
+  .job-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .job-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+  }
+
+  .job-item.selected {
+    border-color: #007bff;
+    background: #f8f9ff;
+  }
+
+  .job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .job-type {
+    background: #007bff;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .job-size {
+    font-size: 0.8rem;
+    color: #6c757d;
+  }
+
+  .job-company {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .job-title {
+    margin: 0 0 5px 0;
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.3;
+  }
+
+  .job-location, .job-questions {
+    margin: 0 0 3px 0;
+    font-size: 0.8rem;
+    color: #666;
+  }
+
+  /* Collapsed Jobs List */
+  .jobs-list-collapsed {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 5px 0;
+  }
+
+  .job-icon {
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 45px;
+  }
+
+  .job-icon:hover {
+    border-color: #007bff;
+    background: #f8f9ff;
+    color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.15);
+    transform: translateX(2px);
+  }
+
+  .job-icon.selected {
+    border-color: #007bff;
+    background: #007bff;
+    color: white;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+    font-weight: 700;
+  }
+
+  /* Cover Letter Panel */
+  .cover-letter-panel {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e5e5e5;
+    overflow: hidden;
+  }
+
+  .no-selection {
+    padding: 80px 40px;
+    text-align: center;
+    color: #666;
+  }
+
+  .placeholder-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+  }
+
+  .no-selection h2 {
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  .job-header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 25px;
+    border-bottom: 1px solid #dee2e6;
+    background: #f8f9fa;
+  }
+
+  .job-info h2 {
+    margin: 0 0 8px 0;
+    color: #333;
+  }
+
+  .job-info h3 {
+    margin: 0 0 10px 0;
+    color: #555;
+    font-weight: 500;
+  }
+
+  .location {
+    margin: 0;
+    color: #666;
+  }
+
+  .generate-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+
+  .generate-btn:hover:not(:disabled) {
+    background: #218838;
+  }
+
+  .generate-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+  }
+
+  .content-section {
+    padding: 25px;
+  }
+
+  .cover-letter-section {
+    margin-bottom: 30px;
+  }
+
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .section-header h3 {
+    margin: 0;
+    color: #333;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .copy-btn {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .copy-btn:hover {
+    background: #138496;
+  }
+
+  .regenerate-btn {
+    background: #ffc107;
+    color: #212529;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .regenerate-btn:hover:not(:disabled) {
+    background: #e0a800;
+  }
+
+  .regenerate-btn:disabled {
+    background: #6c757d;
+    color: white;
+    cursor: not-allowed;
+  }
+
+  .generated-content {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 25px;
+    margin-bottom: 30px;
+  }
+
+  .cover-letter-text {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: Georgia, serif;
+    line-height: 1.7;
+    color: #333;
+    font-size: 1.05rem;
+  }
+
+  .job-description-section h3 {
+    margin-top: 0;
+    color: #495057;
+    margin-bottom: 20px;
+  }
+
+  .job-details-card {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .job-meta {
+    background: #f8f9fa;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+  }
+
+  .meta-item {
+    background: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    border: 1px solid #dee2e6;
+    color: #495057;
+  }
+
+  .job-description-content {
+    padding: 20px;
+  }
+
+  .job-details h4 {
+    color: #495057;
+    margin: 0 0 15px 0;
+    font-size: 1rem;
+  }
+
+  .job-questions-preview {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .job-questions-preview h4 {
+    color: #495057;
+    margin: 0 0 15px 0;
+    font-size: 1rem;
+  }
+
+  .questions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .question-preview {
+    padding: 8px 0;
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .question-preview strong {
+    color: #495057;
+  }
+
+  .job-link {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .job-link a {
+    color: #007acc;
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .job-link a:hover {
+    text-decoration: underline;
+  }
+
+  .job-text {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #333;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+  }
+
+  .empty-state small {
+    display: block;
+    margin-top: 5px;
+    color: #999;
+  }
+
+  .login-required {
+    text-align: center;
+    padding: 80px 20px;
+  }
+
+  .login-required a {
+    color: #007bff;
+    text-decoration: none;
+  }
+
+  .login-required a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 1024px) {
+    .main-content {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .job-header-section {
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .container {
+      padding: 15px;
+    }
   }
 </style>
