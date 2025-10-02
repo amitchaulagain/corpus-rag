@@ -178,7 +178,7 @@ Please format as a professional cover letter with proper greeting and closing.`;
             class="prompt-editor"
             bind:value={coverLetterPrompt}
             placeholder="Enter your AI prompt here..."
-            rows="6"
+            rows="10"
             on:blur={() => savePrompt(coverLetterPrompt)}
           ></textarea>
         </div>
@@ -415,7 +415,7 @@ Please format as a professional cover letter with proper greeting and closing.`;
     resize: vertical;
     background: white;
     color: #333;
-    min-height: 240px;
+    height: auto;
   }
 
   .prompt-editor:focus {

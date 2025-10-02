@@ -29,7 +29,7 @@
   let enhancement: EnhancementResult | null = null;
   let isLoading = false;
   let isEnhancing = false;
-  let enhancementFocus = 'ats'; // 'ats', 'skills', 'experience', 'keywords'
+  let enhancementFocus = 'ats';
 
   const focusOptions = [
     { value: 'ats', label: '🤖 ATS Optimization', description: 'Optimize for Applicant Tracking Systems' },
@@ -149,17 +149,14 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
 
   function parseEnhancementResponse(text: string): EnhancementResult {
     try {
-      // Extract fit scores
       const originalScoreMatch = text.match(/original[^0-9]*(\d+)%?/i);
       const enhancedScoreMatch = text.match(/enhanced[^0-9]*(\d+)%?/i);
-      
+
       const originalFitScore = originalScoreMatch ? parseInt(originalScoreMatch[1]) : 0;
       const enhancedFitScore = enhancedScoreMatch ? parseInt(enhancedScoreMatch[1]) : 0;
 
-      // Extract improvements from the text
       const improvements: Enhancement[] = [];
-      
-      // Look for section improvements
+
       const sectionMatches = text.matchAll(/(?:section|improvement)[:\s]*([^:]+)[:\s]*\n(?:original|before)[:\s]*([^\n]+)\n(?:enhanced|after)[:\s]*([^\n]+)\n(?:reason|why)[:\s]*([^\n]+)/gi);
       for (const match of sectionMatches) {
         improvements.push({
@@ -171,34 +168,29 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
         });
       }
 
-      // Extract ATS keywords
       const atsKeywords = {
         added: [] as string[],
         optimized: [] as string[]
       };
 
-      // Look for keywords
       const keywordMatches = text.matchAll(/(?:keyword|ats)[:\s]*([^\n]+)/gi);
       for (const match of keywordMatches) {
         const keywords = match[1].split(',').map(k => k.trim()).filter(k => k.length > 0);
         atsKeywords.added.push(...keywords);
       }
 
-      // Extract enhanced resume content
       let enhancedResume = '';
       const resumeMatch = text.match(/(?:enhanced resume|complete resume)[:\s]*\n([\s\S]+?)(?:\n\n|\n##|\n###|$)/i);
       if (resumeMatch) {
         enhancedResume = resumeMatch[1].trim();
       }
 
-      // Extract summary
       let summary = '';
       const summaryMatch = text.match(/(?:summary|overview)[:\s]*\n([^\n]+)/i);
       if (summaryMatch) {
         summary = summaryMatch[1].trim();
       }
 
-      // If parsing failed to extract meaningful data, return the raw text as enhanced resume
       if (improvements.length === 0 && !enhancedResume) {
         enhancedResume = text;
         summary = 'AI-generated resume enhancement based on job requirements';
@@ -225,24 +217,6 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
     }
   }
 
-  function getImpactColor(impact: string): string {
-    switch (impact) {
-      case 'high': return 'text-success';
-      case 'medium': return 'text-warning';
-      case 'low': return 'text-info';
-      default: return 'text-base-content';
-    }
-  }
-
-  function getImpactBadge(impact: string): string {
-    switch (impact) {
-      case 'high': return 'badge-success';
-      case 'medium': return 'badge-warning';
-      case 'low': return 'badge-info';
-      default: return 'badge-ghost';
-    }
-  }
-
   function formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 KB';
     const k = 1024;
@@ -262,7 +236,7 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
 
   function downloadEnhancedResume() {
     if (!enhancement) return;
-    
+
     const blob = new Blob([enhancement.enhancedResume], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -275,280 +249,785 @@ Provide specific, actionable enhancements with clear before/after comparisons.`
   }
 </script>
 
-<main class="container mx-auto max-w-7xl p-6">
-  <header class="mb-8">
+<main class="container mx-auto max-w-6xl p-6">
+  <div class="mb-8">
     <h1 class="text-4xl font-bold mb-4 text-primary">✨ Resume Enhancement</h1>
-    <p class="text-base-content/70">ATS optimization and tailored resume improvements for specific job descriptions</p>
-  </header>
+    <p class="text-base-content/70">ATS optimization and tailored resume improvements for specific jobs</p>
+  </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-    <!-- Jobs List Sidebar -->
-    <div class="lg:col-span-1">
-      <div class="card bg-base-100 shadow-xl mb-6">
-        <div class="card-body">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="card-title">💼 Jobs ({jobs.length})</h2>
-            <button class="btn btn-ghost btn-sm" on:click={loadJobs} disabled={isLoading}>
-              {#if isLoading}
-                <span class="loading loading-spinner loading-sm"></span>
-              {:else}
-                🔄
-              {/if}
-            </button>
-          </div>
-
-          {#if isLoading}
-            <div class="flex justify-center py-8">
-              <span class="loading loading-spinner loading-lg"></span>
-            </div>
-          {:else if jobs.length === 0}
-            <div class="text-center py-8">
-              <span class="text-4xl block mb-2">📋</span>
-              <p class="text-base-content/70 text-sm">No jobs found</p>
-            </div>
-          {:else}
-            <div class="space-y-3 max-h-80 overflow-y-auto">
-              {#each jobs as job}
-                <div
-                  class="p-3 border rounded-lg cursor-pointer transition-all hover:border-primary text-sm"
-                  class:border-primary={selectedJob?.filename === job.filename}
-                  class:bg-primary={selectedJob?.filename === job.filename}
-                  class:bg-opacity-5={selectedJob?.filename === job.filename}
-                  role="button"
-                  tabindex="0"
-                  on:click={() => selectJob(job)}
-                  on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectJob(job); } }}
-                >
-                  <div class="flex justify-between items-start mb-1">
-                    <div class="badge badge-xs badge-primary">Job</div>
-                    <span class="text-xs text-base-content/50">{formatFileSize(job.size)}</span>
-                  </div>
-                  <h3 class="font-semibold text-xs mb-1">{job.company}</h3>
-                  <p class="text-xs text-base-content/70">{job.title}</p>
-                </div>
-              {/each}
-            </div>
-          {/if}
-        </div>
+  <div class="main-content">
+    <!-- Jobs Sidebar -->
+    <div class="jobs-sidebar">
+      <div class="sidebar-header">
+        <h2>💼 Jobs with Descriptions ({jobs.length})</h2>
+        <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
+          {#if isLoading}⏳{:else}🔄{/if}
+        </button>
       </div>
+
+      {#if isLoading}
+        <div class="loading">Loading jobs...</div>
+      {:else if jobs.length === 0}
+        <div class="empty-state">
+          <p>No job descriptions found</p>
+        </div>
+      {:else}
+        <div class="jobs-list">
+          {#each jobs as job}
+            <div
+              class="job-item"
+              class:selected={selectedJob?.filename === job.filename}
+              on:click={() => selectJob(job)}
+              role="button"
+              tabindex="0"
+              on:keydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectJob(job); } }}
+            >
+              <div class="job-header">
+                <span class="job-type">💼 Job</span>
+                <span class="job-size">{formatFileSize(job.size)}</span>
+              </div>
+              <h3 class="job-company">{job.company}</h3>
+              <p class="job-title">{job.title}</p>
+              {#if job.location}
+                <p class="job-location">📍 {job.location}</p>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      {/if}
 
       <!-- Enhancement Focus -->
       {#if selectedJob}
-        <div class="card bg-base-100 shadow-xl">
-          <div class="card-body">
-            <h3 class="card-title text-sm mb-3">🎯 Enhancement Focus</h3>
-            <div class="space-y-2">
-              {#each focusOptions as option}
-                <label class="cursor-pointer">
-                  <input 
-                    type="radio" 
-                    bind:group={enhancementFocus} 
-                    value={option.value} 
-                    class="radio radio-primary radio-sm"
-                  />
-                  <div class="ml-2">
-                    <div class="text-sm font-medium">{option.label}</div>
-                    <div class="text-xs text-base-content/60">{option.description}</div>
-                  </div>
-                </label>
-              {/each}
-            </div>
+        <div class="focus-section">
+          <h3>🎯 Enhancement Focus</h3>
+          <div class="focus-options">
+            {#each focusOptions as option}
+              <label class="focus-option">
+                <input
+                  type="radio"
+                  bind:group={enhancementFocus}
+                  value={option.value}
+                />
+                <div class="focus-label">
+                  <div class="focus-title">{option.label}</div>
+                  <div class="focus-desc">{option.description}</div>
+                </div>
+              </label>
+            {/each}
           </div>
         </div>
       {/if}
     </div>
 
     <!-- Enhancement Panel -->
-    <div class="lg:col-span-3">
+    <div class="cover-letter-panel">
       {#if !selectedJob}
-        <div class="card bg-base-100 shadow-xl">
-          <div class="card-body text-center py-16">
-            <span class="text-6xl block mb-4">✨</span>
-            <h2 class="text-2xl font-bold mb-2">Select a Job to Enhance Resume</h2>
-            <p class="text-base-content/70">Choose a job from the list to start optimizing your resume</p>
-          </div>
-        </div>
-      {:else if !jobContent}
-        <div class="card bg-base-100 shadow-xl">
-          <div class="card-body text-center py-16">
-            <span class="loading loading-spinner loading-lg mb-4"></span>
-            <p class="text-base-content/70">Loading job details...</p>
-          </div>
+        <div class="no-selection">
+          <div class="placeholder-icon">✨</div>
+          <h2>Select a job to enhance resume</h2>
+          <p>Choose from the jobs on the left to start optimizing</p>
         </div>
       {:else}
-        <div class="space-y-6">
-          <!-- Job Header & Enhancement Button -->
-          <div class="card bg-base-100 shadow-xl">
-            <div class="card-body">
-              <div class="flex justify-between items-start">
-                <div>
-                  <h2 class="card-title text-xl mb-2">{selectedJob.company}</h2>
-                  <h3 class="text-lg font-medium mb-2">{selectedJob.title}</h3>
-                  {#if selectedJob.location}
-                    <p class="text-base-content/70">📍 {selectedJob.location}</p>
-                  {/if}
-                </div>
-                <div class="text-right">
-                  <div class="mb-2">
-                    <span class="text-sm text-base-content/70">Focus:</span>
-                    <span class="badge badge-primary badge-sm ml-1">
-                      {focusOptions.find(opt => opt.value === enhancementFocus)?.label}
-                    </span>
-                  </div>
-                  <button
-                    class="btn btn-primary"
-                    on:click={enhanceResume}
-                    disabled={isEnhancing}
-                  >
-                    {#if isEnhancing}
-                      <span class="loading loading-spinner loading-sm"></span>
-                      Enhancing...
-                    {:else}
-                      ✨ Enhance Resume
-                    {/if}
-                  </button>
-                </div>
-              </div>
-            </div>
+        <div class="job-header-section">
+          <div class="job-info">
+            <h2>{selectedJob.company}</h2>
+            <h3>{selectedJob.title}</h3>
+            {#if selectedJob.location}
+              <p class="location">📍 {selectedJob.location}</p>
+            {/if}
           </div>
 
-          <!-- Job Description -->
-          {#if jobContent && jobContent.details}
-            <div class="card bg-base-100 shadow-xl">
-              <div class="card-body">
-                <h3 class="card-title mb-4">📄 Job Description</h3>
-                <div class="prose prose-sm max-w-none">
-                  <div class="whitespace-pre-wrap text-sm leading-relaxed max-h-64 overflow-y-auto">
-                    {jobContent.details}
-                  </div>
-                </div>
-              </div>
+          <div class="generate-section">
+            <div class="focus-badge">
+              Focus: {focusOptions.find(opt => opt.value === enhancementFocus)?.label}
             </div>
-          {/if}
+            <button
+              class="generate-btn"
+              on:click={enhanceResume}
+              disabled={isEnhancing || !jobContent}
+            >
+              {#if isEnhancing}
+                ⏳ Enhancing...
+              {:else}
+                ✨ Enhance Resume
+              {/if}
+            </button>
+          </div>
+        </div>
 
-          <!-- Enhancement Results -->
-          {#if enhancement}
-            <!-- Score Improvement -->
-            <div class="card bg-base-100 shadow-xl">
-              <div class="card-body">
-                <h3 class="card-title mb-4">📈 Improvement Score</h3>
-                <div class="grid grid-cols-3 gap-4">
-                  <div class="text-center">
-                    <div class="text-2xl font-bold text-base-content/70">{enhancement.originalFitScore}%</div>
-                    <div class="text-sm text-base-content/70">Original Score</div>
+        {#if jobContent}
+          <div class="content-section">
+            {#if enhancement}
+              <!-- Score Improvement -->
+              <div class="score-section">
+                <h3>📈 Improvement Score</h3>
+                <div class="score-grid">
+                  <div class="score-card">
+                    <div class="score-title">Original Score</div>
+                    <div class="score-value original">{enhancement.originalFitScore}%</div>
                   </div>
-                  <div class="text-center">
-                    <div class="text-3xl">➡️</div>
-                    <div class="text-sm text-base-content/70">Enhanced</div>
-                  </div>
-                  <div class="text-center">
-                    <div class="text-2xl font-bold text-success">{enhancement.enhancedFitScore}%</div>
-                    <div class="text-sm text-base-content/70">
+                  <div class="score-arrow">➡️</div>
+                  <div class="score-card">
+                    <div class="score-title">Enhanced Score</div>
+                    <div class="score-value enhanced">{enhancement.enhancedFitScore}%</div>
+                    <div class="score-desc success">
                       +{enhancement.enhancedFitScore - enhancement.originalFitScore}% improvement
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Specific Improvements -->
-            <div class="card bg-base-100 shadow-xl">
-              <div class="card-body">
-                <h3 class="card-title mb-4">🔧 Specific Improvements</h3>
-                <div class="space-y-4">
-                  {#each enhancement.improvements as improvement}
-                    <div class="border rounded-lg p-4">
-                      <div class="flex justify-between items-center mb-3">
-                        <h4 class="font-semibold">{improvement.section}</h4>
-                        <div class="badge {getImpactBadge(improvement.impact)}">{improvement.impact} impact</div>
-                      </div>
-                      
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                        <div>
-                          <p class="text-sm font-medium text-base-content/70 mb-2">Before:</p>
-                          <div class="bg-base-200 p-3 rounded text-sm">
-                            {improvement.original}
+              <!-- Improvements -->
+              {#if enhancement.improvements.length > 0}
+                <div class="improvements-section">
+                  <h3>🔧 Specific Improvements</h3>
+                  <div class="improvements-list">
+                    {#each enhancement.improvements as improvement}
+                      <div class="improvement-item">
+                        <div class="improvement-header">
+                          <h4>{improvement.section}</h4>
+                          <span class="badge {improvement.impact}">{improvement.impact} impact</span>
+                        </div>
+
+                        <div class="improvement-content-grid">
+                          <div>
+                            <p class="label">Before:</p>
+                            <div class="text-box">{improvement.original}</div>
+                          </div>
+                          <div>
+                            <p class="label success">After:</p>
+                            <div class="text-box success">{improvement.enhanced}</div>
                           </div>
                         </div>
-                        <div>
-                          <p class="text-sm font-medium text-success mb-2">After:</p>
-                          <div class="bg-success/10 border border-success/20 p-3 rounded text-sm">
-                            {improvement.enhanced}
-                          </div>
+
+                        <div class="improvement-reason">
+                          <strong>Why:</strong> {improvement.reason}
                         </div>
                       </div>
-                      
-                      <div class="text-sm text-base-content/70">
-                        <strong>Why:</strong> {improvement.reason}
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+
+              <!-- ATS Keywords -->
+              {#if enhancement.atsKeywords.added.length > 0 || enhancement.atsKeywords.optimized.length > 0}
+                <div class="keywords-section">
+                  <h3>🤖 ATS Keywords Enhancement</h3>
+                  <div class="keywords-grid">
+                    {#if enhancement.atsKeywords.added.length > 0}
+                      <div class="keywords-col">
+                        <h4>✅ Keywords Added</h4>
+                        <div class="keywords-tags">
+                          {#each enhancement.atsKeywords.added as keyword}
+                            <span class="keyword-tag added">{keyword}</span>
+                          {/each}
+                        </div>
                       </div>
-                    </div>
-                  {/each}
-                </div>
-              </div>
-            </div>
-
-            <!-- ATS Keywords -->
-            <div class="card bg-base-100 shadow-xl">
-              <div class="card-body">
-                <h3 class="card-title mb-4">🤖 ATS Keywords Enhancement</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <h4 class="font-semibold text-success mb-2">✅ Keywords Added</h4>
-                    <div class="flex flex-wrap gap-2">
-                      {#each enhancement.atsKeywords.added as keyword}
-                        <span class="badge badge-success badge-outline">{keyword}</span>
-                      {/each}
-                    </div>
-                  </div>
-                  <div>
-                    <h4 class="font-semibold text-info mb-2">🔧 Keywords Optimized</h4>
-                    <div class="flex flex-wrap gap-2">
-                      {#each enhancement.atsKeywords.optimized as keyword}
-                        <span class="badge badge-info badge-outline">{keyword}</span>
-                      {/each}
-                    </div>
+                    {/if}
+                    {#if enhancement.atsKeywords.optimized.length > 0}
+                      <div class="keywords-col">
+                        <h4>🔧 Keywords Optimized</h4>
+                        <div class="keywords-tags">
+                          {#each enhancement.atsKeywords.optimized as keyword}
+                            <span class="keyword-tag optimized">{keyword}</span>
+                          {/each}
+                        </div>
+                      </div>
+                    {/if}
                   </div>
                 </div>
-              </div>
-            </div>
+              {/if}
 
-            <!-- Enhanced Resume Preview -->
-            <div class="card bg-base-100 shadow-xl">
-              <div class="card-body">
-                <div class="flex justify-between items-center mb-4">
-                  <h3 class="card-title">📄 Enhanced Resume</h3>
-                  <div class="flex gap-2">
-                    <button 
-                      class="btn btn-outline btn-sm" 
-                      on:click={() => copyToClipboard(enhancement?.enhancedResume || '')}
-                    >
+              <!-- Enhanced Resume -->
+              <div class="resume-section">
+                <div class="resume-header">
+                  <h3>📄 Enhanced Resume</h3>
+                  <div class="actions">
+                    <button class="copy-btn" on:click={() => copyToClipboard(enhancement?.enhancedResume || '')}>
                       📋 Copy
                     </button>
-                    <button 
-                      class="btn btn-primary btn-sm" 
-                      on:click={downloadEnhancedResume}
-                    >
+                    <button class="download-btn" on:click={downloadEnhancedResume}>
                       💾 Download
                     </button>
                   </div>
                 </div>
-                
-                <div class="bg-base-200 p-4 rounded-lg max-h-96 overflow-y-auto">
-                  <pre class="text-sm whitespace-pre-wrap font-sans">{enhancement.enhancedResume}</pre>
+                <div class="resume-content">
+                  <pre>{enhancement.enhancedResume}</pre>
                 </div>
               </div>
-            </div>
-          {:else if isEnhancing}
-            <div class="card bg-base-100 shadow-xl">
-              <div class="card-body text-center py-16">
-                <span class="loading loading-spinner loading-lg mb-4"></span>
-                <h3 class="text-lg font-semibold mb-2">Enhancing Your Resume</h3>
-                <p class="text-base-content/70">Optimizing for {focusOptions.find(opt => opt.value === enhancementFocus)?.label}...</p>
+            {:else if isEnhancing}
+              <div class="enhancing-state">
+                <div class="loading-spinner">⏳</div>
+                <h3>Enhancing Your Resume</h3>
+                <p>Optimizing for {focusOptions.find(opt => opt.value === enhancementFocus)?.label}...</p>
               </div>
-            </div>
-          {/if}
-        </div>
+            {/if}
+          </div>
+        {:else}
+          <div class="loading">Loading job details...</div>
+        {/if}
       {/if}
     </div>
   </div>
 </main>
+
+<style>
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .main-content {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 30px;
+    min-height: 700px;
+  }
+
+  /* Jobs Sidebar */
+  .jobs-sidebar {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e5e5e5;
+  }
+
+  .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .sidebar-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #495057;
+  }
+
+  .refresh-btn {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+
+  .refresh-btn:hover {
+    background: #e9ecef;
+  }
+
+  .jobs-list {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+  }
+
+  .job-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .job-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+  }
+
+  .job-item.selected {
+    border-color: #007bff;
+    background: #f8f9ff;
+  }
+
+  .job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .job-type {
+    background: #007bff;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .job-size {
+    font-size: 0.8rem;
+    color: #6c757d;
+  }
+
+  .job-company {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .job-title {
+    margin: 0 0 5px 0;
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.3;
+  }
+
+  .job-location {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #666;
+  }
+
+  /* Focus Section */
+  .focus-section {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+  }
+
+  .focus-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .focus-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .focus-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background 0.2s;
+  }
+
+  .focus-option:hover {
+    background: #f8f9fa;
+  }
+
+  .focus-option input[type="radio"] {
+    margin-top: 2px;
+  }
+
+  .focus-label {
+    flex: 1;
+  }
+
+  .focus-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 2px;
+  }
+
+  .focus-desc {
+    font-size: 0.75rem;
+    color: #666;
+  }
+
+  /* Main Panel */
+  .cover-letter-panel {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e5e5e5;
+    overflow: hidden;
+  }
+
+  .no-selection {
+    padding: 80px 40px;
+    text-align: center;
+    color: #666;
+  }
+
+  .placeholder-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+  }
+
+  .no-selection h2 {
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  .job-header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 25px;
+    border-bottom: 1px solid #dee2e6;
+    background: #f8f9fa;
+  }
+
+  .job-info h2 {
+    margin: 0 0 8px 0;
+    color: #333;
+  }
+
+  .job-info h3 {
+    margin: 0 0 10px 0;
+    color: #555;
+    font-weight: 500;
+  }
+
+  .location {
+    margin: 0;
+    color: #666;
+  }
+
+  .generate-section {
+    text-align: right;
+  }
+
+  .focus-badge {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 8px;
+  }
+
+  .generate-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+
+  .generate-btn:hover:not(:disabled) {
+    background: #218838;
+  }
+
+  .generate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .content-section {
+    padding: 25px;
+  }
+
+  /* Score Section */
+  .score-section {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 25px;
+  }
+
+  .score-section h3 {
+    margin: 0 0 20px 0;
+    color: #333;
+  }
+
+  .score-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 30px;
+    align-items: center;
+  }
+
+  .score-card {
+    text-align: center;
+  }
+
+  .score-title {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 10px;
+  }
+
+  .score-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+
+  .score-value.original {
+    color: #6c757d;
+  }
+
+  .score-value.enhanced {
+    color: #28a745;
+  }
+
+  .score-desc {
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  .score-desc.success {
+    color: #28a745;
+  }
+
+  .score-arrow {
+    font-size: 2rem;
+  }
+
+  /* Improvements Section */
+  .improvements-section {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 25px;
+  }
+
+  .improvements-section h3 {
+    margin: 0 0 20px 0;
+    color: #333;
+  }
+
+  .improvements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .improvement-item {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+  }
+
+  .improvement-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .improvement-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #333;
+  }
+
+  .badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .badge.high {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .badge.medium {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .badge.low {
+    background: #d1ecf1;
+    color: #0c5460;
+  }
+
+  .improvement-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+
+  .label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: #666;
+  }
+
+  .label.success {
+    color: #28a745;
+  }
+
+  .text-box {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+
+  .text-box.success {
+    background: #f0fff4;
+    border-color: #28a745;
+  }
+
+  .improvement-reason {
+    font-size: 0.85rem;
+    color: #666;
+  }
+
+  /* Keywords Section */
+  .keywords-section {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 25px;
+  }
+
+  .keywords-section h3 {
+    margin: 0 0 20px 0;
+    color: #333;
+  }
+
+  .keywords-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .keywords-col h4 {
+    margin: 0 0 12px 0;
+    font-size: 0.95rem;
+    color: #333;
+  }
+
+  .keywords-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .keyword-tag {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .keyword-tag.added {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .keyword-tag.optimized {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+  }
+
+  /* Resume Section */
+  .resume-section {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 25px;
+  }
+
+  .resume-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .resume-header h3 {
+    margin: 0;
+    color: #333;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .copy-btn, .download-btn {
+    background: #17a2b8;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+
+  .copy-btn:hover, .download-btn:hover {
+    background: #138496;
+  }
+
+  .resume-content {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .resume-content pre {
+    margin: 0;
+    white-space: pre-wrap;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  /* Enhancing State */
+  .enhancing-state {
+    text-align: center;
+    padding: 60px 40px;
+    color: #666;
+  }
+
+  .loading-spinner {
+    font-size: 3rem;
+    margin-bottom: 20px;
+  }
+
+  .enhancing-state h3 {
+    font-size: 1.3rem;
+    color: #333;
+    margin-bottom: 10px;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+  }
+
+  @media (max-width: 1024px) {
+    .main-content {
+      grid-template-columns: 1fr;
+    }
+
+    .keywords-grid, .improvement-content-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

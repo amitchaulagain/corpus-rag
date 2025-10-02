@@ -2,17 +2,11 @@ We have two documents
 1. resume 
 2. job description
 
-
-
-
 Task:
 Step 1: find list of skills/experience/keywords/education in resume only => S1,T1,U1,V1
 Step 2: find list of skills/experience/keywords/education in job-description only =>S2,T2,U2,V2
 Step 3: find the list of skills/experience/keywords/education that are both in resume and job description =>S3,T3,U3,V3
 Step 4: find the list of skills/experience/keywords/education that are in job description but not in resume =>S4,T4,U4,V4
-
-
-
 
 Step 5 : Calculate category match scores:
    - Skills Match Score (S3)

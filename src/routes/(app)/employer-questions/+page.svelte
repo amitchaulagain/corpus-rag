@@ -244,207 +244,495 @@ Questions: [Questions List]`;
   }
 </script>
 
-<main class="container mx-auto max-w-7xl p-4 lg:p-6">
+<main class="container mx-auto max-w-6xl p-6">
   <div class="mb-8">
     <h1 class="text-4xl font-bold mb-4 text-primary">❓ Employer Questions</h1>
     <p class="text-base-content/70">Get AI-powered recommendations for employer screening questions</p>
 
     <!-- Always Visible Prompt Section -->
-    <div class="card bg-base-100 shadow-xl border border-base-300 hover:border-primary/30 transition-colors mt-6">
-      <div class="card-body">
-        <h3 class="card-title text-lg">🤖 AI Prompt Editor</h3>
-        <div class="mb-4">
+    <div class="prompt-section">
+      <h3>🤖 AI Prompt Editor</h3>
+      <div class="prompt-container">
+        <div class="prompt-area">
           <textarea
-            class="textarea textarea-bordered w-full"
+            class="prompt-editor"
             bind:value={employerQuestionsPrompt}
             placeholder="Enter your AI prompt here..."
-            rows="20"
+            rows="10"
+            on:blur={() => savePrompt(employerQuestionsPrompt)}
           ></textarea>
         </div>
-
       </div>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+  <div class="main-content">
     <!-- Jobs List -->
-    <div class="lg:col-span-1 card bg-base-100 shadow-xl border border-base-300 hover:border-primary/30 transition-colors">
-      <div class="card-body">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="card-title text-primary">❓ Jobs with Questions ({jobs.length})</h2>
-          <button class="btn btn-ghost btn-sm" class:btn-disabled={isLoading} on:click={loadJobs} disabled={isLoading}>
-            {#if isLoading}⏳{:else}🔄{/if}
-          </button>
-        </div>
-
-        {#if isLoading}
-          <div class="flex justify-center items-center py-12">
-            <span class="loading loading-spinner loading-lg text-primary"></span>
-            <span class="ml-4 text-base-content/70">Loading jobs...</span>
-          </div>
-        {:else if jobs.length === 0}
-          <div class="text-center py-12">
-            <p class="text-base-content">No employer questions found</p>
-            <small class="text-base-content/50">Only jobs with screening questions will appear here</small>
-          </div>
-        {:else}
-          <div class="space-y-3 h-full overflow-y-auto pr-2">
-            {#each jobs as job}
-              <div
-                class="card bg-base-200 shadow-md cursor-pointer hover:shadow-lg hover:shadow-primary/20 hover:border-primary/30 border border-transparent transition-all duration-300 hover:-translate-y-1"
-                class:ring-2={selectedJob?.filename === job.filename}
-                class:ring-primary={selectedJob?.filename === job.filename}
-                on:click={() => selectJob(job)}
-              >
-                <div class="card-body p-4">
-                  <div class="flex justify-between items-start mb-2">
-                    <div class="badge badge-primary badge-sm">
-                      ❓ {job.questionCount} Questions
-                    </div>
-                    <div class="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        class="checkbox checkbox-xs"
-                        bind:checked={jobDescriptionStates[job.filename]}
-                        on:click|stopPropagation
-                      />
-                      <div class="text-xs text-base-content/50">{formatFileSize(job.size)}</div>
-                    </div>
-                  </div>
-                  <h3 class="font-bold text-sm text-primary">{job.company}</h3>
-                  <p class="text-sm text-base-content/80">{job.title}</p>
-                  {#if job.location}
-                    <p class="text-xs text-base-content/60">📍 {job.location}</p>
-                  {/if}
-                  {#if job.hasJobDetails}
-                    <p class="text-xs text-success">💼 Has job description too</p>
-                  {/if}
-                </div>
-              </div>
-            {/each}
-          </div>
-        {/if}
+    <div class="jobs-sidebar">
+      <div class="sidebar-header">
+        <h2>❓ Jobs with Questions ({jobs.length})</h2>
+        <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
+          {#if isLoading}⏳{:else}🔄{/if}
+        </button>
       </div>
+
+      {#if isLoading}
+        <div class="loading">Loading jobs...</div>
+      {:else if jobs.length === 0}
+        <div class="empty-state">
+          <p>No employer questions found</p>
+          <small>Only jobs with screening questions will appear here</small>
+        </div>
+      {:else}
+        <div class="jobs-list">
+          {#each jobs as job}
+            <div
+              class="job-item"
+              class:selected={selectedJob?.filename === job.filename}
+              on:click={() => selectJob(job)}
+            >
+              <div class="job-header">
+                <span class="job-type">
+                  ❓ {job.questionCount} Questions
+                </span>
+                <span class="job-size">{formatFileSize(job.size)}</span>
+              </div>
+              <h3 class="job-company">{job.company}</h3>
+              <p class="job-title">{job.title}</p>
+              {#if job.location}
+                <p class="job-location">📍 {job.location}</p>
+              {/if}
+              {#if job.hasJobDetails}
+                <p class="job-questions">💼 Has job description too</p>
+              {/if}
+            </div>
+          {/each}
+        </div>
+      {/if}
     </div>
 
     <!-- Q&A Panel -->
-    <div class="lg:col-span-3">
-      <div class="card bg-base-100 shadow-xl border border-base-300 hover:border-primary/30 transition-colors h-full">
-        <div class="card-body">
-          {#if !selectedJob}
-            <div class="text-center py-16">
-              <div class="text-6xl mb-4">❓</div>
-              <h2 class="text-2xl font-bold mb-2 text-primary">Select a job with questions</h2>
-              <p class="text-base-content/70">Choose from employer screening questions on the left to get AI-powered answer recommendations</p>
-            </div>
-          {:else}
-            <div class="mb-6">
-              <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                <div>
-                  <h2 class="text-2xl font-bold text-primary">{selectedJob.company}</h2>
-                  <h3 class="text-lg font-semibold text-base-content">{selectedJob.title}</h3>
-                  {#if selectedJob.location}
-                    <p class="text-sm text-base-content/70">📍 {selectedJob.location}</p>
-                  {/if}
-                  <p class="text-sm text-base-content/70">❓ {selectedJob.questionCount} screening questions</p>
-                </div>
+    <div class="cover-letter-panel">
+      {#if !selectedJob}
+        <div class="no-selection">
+          <div class="placeholder-icon">❓</div>
+          <h2>Select a job to see questions</h2>
+          <p>Choose from the jobs on the left to start getting answer recommendations</p>
+        </div>
+      {:else}
+        <div class="job-header-section">
+          <div class="job-info">
+            <h2>{selectedJob.company}</h2>
+            <h3>{selectedJob.title}</h3>
+            {#if selectedJob.location}
+              <p class="location">📍 {selectedJob.location}</p>
+            {/if}
+          </div>
 
-                <button
-                  class="btn btn-primary"
-                  class:loading={isGenerating}
-                  class:btn-disabled={isGenerating || !jobContent}
-                  on:click={generateAnswers}
-                  disabled={isGenerating || !jobContent}
-                >
-                  {#if isGenerating}
-                    Generating Answers...
-                  {:else}
-                    ✅ Get Answer Recommendations
-                  {/if}
-                </button>
-              </div>
-            </div>
+          <div class="generate-section">
+            <button
+              class="generate-btn"
+              on:click={generateAnswers}
+              disabled={isGenerating || !jobContent}
+            >
+              {#if isGenerating}
+                ⏳ Generating...
+              {:else}
+                ✅ Get Recommendations
+              {/if}
+            </button>
+          </div>
+        </div>
 
-            {#if jobContent && jobContent.questions}
-              <div class="space-y-6">
-                <!-- Generated Answers -->
-                {#if generatedAnswers}
-                  <div class="card bg-success bg-opacity-10 border-2 border-success border-opacity-30 shadow-lg hover:shadow-xl transition-shadow duration-300">
-                    <div class="card-body">
-                      <div class="flex justify-between items-center mb-4">
-                        <h3 class="card-title text-success">🎯 AI Recommendations</h3>
-                        <div class="flex gap-2">
-                          <button class="btn btn-ghost btn-sm" on:click={() => copyToClipboard(generatedAnswers)}>
-                            📋 Copy All
-                          </button>
-                          <button class="btn btn-ghost btn-sm" class:btn-disabled={isGenerating} on:click={generateAnswers} disabled={isGenerating}>
-                            🔄 Regenerate
-                          </button>
-                        </div>
-                      </div>
-                      <div class="bg-base-200 p-4 rounded-lg overflow-x-auto">
-                        <pre class="text-sm whitespace-pre-wrap">{generatedAnswers}</pre>
-                      </div>
-                    </div>
-                  </div>
-                {/if}
-
-                <!-- Questions List -->
-                <div class="card bg-base-200 border border-base-300 shadow-md hover:shadow-lg transition-shadow duration-300">
-                  <div class="card-body">
-                    <h3 class="card-title text-primary mb-4">📝 Employer Questions ({jobContent.questions.length})</h3>
-                    <div class="space-y-6 h-full overflow-y-auto pr-4">
-                      {#each jobContent.questions as question, index}
-                        <div class="card bg-base-100 shadow-md border border-base-200 hover:shadow-lg hover:border-primary/20 transition-all duration-200">
-                          <div class="card-body p-6">
-                            <div class="flex justify-between items-center mb-2">
-                              <h4 class="font-semibold text-primary">Question {index + 1}</h4>
-                              <div class="badge badge-outline badge-sm">{question.type || 'select'}</div>
-                            </div>
-                            <p class="text-base-content mb-3">{question.q}</p>
-                            {#if question.opts && question.opts.length > 0}
-                              <div>
-                                <h5 class="font-medium text-base-content/80 mb-2">Options:</h5>
-                                <div class="space-y-3">
-                                  {#each question.opts as option, optIndex}
-                                    <div class="flex items-center gap-4 p-4 rounded-lg border transition-all duration-200 hover:border-primary/30"
-                                         class:bg-success={isOptionRecommended(index, optIndex)}
-                                         class:text-success-content={isOptionRecommended(index, optIndex)}
-                                         class:border-success={isOptionRecommended(index, optIndex)}
-                                         class:border-2={isOptionRecommended(index, optIndex)}
-                                         class:shadow-lg={isOptionRecommended(index, optIndex)}
-                                         class:ring-2={isOptionRecommended(index, optIndex)}
-                                         class:ring-success={isOptionRecommended(index, optIndex)}
-                                         class:ring-opacity-50={isOptionRecommended(index, optIndex)}
-                                         class:border-base-300={!isOptionRecommended(index, optIndex)}>
-                                      <div class="badge badge-sm font-bold" class:badge-success={isOptionRecommended(index, optIndex)} class:badge-outline={!isOptionRecommended(index, optIndex)}>
-                                        {optIndex}
-                                      </div>
-                                      <span class="flex-1 text-sm font-medium" class:font-bold={isOptionRecommended(index, optIndex)}>{option}</span>
-                                      {#if isOptionRecommended(index, optIndex)}
-                                        <div class="badge badge-success badge-sm font-bold animate-pulse">🤖 AI RECOMMENDED</div>
-                                      {/if}
-                                    </div>
-                                  {/each}
-                                </div>
-                              </div>
-                            {/if}
-                          </div>
-                        </div>
-                      {/each}
-                    </div>
+        {#if jobContent && jobContent.questions}
+          <div class="content-section">
+            <!-- Generated Answers -->
+            {#if generatedAnswers}
+              <div class="cover-letter-section">
+                <div class="section-header">
+                  <h3>🎯 AI Recommendations</h3>
+                  <div class="actions">
+                    <button class="copy-btn" on:click={() => copyToClipboard(generatedAnswers)}>
+                      📋 Copy
+                    </button>
+                    <button class="regenerate-btn" on:click={generateAnswers} disabled={isGenerating}>
+                      🔄 Regenerate
+                    </button>
                   </div>
                 </div>
-              </div>
-            {:else}
-              <div class="flex justify-center items-center py-12">
-                <span class="loading loading-spinner loading-lg text-primary"></span>
-                <span class="ml-4 text-base-content/70">Loading questions...</span>
+                <div class="generated-content">
+                  <pre class="cover-letter-text">{generatedAnswers}</pre>
+                </div>
               </div>
             {/if}
-          {/if}
-        </div>
-      </div>
+
+            <!-- Questions List -->
+            <div class="job-description-section">
+              <h3>📝 Employer Questions ({jobContent.questions.length})</h3>
+              <div class="space-y-6">
+                {#each jobContent.questions as question, index}
+                  <div class="question-item">
+                    <div class="question-header">
+                      <h4>Question {index + 1}</h4>
+                      <div class="question-type">{question.type || 'select'}</div>
+                    </div>
+                    <p class="question-text">{question.q}</p>
+                    {#if question.opts && question.opts.length > 0}
+                      <div class="options-list">
+                        <h5>Options:</h5>
+                        {#each question.opts as option, optIndex}
+                          <div
+                            class="option-item"
+                            class:recommended={isOptionRecommended(index, optIndex)}
+                          >
+                            <div class="option-index">{optIndex}</div>
+                            <span class="option-text">{option}</span>
+                            {#if isOptionRecommended(index, optIndex)}
+                              <div class="recommended-badge">🤖 AI RECOMMENDED</div>
+                            {/if}
+                          </div>
+                        {/each}
+                      </div>
+                    {/if}
+                  </div>
+                {/each}
+              </div>
+            </div>
+          </div>
+        {:else}
+          <div class="loading">Loading questions...</div>
+        {/if}
+      {/if}
     </div>
   </div>
 </main>
+
+<style>
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+
+  .page-header h1 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 2.2rem;
+  }
+
+  .page-header p {
+    color: #666;
+    font-size: 1.1rem;
+    margin: 0 0 20px 0;
+  }
+
+  .prompt-section {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+    max-width: none;
+  }
+
+  .prompt-section h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 1.1rem;
+  }
+
+  .prompt-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .prompt-area {
+    width: 100%;
+  }
+
+  .prompt-editor {
+    width: 100%;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.5;
+    resize: vertical;
+    background: white;
+    color: #333;
+    height: auto;
+  }
+
+  .prompt-editor:focus {
+    outline: none;
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+  }
+
+  .main-content {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 30px;
+    min-height: 700px;
+  }
+
+  /* Jobs Sidebar */
+  .jobs-sidebar {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e5e5e5;
+  }
+
+  .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #dee2e6;
+  }
+
+  .sidebar-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #495057;
+  }
+
+  .refresh-btn {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+
+  .refresh-btn:hover {
+    background: #e9ecef;
+  }
+
+  .jobs-list {
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .job-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .job-item:hover {
+    border-color: #007bff;
+    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+  }
+
+  .job-item.selected {
+    border-color: #007bff;
+    background: #f8f9ff;
+  }
+
+  .job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .job-type {
+    background: #007bff;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .job-size {
+    font-size: 0.8rem;
+    color: #6c757d;
+  }
+
+  .job-company {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .job-title {
+    margin: 0 0 5px 0;
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.3;
+  }
+
+  .job-location, .job-questions {
+    margin: 0 0 3px 0;
+    font-size: 0.8rem;
+    color: #666;
+  }
+
+  /* Q&A Panel */
+  .cover-letter-panel {
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e5e5e5;
+    overflow: hidden;
+  }
+
+  .no-selection {
+    padding: 80px 40px;
+    text-align: center;
+    color: #666;
+  }
+
+  .placeholder-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+  }
+
+  .no-selection h2 {
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  .job-header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 25px;
+    border-bottom: 1px solid #dee2e6;
+    background: #f8f9fa;
+  }
+
+  .job-info h2 {
+    margin: 0 0 8px 0;
+    color: #333;
+  }
+
+  .job-info h3 {
+    margin: 0 0 10px 0;
+    color: #555;
+    font-weight: 500;
+  }
+
+  .location {
+    margin: 0;
+    color: #666;
+  }
+
+  .generate-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: background-color 0.2s;
+  }
+
+  .generate-btn:hover:not(:disabled) {
+    background: #218838;
+  }
+
+  .generate-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .question-item {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .question-header h4 {
+    margin: 0;
+    color: #333;
+  }
+
+  .question-type {
+    background: #6c757d;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+  }
+
+  .question-text {
+    margin: 0 0 15px 0;
+    color: #555;
+  }
+
+  .options-list h5 {
+    margin: 0 0 10px 0;
+    color: #495057;
+    font-size: 0.9rem;
+  }
+
+  .option-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+  }
+
+  .option-item.recommended {
+    border-color: #28a745;
+    background: #f0fff4;
+  }
+
+  .option-index {
+    background: #e9ecef;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .option-text {
+    flex: 1;
+  }
+
+  .recommended-badge {
+    background: #28a745;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+</style>
