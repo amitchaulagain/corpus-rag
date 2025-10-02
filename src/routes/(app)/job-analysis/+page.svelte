@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { apiRequest } from '$lib/api-client.js';
+  import JobAnalysisResult from '$lib/components/JobAnalysisResult.svelte';
 
   // all variables
   let user = null;
@@ -9,8 +10,8 @@
   let jobContent = null;
   let isLoading = false;
   let isGenerating = false;
-  let generatedCoverLetter = '';
-  let coverLetterPrompt = '';
+  let analysisResult = null;
+  let analysisPrompt = '';
 
   let lastSavedPrompt = '';
   let initialLoaded = false;
@@ -30,7 +31,7 @@
     try {
       const response = await apiRequest('/api/prompts/job-analysis');
       const data = await response.json();
-      coverLetterPrompt = data.content;
+      analysisPrompt = data.content;
       lastSavedPrompt = data.content || '';
       isPromptModified = data.isModified || false;
       initialLoaded = true;
@@ -42,7 +43,7 @@
     } catch (error) {
       console.error('Failed to load prompt:', error);
       // Fallback to default if loading fails
-      coverLetterPrompt = `You are an expert career coach and job market analyst. I will provide you with a job description and my resume. Your task is to conduct a comprehensive analysis of how well I match the position and provide actionable insights.
+      analysisPrompt = `You are an expert career coach and job market analyst. I will provide you with a job description and my resume. Your task is to conduct a comprehensive analysis of how well I match the position and provide actionable insights.
 
 Instructions:
 1. Analyze the job description thoroughly:
@@ -131,7 +132,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
 
   async function resetPrompt() {
     if (confirm('Reset prompt to default? This will overwrite your current prompt.')) {
-      coverLetterPrompt = defaultPrompt;
+      analysisPrompt = defaultPrompt;
       await savePrompt(defaultPrompt);
     }
   }
@@ -168,7 +169,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
 
     selectedJob = job;
     jobContent = null;
-    generatedCoverLetter = '';
+    analysisResult = null;
 
     try {
       const response = await apiRequest(`/api/jobs/${job.filename}`);
@@ -185,10 +186,11 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     }
   }
 
-  async function generateCoverLetter() {
+  async function generateAnalysis() {
     if (!selectedJob || !jobContent) return;
 
     isGenerating = true;
+    analysisResult = null;
     try {
       const response = await apiRequest('/api/generate', {
         method: 'POST',
@@ -196,23 +198,34 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          type: 'cover_letter',
+          type: 'job_analysis',
           jobDetails: jobContent,
           userEmail: user.email,
-          customPrompt: coverLetterPrompt
+          customPrompt: analysisPrompt
         })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        generatedCoverLetter = data.data.generatedText;
+        try {
+          // The AI might wrap the JSON in ```json ... ```, so we need to strip that.
+          const rawText = data.data.generatedText;
+          const jsonMatch = rawText.match(/```json\n([\s\S]*?)\n```/);
+          const jsonString = jsonMatch ? jsonMatch[1] : rawText;
+          analysisResult = JSON.parse(jsonString);
+        } catch (e) {
+          console.error('Failed to parse analysis JSON:', e);
+          alert('The analysis result was not valid JSON. Please check the prompt and try again.');
+          // Optionally, you can show the raw text for debugging
+          analysisResult = { error: 'Invalid JSON response', raw: data.data.generatedText };
+        }
       } else {
-        alert('Failed to generate cover letter: ' + data.error);
+        alert('Failed to generate analysis: ' + data.error);
       }
     } catch (error) {
-      console.error('Failed to generate cover letter:', error);
-      alert('Failed to generate cover letter: ' + error.message);
+      console.error('Failed to generate analysis:', error);
+      alert('Failed to generate analysis: ' + error.message);
     } finally {
       isGenerating = false;
     }
@@ -224,15 +237,6 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     const sizes = ['Bytes', 'KB', 'MB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return Math.round(bytes / Math.pow(k, i)) + ' ' + sizes[i];
-  }
-
-  function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-      alert('Copied to clipboard!');
-    }).catch(err => {
-      console.error('Failed to copy:', err);
-      alert('Failed to copy to clipboard');
-    });
   }
 </script>
 
@@ -259,16 +263,16 @@ Be honest, specific, and actionable. Include concrete examples from both the job
             <pre
               class="prompt-display"
               contenteditable="true"
-              bind:textContent={coverLetterPrompt}
-              on:blur={() => savePrompt(coverLetterPrompt)}
-            >{coverLetterPrompt}</pre>
+              bind:textContent={analysisPrompt}
+              on:blur={() => savePrompt(analysisPrompt)}
+            >{analysisPrompt}</pre>
           {:else}
             <textarea
               class="prompt-editor"
-              bind:value={coverLetterPrompt}
+              bind:value={analysisPrompt}
               placeholder="Enter your AI prompt here..."
               rows="10"
-              on:blur={() => savePrompt(coverLetterPrompt)}
+              on:blur={() => savePrompt(analysisPrompt)}
             ></textarea>
           {/if}
         </div>
@@ -349,11 +353,11 @@ Be honest, specific, and actionable. Include concrete examples from both the job
       {/if}
     </div>
 
-    <!-- Cover Letter Generation -->
+    <!-- Analysis Panel -->
     <div class="cover-letter-panel">
       {#if !selectedJob}
         <div class="no-selection">
-          <div class="placeholder-icon">✍️</div>
+          <div class="placeholder-icon">📊</div>
           <h2>Select a job for analysis</h2>
           <p>Choose from the job descriptions on the left to start analyzing job requirements</p>
         </div>
@@ -370,7 +374,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           <div class="generate-section">
             <button
               class="generate-btn"
-              on:click={generateCoverLetter}
+              on:click={generateAnalysis}
               disabled={isGenerating || !jobContent}
             >
               {#if isGenerating}
@@ -384,25 +388,13 @@ Be honest, specific, and actionable. Include concrete examples from both the job
 
         {#if jobContent}
           <div class="content-section">
-            <!-- Generated Cover Letter -->
-            {#if generatedCoverLetter}
-              <div class="cover-letter-section">
-                <div class="section-header">
-                  <h3>📝 Your Cover Letter</h3>
-                  <div class="actions">
-                    <button class="copy-btn" on:click={() => copyToClipboard(generatedCoverLetter)}>
-                      📋 Copy
-                    </button>
-                  </div>
-                </div>
-                <div class="generated-content">
-                  <pre class="cover-letter-text">{generatedCoverLetter}</pre>
-                </div>
-              </div>
+            <!-- Generated Analysis -->
+            {#if analysisResult}
+              <JobAnalysisResult {analysisResult} />
             {/if}
 
             <!-- Job Description -->
-            <div class="job-description-section">
+            <div class="job-description-section" style="margin-top: 2rem;">
               <h3>📋 Job Description</h3>
               <div class="job-details-card">
                 <div class="job-meta">
