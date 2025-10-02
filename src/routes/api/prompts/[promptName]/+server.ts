@@ -116,65 +116,74 @@ Rules:
 - Choose answers that position me as the ideal candidate
 
 Questions: [Questions List]`,
-    'job-analysis': `You are an expert career coach and job market analyst. I will provide you with a job description and my resume. Your task is to conduct a comprehensive analysis of how well I match the position and provide actionable insights.
+    'job-analysis': `You are an ATS (Applicant Tracking System) analyzer. You will receive two documents:
+1. resume
+2. job description
 
-Instructions:
-1. Analyze the job description thoroughly:
-   - Job title and seniority level
-   - Key responsibilities and day-to-day duties
-   - Required skills (technical and soft skills)
-   - Preferred qualifications
-   - Company culture indicators
-   - Growth opportunities mentioned
-   - Compensation signals (if any)
+Your task is to perform a comprehensive job fit analysis and return ONLY valid JSON - no explanations, no markdown code blocks, no extra text.
 
-2. Evaluate my resume against the job requirements:
-   - Direct skill matches
-   - Transferable skills and experiences
-   - Gaps in qualifications
-   - Overqualified areas
-   - Relevant achievements and metrics
-   - Cultural fit indicators
+ANALYSIS STEPS:
 
-3. Provide a detailed analysis report including:
+Step 1: Extract TECHNICAL SKILLS ONLY from both documents
+- Focus on: hard skills, tools, technologies, certifications, domain-specific competencies
+- Exclude: soft skills, generic terms like "communication", "leadership", "teamwork"
+- Examples vary by field:
+  * Tech: Java, Python, React, AWS, Docker, SQL, Agile
+  * Marketing: SEO, Google Analytics, CRM, A/B testing, Copywriting
+  * Finance: Financial modeling, Excel, SAP, Risk analysis, GAAP
+  * Design: Figma, Adobe Creative Suite, UI/UX, Prototyping
 
-   **Overall Fit Score:** Rate 0-100 with justification
+Step 2: Extract MEANINGFUL KEYWORDS from both documents
+- Focus on: domain-specific terms, job-specific requirements, technical concepts, role-specific responsibilities
+- Exclude: common filler words like "team", "work", "experience", "professional", "responsible for"
+- Limit to max 20 most important keywords per document
+- Examples vary by field:
+  * Tech: "full-stack development", "microservices", "CI/CD pipeline", "API design"
+  * Marketing: "content strategy", "campaign management", "customer acquisition", "brand positioning"
+  * Finance: "financial reporting", "budget forecasting", "compliance", "portfolio management"
 
-   **Strengths (What Makes Me a Great Fit):**
-   - List 5-7 key strengths with specific examples from my resume
-   - Connect each strength to specific job requirements
-   - Highlight unique qualifications that set me apart
+Step 3: Find matched and missing items
+- matched skills: skills in BOTH resume and JD
+- missing skills: skills in JD but NOT in resume
+- matched_keywords: keywords in BOTH resume and JD
+- missing_keywords: keywords in JD but NOT in resume
 
-   **Gaps & Concerns:**
-   - Required skills/experience I'm missing
-   - Potential red flags from employer perspective
-   - Areas where I may be underqualified
+Step 4: Calculate match scores (0-100):
+- Skills Match Score: (matched skills / total JD skills) * 100
+- Experience Match Score: based on years and relevance of experience
 
-   **Transferable Skills & Experiences:**
-   - Skills from other roles that apply here
-   - How to frame unrelated experience as relevant
-   - Hidden strengths the employer might miss
+Step 5: Calculate overall fit score using ATS weighting:
+- Skills: 50%
+- Experience: 30%
+- Keywords: 20%
 
-   **Interview Preparation:**
-   - Top 5 questions they're likely to ask based on the job description
-   - Key talking points to emphasize
-   - Stories/examples to prepare (STAR format suggestions)
-   - Potential concerns to proactively address
+Step 6: Write evaluation summary (2-3 sentences) and 3-5 actionable recommendations
 
-   **Application Strategy:**
-   - Should I apply? (Yes/No with reasoning)
-   - Priority level (High/Medium/Low)
-   - How to position myself in application materials
-   - Networking opportunities to leverage
-   - Timeline considerations
+CRITICAL OUTPUT REQUIREMENTS:
+1. Return ONLY the JSON object - no markdown, no code blocks, no explanations
+2. Do NOT wrap in \`\`\`json or \`\`\`
+3. Return valid, parseable JSON
+4. All arrays must contain strings only
+5. All scores must be integers 0-100
 
-   **Resume Optimization Suggestions:**
-   - Top 3-5 specific changes to make
-   - Keywords to incorporate
-   - Achievements to highlight
-   - How to address gaps
-
-Be honest, specific, and actionable. Include concrete examples from both the job description and my resume to support all points.`,
+Output format (EXACT JSON structure - use underscores in keys, no spaces):
+{
+  "overall_fit_score": 0,
+  "category_scores": {
+    "skills_match_score": 0,
+    "experience_match_score": 0
+  },
+  "skills_in_resume": [],
+  "skills_in_jd": [],
+  "matched_skills": [],
+  "missing_skills": [],
+  "keywords_in_resume": [],
+  "keywords_in_jd": [],
+  "matched_keywords": [],
+  "missing_keywords": [],
+  "evaluation_summary": "",
+  "recommendations": []
+}`,
     'resume-enhancement': `You are an expert resume optimizer and ATS specialist. I will provide you with a job description and my current resume. Your task is to enhance my resume to maximize ATS compatibility and appeal to hiring managers for this specific role.
 
 Instructions:

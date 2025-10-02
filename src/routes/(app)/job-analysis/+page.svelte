@@ -209,13 +209,38 @@ Be honest, specific, and actionable. Include concrete examples from both the job
 
       if (data.success) {
         try {
-          // The AI might wrap the JSON in ```json ... ```, so we need to strip that.
-          const rawText = data.data.generatedText;
-          const jsonMatch = rawText.match(/```json\n([\s\S]*?)\n```/);
-          const jsonString = jsonMatch ? jsonMatch[1] : rawText;
+          // The AI might wrap the JSON in code blocks, so we need to extract it
+          const rawText = data.data.generatedText.trim();
+
+          let jsonString = rawText;
+
+          // Try multiple extraction patterns in order of specificity
+          // 1. Try ```json ... ```
+          let match = rawText.match(/```json\s*([\s\S]*?)\s*```/);
+          if (match) {
+            jsonString = match[1].trim();
+          } else {
+            // 2. Try generic ``` ... ```
+            match = rawText.match(/```\s*([\s\S]*?)\s*```/);
+            if (match) {
+              jsonString = match[1].trim();
+            } else {
+              // 3. Try to find JSON object boundaries
+              const startIdx = rawText.indexOf('{');
+              const endIdx = rawText.lastIndexOf('}');
+              if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+                jsonString = rawText.substring(startIdx, endIdx + 1);
+              }
+            }
+          }
+
           analysisResult = JSON.parse(jsonString);
+
+          // Save the response
+          await saveResponse(analysisResult);
         } catch (e) {
           console.error('Failed to parse analysis JSON:', e);
+          console.error('Raw response:', data.data.generatedText);
           alert('The analysis result was not valid JSON. Please check the prompt and try again.');
           // Optionally, you can show the raw text for debugging
           analysisResult = { error: 'Invalid JSON response', raw: data.data.generatedText };
@@ -228,6 +253,47 @@ Be honest, specific, and actionable. Include concrete examples from both the job
       alert('Failed to generate analysis: ' + error.message);
     } finally {
       isGenerating = false;
+    }
+  }
+
+  async function saveResponse(response) {
+    if (!selectedJob) return;
+
+    try {
+      await apiRequest('/api/save-response', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'job-analysis',
+          company: selectedJob.company,
+          title: selectedJob.title,
+          jobFilename: selectedJob.filename,
+          response
+        })
+      });
+    } catch (error) {
+      console.error('Failed to save response:', error);
+      // Don't show alert, just log - saving is a nice-to-have
+    }
+  }
+
+  async function loadLastResponse() {
+    if (!selectedJob) return;
+
+    try {
+      const response = await apiRequest(`/api/save-response?type=job-analysis&jobFilename=${encodeURIComponent(selectedJob.filename)}`);
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        analysisResult = data.data.response;
+      } else {
+        alert('No saved analysis found for this job.');
+      }
+    } catch (error) {
+      console.error('Failed to load saved response:', error);
+      alert('Failed to load saved response: ' + error.message);
     }
   }
 
@@ -312,26 +378,37 @@ Be honest, specific, and actionable. Include concrete examples from both the job
               <div
                 class="job-item"
                 class:selected={selectedJob?.filename === job.filename}
-                on:click={() => selectJob(job)}
               >
-                <div class="job-header">
-                  <span class="job-type">
-                    {#if job.hasQuestions}
-                      💼❓ Job + Q&A
-                    {:else}
-                      💼 Job Only
-                    {/if}
-                  </span>
-                  <span class="job-size">{formatFileSize(job.size)}</span>
+                <div on:click={() => selectJob(job)} style="cursor: pointer;">
+                  <div class="job-header">
+                    <span class="job-type">
+                      {#if job.hasQuestions}
+                        💼❓ Job + Q&A
+                      {:else}
+                        💼 Job Only
+                      {/if}
+                    </span>
+                    <span class="job-size">{formatFileSize(job.size)}</span>
+                  </div>
+                  <h3 class="job-company">{job.company}</h3>
+                  <p class="job-title">{job.title}</p>
+                  {#if job.location}
+                    <p class="job-location">📍 {job.location}</p>
+                  {/if}
+                  {#if job.hasQuestions}
+                    <p class="job-questions">❓ {job.questionCount} questions</p>
+                  {/if}
                 </div>
-                <h3 class="job-company">{job.company}</h3>
-                <p class="job-title">{job.title}</p>
-                {#if job.location}
-                  <p class="job-location">📍 {job.location}</p>
-                {/if}
-                {#if job.hasQuestions}
-                  <p class="job-questions">❓ {job.questionCount} questions</p>
-                {/if}
+                <button
+                  class="quick-action-btn"
+                  on:click|stopPropagation={async () => {
+                    await selectJob(job);
+                    await generateAnalysis();
+                  }}
+                  disabled={isGenerating}
+                >
+                  🎯 Analyze
+                </button>
               </div>
             {/each}
           </div>
@@ -382,6 +459,13 @@ Be honest, specific, and actionable. Include concrete examples from both the job
               {:else}
                 🎯 Analyze Job
               {/if}
+            </button>
+            <button
+              class="load-btn"
+              on:click={loadLastResponse}
+              disabled={!selectedJob}
+            >
+              📂 Load Saved
             </button>
           </div>
         </div>
@@ -689,7 +773,6 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     border-radius: 6px;
     padding: 15px;
     margin-bottom: 12px;
-    cursor: pointer;
     transition: all 0.2s;
   }
 
@@ -701,6 +784,28 @@ Be honest, specific, and actionable. Include concrete examples from both the job
   .job-item.selected {
     border-color: #007bff;
     background: #f8f9ff;
+  }
+
+  .quick-action-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 6px 12px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .quick-action-btn:hover:not(:disabled) {
+    background: #0056b3;
+  }
+
+  .quick-action-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
   }
 
   .job-header {
@@ -835,7 +940,12 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     color: #666;
   }
 
-  .generate-btn {
+  .generate-section {
+    display: flex;
+    gap: 10px;
+  }
+
+  .generate-btn, .load-btn {
     background: #28a745;
     color: white;
     border: none;
@@ -852,6 +962,19 @@ Be honest, specific, and actionable. Include concrete examples from both the job
   }
 
   .generate-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+  }
+
+  .load-btn {
+    background: #17a2b8;
+  }
+
+  .load-btn:hover:not(:disabled) {
+    background: #138496;
+  }
+
+  .load-btn:disabled {
     background: #6c757d;
     cursor: not-allowed;
   }

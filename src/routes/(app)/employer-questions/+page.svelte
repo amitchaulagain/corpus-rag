@@ -177,6 +177,9 @@ Questions: [Questions List]`;
         parsedAnswers = parseAIAnswers(data.data.generatedText);
         console.log('Generated answers:', generatedAnswers);
         console.log('Parsed answers:', parsedAnswers);
+
+        // Save the response
+        await saveResponse({ raw: generatedAnswers, parsed: parsedAnswers });
       } else {
         alert('Failed to generate answers: ' + data.error);
       }
@@ -185,6 +188,47 @@ Questions: [Questions List]`;
       alert('Failed to generate answers: ' + error.message);
     } finally {
       isGenerating = false;
+    }
+  }
+
+  async function saveResponse(response) {
+    if (!selectedJob) return;
+
+    try {
+      await apiRequest('/api/save-response', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'employer-questions',
+          company: selectedJob.company,
+          title: selectedJob.title,
+          jobFilename: selectedJob.filename,
+          response
+        })
+      });
+    } catch (error) {
+      console.error('Failed to save response:', error);
+    }
+  }
+
+  async function loadLastResponse() {
+    if (!selectedJob) return;
+
+    try {
+      const response = await apiRequest(`/api/save-response?type=employer-questions&jobFilename=${encodeURIComponent(selectedJob.filename)}`);
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        generatedAnswers = data.data.response.raw;
+        parsedAnswers = data.data.response.parsed || parseAIAnswers(data.data.response.raw);
+      } else {
+        alert('No saved answers found for this job.');
+      }
+    } catch (error) {
+      console.error('Failed to load saved response:', error);
+      alert('Failed to load saved response: ' + error.message);
     }
   }
 
@@ -352,22 +396,33 @@ Questions: [Questions List]`;
               <div
                 class="job-item"
                 class:selected={selectedJob?.filename === job.filename}
-                on:click={() => selectJob(job)}
               >
-                <div class="job-header">
-                  <span class="job-type">
-                    ❓ {job.questionCount} Questions
-                  </span>
-                  <span class="job-size">{formatFileSize(job.size)}</span>
+                <div on:click={() => selectJob(job)} style="cursor: pointer;">
+                  <div class="job-header">
+                    <span class="job-type">
+                      ❓ {job.questionCount} Questions
+                    </span>
+                    <span class="job-size">{formatFileSize(job.size)}</span>
+                  </div>
+                  <h3 class="job-company">{job.company}</h3>
+                  <p class="job-title">{job.title}</p>
+                  {#if job.location}
+                    <p class="job-location">📍 {job.location}</p>
+                  {/if}
+                  {#if job.hasJobDetails}
+                    <p class="job-questions">💼 Has job description too</p>
+                  {/if}
                 </div>
-                <h3 class="job-company">{job.company}</h3>
-                <p class="job-title">{job.title}</p>
-                {#if job.location}
-                  <p class="job-location">📍 {job.location}</p>
-                {/if}
-                {#if job.hasJobDetails}
-                  <p class="job-questions">💼 Has job description too</p>
-                {/if}
+                <button
+                  class="quick-action-btn"
+                  on:click|stopPropagation={async () => {
+                    await selectJob(job);
+                    await generateAnswers();
+                  }}
+                  disabled={isGenerating}
+                >
+                  💡 Answer
+                </button>
               </div>
             {/if}
           {/each}
@@ -404,6 +459,13 @@ Questions: [Questions List]`;
               {:else}
                 ✅ Get Recommendations
               {/if}
+            </button>
+            <button
+              class="load-btn"
+              on:click={loadLastResponse}
+              disabled={!selectedJob}
+            >
+              📂 Load Saved
             </button>
           </div>
         </div>
@@ -653,7 +715,6 @@ Questions: [Questions List]`;
     border-radius: 6px;
     padding: 15px;
     margin-bottom: 12px;
-    cursor: pointer;
     transition: all 0.2s;
   }
 
@@ -665,6 +726,28 @@ Questions: [Questions List]`;
   .job-item.selected {
     border-color: #007bff;
     background: #f8f9ff;
+  }
+
+  .quick-action-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 6px 12px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .quick-action-btn:hover:not(:disabled) {
+    background: #0056b3;
+  }
+
+  .quick-action-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
   }
 
   .job-header {
@@ -758,7 +841,12 @@ Questions: [Questions List]`;
     color: #666;
   }
 
-  .generate-btn {
+  .generate-section {
+    display: flex;
+    gap: 10px;
+  }
+
+  .generate-btn, .load-btn {
     background: #28a745;
     color: white;
     border: none;
@@ -776,6 +864,19 @@ Questions: [Questions List]`;
 
   .generate-btn:disabled {
     opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .load-btn {
+    background: #17a2b8;
+  }
+
+  .load-btn:hover:not(:disabled) {
+    background: #138496;
+  }
+
+  .load-btn:disabled {
+    background: #6c757d;
     cursor: not-allowed;
   }
 

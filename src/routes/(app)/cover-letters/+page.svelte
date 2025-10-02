@@ -179,6 +179,8 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
 
       if (data.success) {
         generatedCoverLetter = data.data.generatedText;
+        // Save the response
+        await saveResponse(generatedCoverLetter);
       } else {
         alert('Failed to generate cover letter: ' + data.error);
       }
@@ -187,6 +189,46 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
       alert('Failed to generate cover letter: ' + error.message);
     } finally {
       isGenerating = false;
+    }
+  }
+
+  async function saveResponse(response) {
+    if (!selectedJob) return;
+
+    try {
+      await apiRequest('/api/save-response', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          type: 'cover-letter',
+          company: selectedJob.company,
+          title: selectedJob.title,
+          jobFilename: selectedJob.filename,
+          response
+        })
+      });
+    } catch (error) {
+      console.error('Failed to save response:', error);
+    }
+  }
+
+  async function loadLastResponse() {
+    if (!selectedJob) return;
+
+    try {
+      const response = await apiRequest(`/api/save-response?type=cover-letter&jobFilename=${encodeURIComponent(selectedJob.filename)}`);
+      const data = await response.json();
+
+      if (data.success && data.data) {
+        generatedCoverLetter = data.data.response;
+      } else {
+        alert('No saved cover letter found for this job.');
+      }
+    } catch (error) {
+      console.error('Failed to load saved response:', error);
+      alert('Failed to load saved response: ' + error.message);
     }
   }
 
@@ -280,26 +322,37 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
               <div
                 class="job-item"
                 class:selected={selectedJob?.filename === job.filename}
-                on:click={() => selectJob(job)}
               >
-                <div class="job-header">
-                  <span class="job-type">
-                    {#if job.hasQuestions}
-                      💼❓ Job + Q&A
-                    {:else}
-                      💼 Job Only
-                    {/if}
-                  </span>
-                  <span class="job-size">{formatFileSize(job.size)}</span>
+                <div on:click={() => selectJob(job)} style="cursor: pointer;">
+                  <div class="job-header">
+                    <span class="job-type">
+                      {#if job.hasQuestions}
+                        💼❓ Job + Q&A
+                      {:else}
+                        💼 Job Only
+                      {/if}
+                    </span>
+                    <span class="job-size">{formatFileSize(job.size)}</span>
+                  </div>
+                  <h3 class="job-company">{job.company}</h3>
+                  <p class="job-title">{job.title}</p>
+                  {#if job.location}
+                    <p class="job-location">📍 {job.location}</p>
+                  {/if}
+                  {#if job.hasQuestions}
+                    <p class="job-questions">❓ {job.questionCount} questions</p>
+                  {/if}
                 </div>
-                <h3 class="job-company">{job.company}</h3>
-                <p class="job-title">{job.title}</p>
-                {#if job.location}
-                  <p class="job-location">📍 {job.location}</p>
-                {/if}
-                {#if job.hasQuestions}
-                  <p class="job-questions">❓ {job.questionCount} questions</p>
-                {/if}
+                <button
+                  class="quick-action-btn"
+                  on:click|stopPropagation={async () => {
+                    await selectJob(job);
+                    await generateCoverLetter();
+                  }}
+                  disabled={isGenerating}
+                >
+                  📝 Generate
+                </button>
               </div>
             {/each}
           </div>
@@ -350,6 +403,13 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
               {:else}
                 ✍️ Generate Cover Letter
               {/if}
+            </button>
+            <button
+              class="load-btn"
+              on:click={loadLastResponse}
+              disabled={!selectedJob}
+            >
+              📂 Load Saved
             </button>
           </div>
         </div>
@@ -671,7 +731,6 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     border-radius: 6px;
     padding: 15px;
     margin-bottom: 12px;
-    cursor: pointer;
     transition: all 0.2s;
   }
 
@@ -683,6 +742,28 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
   .job-item.selected {
     border-color: #007bff;
     background: #f8f9ff;
+  }
+
+  .quick-action-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 6px 12px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .quick-action-btn:hover:not(:disabled) {
+    background: #0056b3;
+  }
+
+  .quick-action-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
   }
 
   .job-header {
@@ -817,7 +898,12 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     color: #666;
   }
 
-  .generate-btn {
+  .generate-section {
+    display: flex;
+    gap: 10px;
+  }
+
+  .generate-btn, .load-btn {
     background: #28a745;
     color: white;
     border: none;
@@ -834,6 +920,19 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
   }
 
   .generate-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+  }
+
+  .load-btn {
+    background: #17a2b8;
+  }
+
+  .load-btn:hover:not(:disabled) {
+    background: #138496;
+  }
+
+  .load-btn:disabled {
     background: #6c757d;
     cursor: not-allowed;
   }

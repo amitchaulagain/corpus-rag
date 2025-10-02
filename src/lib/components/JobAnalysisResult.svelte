@@ -19,10 +19,18 @@
   $: overallScore = Math.round(get(analysisResult, 'overall_fit_score', 0));
   $: skillsScore = Math.round(get(analysisResult, 'category_scores.skills_match_score', 0));
   $: experienceScore = Math.round(get(analysisResult, 'category_scores.experience_match_score', 0));
-  $: matchedSkills = get(analysisResult, 'matched_skills', []);
-  $: missingSkills = get(analysisResult, 'missing_skills', []);
+
+  // Handle both formats: with spaces and with underscores
+  $: skillsInResume = get(analysisResult, 'skills_in_resume', get(analysisResult, 'skills in resume', []));
+  $: skillsInJD = get(analysisResult, 'skills_in_jd', get(analysisResult, 'skills in JD', []));
+  $: matchedSkills = get(analysisResult, 'matched_skills', get(analysisResult, 'matched skills', []));
+  $: missingSkills = get(analysisResult, 'missing_skills', get(analysisResult, 'missing skills', []));
+
+  $: keywordsInResume = get(analysisResult, 'keywords_in_resume', get(analysisResult, 'KEYWORDS in resume', []));
+  $: keywordsInJD = get(analysisResult, 'keywords_in_jd', get(analysisResult, 'KEYWORDS in JD', []));
   $: matchedKeywords = get(analysisResult, 'matched_keywords', []);
   $: missingKeywords = get(analysisResult, 'missing_keywords', []);
+
   $: summary = get(analysisResult, 'evaluation_summary', 'No summary provided.');
   $: recommendations = get(analysisResult, 'recommendations', []);
 
@@ -79,69 +87,96 @@
       </div>
     </div>
 
-    <!-- Matched & Missing -->
+    <!-- Skills Breakdown -->
     <div class="card bg-base-100 shadow-md col-span-1 md:col-span-2">
-        <div class="card-body">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Matched Column -->
-                <div>
-                    <h3 class="font-bold text-lg text-success mb-2">✅ What You Have</h3>
-                    <div class="p-2 rounded-lg">
-                        <h4 class="font-semibold text-sm mb-1">Matched Skills</h4>
-                        {#if matchedSkills.length > 0}
-                            <ul class="list-disc list-inside text-sm">
-                                {#each matchedSkills as item}
-                                    <li>{item}</li>
-                                {/each}
-                            </ul>
-                        {:else}
-                            <p class="text-sm text-base-content/60">No specific skill matches found.</p>
-                        {/if}
-                    </div>
-                    <div class="p-2 mt-2 rounded-lg">
-                        <h4 class="font-semibold text-sm mb-1">Matched Keywords</h4>
-                        {#if matchedKeywords.length > 0}
-                            <ul class="list-disc list-inside text-sm">
-                                {#each matchedKeywords as item}
-                                    <li>{item}</li>
-                                {/each}
-                            </ul>
-                        {:else}
-                            <p class="text-sm text-base-content/60">No specific keyword matches found.</p>
-                        {/if}
-                    </div>
-                </div>
+      <div class="card-body">
+        <h3 class="card-title mb-4">📊 Skills Analysis</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Your Skills -->
+          <div class="p-3 bg-base-200 rounded-lg">
+            <h4 class="font-semibold text-sm mb-2">Your Skills ({skillsInResume.length})</h4>
+            {#if skillsInResume.length > 0}
+              <div class="flex flex-wrap gap-1">
+                {#each skillsInResume as skill}
+                  <span class="badge badge-sm">{skill}</span>
+                {/each}
+              </div>
+            {:else}
+              <p class="text-xs text-base-content/60">No skills extracted</p>
+            {/if}
+          </div>
 
-                <!-- Missing Column -->
-                <div>
-                    <h3 class="font-bold text-lg text-error mb-2">❌ What You're Missing</h3>
-                     <div class="p-2 rounded-lg">
-                        <h4 class="font-semibold text-sm mb-1">Missing Skills</h4>
-                        {#if missingSkills.length > 0}
-                            <ul class="list-disc list-inside text-sm">
-                                {#each missingSkills as item}
-                                    <li>{item}</li>
-                                {/each}
-                            </ul>
-                        {:else}
-                            <p class="text-sm text-base-content/60">No missing skills identified. Great match!</p>
-                        {/if}
-                    </div>
-                    <div class="p-2 mt-2 rounded-lg">
-                        <h4 class="font-semibold text-sm mb-1">Missing Keywords</h4>
-                        {#if missingKeywords.length > 0}
-                            <ul class="list-disc list-inside text-sm">
-                                {#each missingKeywords as item}
-                                    <li>{item}</li>
-                                {/each}
-                            </ul>
-                        {:else}
-                            <p class="text-sm text-base-content/60">No missing keywords identified.</p>
-                        {/if}
-                    </div>
-                </div>
+          <!-- Required Skills -->
+          <div class="p-3 bg-base-200 rounded-lg">
+            <h4 class="font-semibold text-sm mb-2">Required Skills ({skillsInJD.length})</h4>
+            {#if skillsInJD.length > 0}
+              <div class="flex flex-wrap gap-1">
+                {#each skillsInJD as skill}
+                  <span class="badge badge-sm badge-outline">{skill}</span>
+                {/each}
+              </div>
+            {:else}
+              <p class="text-xs text-base-content/60">No skills extracted</p>
+            {/if}
+          </div>
+
+          <!-- Match Summary -->
+          <div class="p-3 bg-base-200 rounded-lg">
+            <h4 class="font-semibold text-sm mb-2">Match Summary</h4>
+            <div class="space-y-2">
+              <div>
+                <span class="text-xs text-success">✅ Matched: {matchedSkills.length}</span>
+                {#if matchedSkills.length > 0}
+                  <div class="text-xs mt-1 flex flex-wrap gap-1">
+                    {#each matchedSkills as skill}
+                      <span class="badge badge-success badge-xs">{skill}</span>
+                    {/each}
+                  </div>
+                {/if}
+              </div>
+              <div>
+                <span class="text-xs text-error">❌ Missing: {missingSkills.length}</span>
+              </div>
             </div>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Keywords Breakdown -->
+    <div class="card bg-base-100 shadow-md col-span-1 md:col-span-2">
+      <div class="card-body">
+        <h3 class="card-title mb-4">🔑 Keywords Analysis</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Matched Keywords -->
+          <div>
+            <h4 class="font-bold text-success mb-2">✅ Matched Keywords ({matchedKeywords.length})</h4>
+            {#if matchedKeywords.length > 0}
+              <div class="flex flex-wrap gap-2">
+                {#each matchedKeywords as keyword}
+                  <span class="badge badge-success">{keyword}</span>
+                {/each}
+              </div>
+            {:else}
+              <p class="text-sm text-base-content/60">No keyword matches found</p>
+            {/if}
+          </div>
+
+          <!-- Missing Keywords -->
+          <div>
+            <h4 class="font-bold text-error mb-2">❌ Missing Keywords ({missingKeywords.length})</h4>
+            {#if missingKeywords.length > 0}
+              <div class="flex flex-wrap gap-2">
+                {#each missingKeywords as keyword}
+                  <span class="badge badge-error badge-outline">{keyword}</span>
+                {/each}
+              </div>
+            {:else}
+              <p class="text-sm text-base-content/60">No missing keywords - excellent match!</p>
+            {/if}
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Summary -->

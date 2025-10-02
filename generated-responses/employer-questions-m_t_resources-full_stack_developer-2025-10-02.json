@@ -1,0 +1,14 @@
+{
+  "type": "employer-questions",
+  "company": "M&T Resources",
+  "title": "Full stack Developer",
+  "jobFilename": "m_t_resources_87500954.json",
+  "generatedAt": "2025-10-02T23:20:10.801Z",
+  "response": {
+    "raw": "[0, 5]",
+    "parsed": [
+      0,
+      5
+    ]
+  }
+}
