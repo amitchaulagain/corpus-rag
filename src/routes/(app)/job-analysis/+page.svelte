@@ -235,17 +235,17 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           let jsonString = rawText;
 
           // Try multiple extraction patterns in order of specificity
-          // 1. Try ```json ... ```
-          let match = rawText.match(/```json\s*([\s\S]*?)\s*```/);
+          // 1. Try ```json ... ``` (non-greedy to get the full content)
+          let match = rawText.match(/```json\s*([\s\S]*?)```/);
           if (match) {
             jsonString = match[1].trim();
           } else {
-            // 2. Try generic ``` ... ```
-            match = rawText.match(/```\s*([\s\S]*?)\s*```/);
+            // 2. Try generic ``` ... ``` (non-greedy)
+            match = rawText.match(/```\s*([\s\S]*?)```/);
             if (match) {
               jsonString = match[1].trim();
             } else {
-              // 3. Try to find JSON object boundaries
+              // 3. Try to find JSON object boundaries (from first { to last })
               const startIdx = rawText.indexOf('{');
               const endIdx = rawText.lastIndexOf('}');
               if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
@@ -254,15 +254,72 @@ Be honest, specific, and actionable. Include concrete examples from both the job
             }
           }
 
+          // Parse the JSON
           analysisResult = JSON.parse(jsonString);
+
+          console.log('Parsed analysis result:', analysisResult);
+
+          // Fetch original resume from cloud storage
+          try {
+            console.log('Fetching storage list for user:', user.email);
+            const storageResponse = await apiRequest(`/api/storage/list?userId=${encodeURIComponent(user.email)}`);
+            const storageData = await storageResponse.json();
+
+            console.log('Storage list response:', storageData);
+
+            if (storageData.success && storageData.files) {
+              const resumeFile = storageData.files.find(f =>
+                f.name === 'resume.txt' || f.name === 'resume.md'
+              );
+
+              console.log('Found resume file:', resumeFile?.name);
+
+              if (resumeFile) {
+                // Fetch the resume content with preview=true to get content
+                const resumeResponse = await apiRequest(`/api/files/${resumeFile.name}?userId=${encodeURIComponent(user.email)}&preview=true`);
+                const resumeData = await resumeResponse.json();
+
+                console.log('Resume fetch response:', resumeData);
+
+                if (resumeData.success && resumeData.data?.preview?.content) {
+                  analysisResult.original_resume = resumeData.data.preview.content;
+                  console.log('✅ Fetched original resume from cloud storage, length:', resumeData.data.preview.content.length);
+                } else {
+                  console.error('Resume data missing content:', resumeData);
+                }
+              } else {
+                console.warn('No resume.txt or resume.md found in cloud storage');
+              }
+            } else {
+              console.warn('Storage list failed or no files:', storageData);
+            }
+          } catch (e) {
+            console.error('Failed to fetch original resume from cloud storage:', e);
+          }
+
+          console.log('Final analysisResult with original resume:', analysisResult);
+
+          // Check if resume fields were truncated (common AI issue)
+          if (analysisResult.updated_resume && analysisResult.updated_resume.length < 100) {
+            console.warn('Updated resume seems truncated, may need to increase max tokens');
+          }
 
           // Save the response
           await saveResponse(analysisResult);
         } catch (e) {
           console.error('Failed to parse analysis JSON:', e);
           console.error('Raw response:', data.data.generatedText);
-          alert('The analysis result was not valid JSON. Please check the prompt and try again.');
-          // Optionally, you can show the raw text for debugging
+
+          // Try to extract partial JSON for debugging
+          const startIdx = data.data.generatedText.indexOf('{');
+          const endIdx = data.data.generatedText.lastIndexOf('}');
+          if (startIdx !== -1 && endIdx !== -1) {
+            const partialJson = data.data.generatedText.substring(startIdx, endIdx + 1);
+            console.log('Attempted JSON extraction:', partialJson.substring(0, 500) + '...');
+          }
+
+          alert('The analysis result was not valid JSON or was truncated. The AI response may be too long. Please try again or check console for details.');
+          // Show the error with raw text for debugging
           analysisResult = { error: 'Invalid JSON response', raw: data.data.generatedText };
         }
       } else {
@@ -500,7 +557,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           <div class="content-section">
             <!-- Generated Analysis -->
             {#if analysisResult}
-              <JobAnalysisResult {analysisResult} />
+              <JobAnalysisResult {analysisResult} {user} />
             {/if}
 
             <!-- Job Description -->

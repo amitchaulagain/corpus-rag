@@ -317,7 +317,7 @@ Focus on concrete, measurable improvements that will help with ATS systems and h
         userId: userEmail || auth.user?.email || 'anonymous',
         question: prompt,
         context: analysisContext,
-        maxTokens: 2000,
+        maxTokens: type === 'job_analysis' ? 16384 : 2000,
         temperature: 0.7
       })
     });

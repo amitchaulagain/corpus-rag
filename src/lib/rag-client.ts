@@ -236,7 +236,7 @@ export class VertexRAGClient {
         generationConfig: {
           temperature: request.temperature || 0.4,
           topP: 0.95,
-          maxOutputTokens: request.maxTokens || 2048,
+          maxOutputTokens: request.maxTokens || 8192,
           candidateCount: 1
         },
         safetySettings: [

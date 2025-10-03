@@ -1,8 +1,12 @@
 <!-- src/lib/components/JobAnalysisResult.svelte -->
 <script lang="ts">
+  import { onMount } from 'svelte';
+
   export let analysisResult;
+  export let user;
 
   let showRawJson = false;
+  let showResumeComparison = false;
 
   // Helper to safely get nested properties
   const get = (obj, path, defaultValue = null) => {
@@ -14,6 +18,38 @@
     }
     return result === undefined ? defaultValue : result;
   };
+
+  // Simple word-level diff to highlight additions
+  function getWordDiff(original, updated) {
+    if (!original || !updated) return [];
+
+    const originalWords = original.split(/\s+/);
+    const updatedWords = updated.split(/\s+/);
+
+    const result = [];
+    let i = 0, j = 0;
+
+    while (j < updatedWords.length) {
+      if (i < originalWords.length && originalWords[i] === updatedWords[j]) {
+        result.push({ word: updatedWords[j], added: false });
+        i++;
+        j++;
+      } else {
+        // Check if this word appears later in original (insertion)
+        const foundIndex = originalWords.slice(i).indexOf(updatedWords[j]);
+        if (foundIndex === -1 || foundIndex > 5) {
+          // Likely an addition
+          result.push({ word: updatedWords[j], added: true });
+          j++;
+        } else {
+          // Skip words in original that were deleted
+          i++;
+        }
+      }
+    }
+
+    return result;
+  }
 
   // Safely access all data points
   $: overallScore = Math.round(get(analysisResult, 'overall_fit_score', 0));
@@ -33,6 +69,14 @@
 
   $: summary = get(analysisResult, 'evaluation_summary', 'No summary provided.');
   $: recommendations = get(analysisResult, 'recommendations', []);
+
+  // $: updatedResume = get(analysisResult, 'updated_resume', '');
+  // $: originalResume = get(analysisResult, 'original_resume', '');
+  // $: hasResumes = updatedResume && originalResume;
+  $: updatedResume = "This is the updated resume";
+  $: originalResume = "This is the original resume";
+  $: hasResumes = true;
+  $: diffWords = (originalResume && updatedResume) ? getWordDiff(originalResume, updatedResume) : [];
 
 </script>
 
@@ -202,6 +246,48 @@
         {/if}
       </div>
     </div>
+
+    <!-- Resume Comparison -->
+    {#if hasResumes}
+      <div class="card bg-base-100 shadow-md col-span-1 md:col-span-2">
+        <div class="card-body">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="card-title">📄 Resume Comparison</h3>
+            <button class="btn btn-sm btn-outline" on:click={() => showResumeComparison = !showResumeComparison}>
+              {showResumeComparison ? 'Hide' : 'Show'} Resumes
+            </button>
+          </div>
+
+          {#if showResumeComparison}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <!-- Original Resume -->
+              <div>
+                <h4 class="font-bold text-base mb-2 text-base-content/70">Original Resume</h4>
+                <div class="resume-text-box">
+                  <pre class="text-xs whitespace-pre-wrap">{originalResume}</pre>
+                </div>
+              </div>
+
+              <!-- Updated Resume with Highlights -->
+              <div>
+                <h4 class="font-bold text-base mb-2 text-success">Optimized Resume (New additions in green)</h4>
+                <div class="resume-text-box">
+                  <div class="text-xs whitespace-pre-wrap">
+                    {#each diffWords as {word, added}}
+                      {#if added}
+                        <span class="bg-success/20 text-success font-semibold">{word}</span>{' '}
+                      {:else}
+                        <span>{word}</span>{' '}
+                      {/if}
+                    {/each}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {/if}
+        </div>
+      </div>
+    {/if}
   </div>
 </div>
 
@@ -210,5 +296,16 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 1rem;
+  }
+
+  .resume-text-box {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 1rem;
+    max-height: 500px;
+    overflow-y: auto;
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+    line-height: 1.6;
   }
 </style>
