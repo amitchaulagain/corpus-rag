@@ -70,12 +70,9 @@
   $: summary = get(analysisResult, 'evaluation_summary', 'No summary provided.');
   $: recommendations = get(analysisResult, 'recommendations', []);
 
-  // $: updatedResume = get(analysisResult, 'updated_resume', '');
-  // $: originalResume = get(analysisResult, 'original_resume', '');
-  // $: hasResumes = updatedResume && originalResume;
-  $: updatedResume = "This is the updated resume";
-  $: originalResume = "This is the original resume";
-  $: hasResumes = true;
+  $: updatedResume = get(analysisResult, 'updated_resume', '');
+  $: originalResume = get(analysisResult, 'original_resume', '');
+  $: hasResumes = updatedResume && originalResume;
   $: diffWords = (originalResume && updatedResume) ? getWordDiff(originalResume, updatedResume) : [];
 
 </script>

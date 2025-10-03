@@ -257,33 +257,23 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           // Parse the JSON
           analysisResult = JSON.parse(jsonString);
 
-          console.log('Parsed analysis result:', analysisResult);
-
           // Fetch original resume from cloud storage
           try {
-            console.log('Fetching storage list for user:', user.email);
-            const storageResponse = await apiRequest(`/api/storage/list?userId=${encodeURIComponent(user.email)}`);
+            const storageResponse = await apiRequest(`/api/files?userId=${encodeURIComponent(user.email)}`);
             const storageData = await storageResponse.json();
 
-            console.log('Storage list response:', storageData);
-
-            if (storageData.success && storageData.files) {
-              const resumeFile = storageData.files.find(f =>
+            if (storageData.success && storageData.data.files) {
+              const resumeFile = storageData.data.files.find(f =>
                 f.name === 'resume.txt' || f.name === 'resume.md'
               );
-
-              console.log('Found resume file:', resumeFile?.name);
 
               if (resumeFile) {
                 // Fetch the resume content with preview=true to get content
                 const resumeResponse = await apiRequest(`/api/files/${resumeFile.name}?userId=${encodeURIComponent(user.email)}&preview=true`);
                 const resumeData = await resumeResponse.json();
 
-                console.log('Resume fetch response:', resumeData);
-
                 if (resumeData.success && resumeData.data?.preview?.content) {
                   analysisResult.original_resume = resumeData.data.preview.content;
-                  console.log('✅ Fetched original resume from cloud storage, length:', resumeData.data.preview.content.length);
                 } else {
                   console.error('Resume data missing content:', resumeData);
                 }
@@ -296,8 +286,6 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           } catch (e) {
             console.error('Failed to fetch original resume from cloud storage:', e);
           }
-
-          console.log('Final analysisResult with original resume:', analysisResult);
 
           // Check if resume fields were truncated (common AI issue)
           if (analysisResult.updated_resume && analysisResult.updated_resume.length < 100) {
