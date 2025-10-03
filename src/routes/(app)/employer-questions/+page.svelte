@@ -485,13 +485,14 @@ Questions: [Questions List]`;
                 ✅ Get Recommendations
               {/if}
             </button>
-            <button
-              class="load-btn"
-              on:click={loadLastResponse}
-              disabled={!selectedJob}
-            >
-              📂 Load Saved
-            </button>
+            {#if selectedJob && jobsWithSavedResponses.has(selectedJob.filename)}
+              <button
+                class="load-btn"
+                on:click={loadLastResponse}
+              >
+                📂 Load Saved
+              </button>
+            {/if}
           </div>
         </div>
 
@@ -754,11 +755,11 @@ Questions: [Questions List]`;
   }
 
   .job-item.has-saved {
-    border-color: #87CEEB;
+    border: 3px dashed #FFD700;
   }
 
   .job-item.has-saved.selected {
-    border-color: cornflowerblue;
+    border: 3px dashed cornflowerblue;
   }
 
   .quick-action-btn-inline {

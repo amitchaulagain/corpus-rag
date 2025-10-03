@@ -485,13 +485,14 @@ Be honest, specific, and actionable. Include concrete examples from both the job
                 🎯 Analyze Job
               {/if}
             </button>
-            <button
-              class="load-btn"
-              on:click={loadLastResponse}
-              disabled={!selectedJob}
-            >
-              📂 Load Saved
-            </button>
+            {#if selectedJob && jobsWithSavedResponses.has(selectedJob.filename)}
+              <button
+                class="load-btn"
+                on:click={loadLastResponse}
+              >
+                📂 Load Saved
+              </button>
+            {/if}
           </div>
         </div>
 
@@ -812,11 +813,11 @@ Be honest, specific, and actionable. Include concrete examples from both the job
   }
 
   .job-item.has-saved {
-    border-color: #87CEEB;
+    border: 3px dashed #FFD700;
   }
 
   .job-item.has-saved.selected {
-    border-color: cornflowerblue;
+    border: 3px dashed cornflowerblue;
   }
 
   .quick-action-btn-inline {

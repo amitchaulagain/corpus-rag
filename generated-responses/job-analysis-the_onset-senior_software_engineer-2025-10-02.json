@@ -3,7 +3,7 @@
   "company": "The Onset",
   "title": "Senior Software Engineer",
   "jobFilename": "the_onset_86861981.json",
-  "generatedAt": "2025-10-02T23:20:43.148Z",
+  "generatedAt": "2025-10-02T23:57:11.866Z",
   "response": {
     "overall_fit_score": 40,
     "category_scores": {
@@ -97,25 +97,35 @@
       "Python",
       "Django",
       "Insurtech",
-      "platform scales",
-      "architecture decisions",
-      "engineering standards",
-      "design systems",
-      "complex problems",
+      "scaling",
+      "platform",
       "microservices",
       "Cloud-native infrastructure",
       "AWS",
-      "Terraform"
+      "Terraform",
+      "CloudFormation",
+      "Cross-functional squads",
+      "Engineering best practice",
+      "SOLID principles",
+      "clean architecture",
+      "Mentorship",
+      "collaboration",
+      "high-performance culture",
+      "product direction",
+      "engineering culture"
     ],
     "matched_keywords": [
-      "Architecture",
       "Python",
       "AWS",
-      "design systems"
+      "Architecture",
+      "platform",
+      "microservices",
+      "Cloud-native infrastructure",
+      "SOLID principles",
+      "clean architecture"
     ],
     "missing_keywords": [
       "Senior Software Engineer",
-      "Systems",
       "backend-heavy stack",
       ".NET",
       "Node",
@@ -123,20 +133,23 @@
       "C++",
       "Django",
       "Insurtech",
-      "platform scales",
-      "architecture decisions",
-      "engineering standards",
-      "complex problems",
-      "microservices",
-      "Cloud-native infrastructure",
-      "Terraform"
+      "scaling",
+      "Terraform",
+      "CloudFormation",
+      "Cross-functional squads",
+      "Engineering best practice",
+      "Mentorship",
+      "collaboration",
+      "high-performance culture",
+      "product direction",
+      "engineering culture"
     ],
-    "evaluation_summary": "The candidate possesses strong data analysis skills with proficiency in Python and AWS, which are relevant to the job description. However, the resume lacks experience in backend development stacks like .NET, Node, Go, or C++, and specific technologies like Terraform and CloudFormation mentioned in the job description. The candidate's experience is primarily in data analysis rather than senior software engineering, architecture, and system design.",
+    "evaluation_summary": "The candidate possesses strong foundational skills in Python and AWS, which are relevant to the job description. However, the resume lacks specific experience in backend technologies like .NET, Node, Go, or C++, and direct experience with microservices architecture and cloud infrastructure tools such as Terraform and CloudFormation. While the candidate has experience in data analysis and visualization, the job requires a Senior Software Engineer with a focus on system design and architecture.",
     "recommendations": [
-      "Highlight any backend development experience, even if personal projects, in the resume.",
-      "Emphasize transferable skills from data analysis that relate to system design and problem-solving.",
-      "Consider acquiring certifications or completing projects in backend technologies like Node.js, Go, or specific cloud infrastructure tools.",
-      "Tailor the resume to showcase any experience with microservices or cloud-native infrastructure, even if in a data context."
+      "Highlight any experience with system design, architecture, or backend development, even if not explicitly listed in the resume.",
+      "Emphasize transferable skills from data analysis that relate to problem-solving and logical thinking applicable to software engineering.",
+      "Consider acquiring certifications or completing projects in areas like microservices, specific backend languages (e.g., Python/Django), and cloud infrastructure tools (Terraform, CloudFormation) to bridge the skill gap.",
+      "Tailor the resume to showcase any experience with building scalable platforms or designing complex systems, aligning with the job's emphasis on architecture."
     ]
   }
 }
