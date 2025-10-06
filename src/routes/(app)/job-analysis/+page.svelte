@@ -131,16 +131,51 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     }
   }
 
-  async function resetPrompt() {
-    if (confirm('Reset prompt to default? This will overwrite your current prompt.')) {
-      analysisPrompt = defaultPrompt;
-      await savePrompt(defaultPrompt);
+
+  async function resetToDefaultPrompt() {
+    if (confirm('Reset prompt to default from file? This will overwrite your current prompt.')) {
+      try {
+        const response = await apiRequest('/api/prompts/job-analysis-default');
+        const data = await response.json();
+        if (data.content) {
+          analysisPrompt = data.content;
+          await savePrompt(data.content);
+      } else {
+          // Fallback to hardcoded default
+          analysisPrompt = defaultPrompt;
+          await savePrompt(defaultPrompt);
+        }
+      } catch (error) {
+        console.error('Failed to load default prompt:', error);
+        // Fallback to hardcoded default
+        analysisPrompt = defaultPrompt;
+        await savePrompt(defaultPrompt);
+      }
+    }
+  }
+
+
+  async function saveAsDefaultPrompt() {
+    if (confirm('Save current prompt as the new default? This will affect all future sessions.')) {
+      try {
+        await apiRequest('/api/prompts/job-analysis-default', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ content: analysisPrompt })
+        });
+        alert('Default prompt saved successfully!');
+      } catch (error) {
+        console.error('Failed to save default prompt:', error);
+        alert('Failed to save default prompt. Please try again.');
+      }
     }
   }
 
   async function loadJobs() {
     if (!user) return;
-
+    
     isLoading = true;
     try {
       const response = await apiRequest('/api/jobs');
@@ -239,7 +274,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           let match = rawText.match(/```json\s*([\s\S]*?)```/);
           if (match) {
             jsonString = match[1].trim();
-          } else {
+      } else {
             // 2. Try generic ``` ... ``` (non-greedy)
             match = rawText.match(/```\s*([\s\S]*?)```/);
             if (match) {
@@ -276,8 +311,8 @@ Be honest, specific, and actionable. Include concrete examples from both the job
                   analysisResult.original_resume = resumeData.data.preview.content;
                 } else {
                   console.error('Resume data missing content:', resumeData);
-                }
-              } else {
+            }
+          } else {
                 console.warn('No resume.txt or resume.md found in cloud storage');
               }
             } else {
@@ -355,7 +390,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
 
       if (data.success && data.data) {
         analysisResult = data.data.response;
-      } else {
+          } else {
         alert('No saved analysis found for this job.');
       }
     } catch (error) {
@@ -381,14 +416,22 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     <!-- Always Visible Prompt Section -->
     <div class="prompt-section">
       <div class="prompt-header">
-        <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
+        <button 
+          class="prompt-toggle-btn"
+          on:click={() => isPromptExpanded = !isPromptExpanded} 
+          aria-expanded={isPromptExpanded}
+          aria-label="Toggle AI Prompt Editor"
+        >
           🤖 AI Prompt Editor
-        </h3>
-        {#if isPromptModified}
-          <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
+        </button>
+        <div class="prompt-actions">
+          <button class="save-default-btn" on:click={saveAsDefaultPrompt} title="Save current prompt as default">
+            💾 Save as Default
+          </button>
+          <button class="reset-btn" on:click={resetToDefaultPrompt} title="Reset to default prompt from file">
             ↺ Reset
           </button>
-        {/if}
+        </div>
       </div>
       <div class="prompt-container">
         <div class="prompt-area">
@@ -399,7 +442,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
               bind:textContent={analysisPrompt}
               on:blur={() => savePrompt(analysisPrompt)}
             >{analysisPrompt}</pre>
-          {:else}
+      {:else}
             <textarea
               class="prompt-editor"
               bind:value={analysisPrompt}
@@ -407,23 +450,28 @@ Be honest, specific, and actionable. Include concrete examples from both the job
               rows="10"
               on:blur={() => savePrompt(analysisPrompt)}
             ></textarea>
-          {/if}
+      {/if}
         </div>
       </div>
     </div>
-  </div>
+    </div>
 
   <div class="main-content">
     <!-- Jobs List -->
     <div class="jobs-sidebar" class:collapsed={isSidebarCollapsed}>
       <div class="sidebar-header">
-        <h2 on:click={() => isSidebarCollapsed = !isSidebarCollapsed} style="cursor: pointer;">
+        <button 
+          class="sidebar-toggle-btn"
+          on:click={() => isSidebarCollapsed = !isSidebarCollapsed} 
+          aria-expanded={!isSidebarCollapsed}
+          aria-label="Toggle job list sidebar"
+        >
           {#if isSidebarCollapsed}
             💼
           {:else}
             💼 Jobs with Descriptions
           {/if}
-        </h2>
+        </button>
         {#if !isSidebarCollapsed}
           <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
             {#if isLoading}⏳{:else}🔄{/if}
@@ -432,29 +480,33 @@ Be honest, specific, and actionable. Include concrete examples from both the job
       </div>
 
       {#if !isSidebarCollapsed}
-        {#if isLoading}
+          {#if isLoading}
           <div class="loading">Loading jobs...</div>
-        {:else if jobs.length === 0}
+          {:else if jobs.length === 0}
           <div class="empty-state">
             <p>No job descriptions found</p>
             <small>Only jobs with detailed descriptions can generate cover letters</small>
-          </div>
-        {:else}
+            </div>
+          {:else}
           <div class="jobs-list">
-            {#each jobs as job}
-              <div
+              {#each jobs as job}
+                <div
                 class="job-item"
                 class:selected={selectedJob?.filename === job.filename}
                 class:has-saved={jobsWithSavedResponses.has(job.filename)}
               >
                 <div class="job-header">
-                  <span class="job-type" on:click={() => selectJob(job)} style="cursor: pointer;">
+                  <button 
+                    class="job-type-btn" 
+                  on:click={() => selectJob(job)}
+                    aria-label="Select job: {job.filename}"
+                  >
                     {#if job.hasQuestions}
                       💼❓ Job + Q&A
                     {:else}
                       💼 Job Only
                     {/if}
-                  </span>
+                  </button>
                   <div class="job-header-right">
                     <span class="job-size">{formatFileSize(job.size)}</span>
                     <button
@@ -467,22 +519,26 @@ Be honest, specific, and actionable. Include concrete examples from both the job
                     >
                       🎯
                     </button>
+                    </div>
                   </div>
-                </div>
-                <div on:click={() => selectJob(job)} style="cursor: pointer;">
+                <button 
+                  class="job-details-btn"
+                  on:click={() => selectJob(job)}
+                  aria-label="Select job details for {job.company} - {job.title}"
+                >
                   <h3 class="job-company">{job.company}</h3>
                   <p class="job-title">{job.title}</p>
                   {#if job.location}
                     <p class="job-location">📍 {job.location}</p>
-                  {/if}
+                    {/if}
                   {#if job.hasQuestions}
                     <p class="job-questions">❓ {job.questionCount} questions</p>
                   {/if}
+                </button>
                 </div>
-              </div>
-            {/each}
-          </div>
-        {/if}
+              {/each}
+            </div>
+          {/if}
       {:else}
         <!-- Collapsed view: Numbered list -->
         <div class="jobs-list-collapsed">
@@ -513,23 +569,23 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           <div class="job-info">
             <h2>{selectedJob.company}</h2>
             <h3>{selectedJob.title}</h3>
-            {#if selectedJob.location}
+                  {#if selectedJob.location}
               <p class="location">📍 {selectedJob.location}</p>
-            {/if}
-          </div>
+                  {/if}
+                </div>
 
           <div class="generate-section">
-            <button
+                <button
               class="generate-btn"
               on:click={generateAnalysis}
               disabled={isGenerating || !jobContent}
             >
               {#if isGenerating}
                 ⏳ Analyzing...
-              {:else}
+                  {:else}
                 🎯 Analyze Job
-              {/if}
-            </button>
+                  {/if}
+                </button>
             {#if selectedJob && jobsWithSavedResponses.has(selectedJob.filename)}
               <button
                 class="load-btn"
@@ -537,9 +593,9 @@ Be honest, specific, and actionable. Include concrete examples from both the job
               >
                 📂 Load Saved
               </button>
-            {/if}
-          </div>
-        </div>
+          {/if}
+              </div>
+            </div>
 
         {#if jobContent}
           <div class="content-section">
@@ -555,28 +611,28 @@ Be honest, specific, and actionable. Include concrete examples from both the job
                 <div class="job-meta">
                   {#if jobContent.company}
                     <span class="meta-item">🏢 {jobContent.company}</span>
-                  {/if}
+            {/if}
                   {#if jobContent.location}
                     <span class="meta-item">📍 {jobContent.location}</span>
-                  {/if}
+                        {/if}
                   {#if jobContent.work_type}
                     <span class="meta-item">💼 {jobContent.work_type}</span>
-                  {/if}
+                        {/if}
                   {#if jobContent.salary_note}
                     <span class="meta-item">💰 {jobContent.salary_note}</span>
-                  {/if}
+            {/if}
                   {#if jobContent.posted}
                     <span class="meta-item">📅 Posted {jobContent.posted}</span>
-                  {/if}
+              {/if}
                   {#if jobContent.application_volume}
                     <span class="meta-item">📊 {jobContent.application_volume} applications</span>
-                  {/if}
-                </div>
+              {/if}
+            </div>
                 <div class="job-description-content">
                   <div class="job-details">
                     <h4>📋 Job Details</h4>
                     <pre class="job-text">{jobContent.details || 'No details available'}</pre>
-                  </div>
+                      </div>
                   {#if jobContent.questions && jobContent.questions.length > 0}
                     <div class="job-questions-preview">
                       <h4>❓ Screening Questions ({jobContent.questions.length})</h4>
@@ -585,25 +641,25 @@ Be honest, specific, and actionable. Include concrete examples from both the job
                           <li class="question-preview">
                             <strong>Q{index + 1}:</strong> {question.q}
                           </li>
-                        {/each}
+                    {/each}
                       </ul>
-                    </div>
-                  {/if}
+              </div>
+            {/if}
                   {#if jobContent.url}
                     <div class="job-link">
                       <a href={jobContent.url} target="_blank" rel="noopener noreferrer">
                         🔗 View Original Job Posting
                       </a>
-                    </div>
-                  {/if}
-                </div>
+              </div>
+            {/if}
               </div>
             </div>
-          </div>
+              </div>
+            </div>
         {:else}
           <div class="loading">Loading job details...</div>
-        {/if}
-      {/if}
+          {/if}
+          {/if}
     </div>
   </div>
 </main>
@@ -658,8 +714,97 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     user-select: none;
   }
 
-  .prompt-section h3:hover {
+  .prompt-toggle-btn {
+    background: none;
+    border: none;
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+    color: #333;
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+    font-weight: inherit;
+  }
+
+  .prompt-toggle-btn:hover {
     color: #007acc;
+  }
+
+  .prompt-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .save-default-btn, .reset-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background 0.2s;
+  }
+
+  .save-default-btn {
+    background: #28a745;
+  }
+
+  .save-default-btn:hover {
+    background: #218838;
+  }
+
+  .reset-btn {
+    background: #007bff;
+  }
+
+  .reset-btn:hover {
+    background: #0056b3;
+  }
+
+  .sidebar-toggle-btn {
+    background: none;
+    border: none;
+    margin: 0;
+    font-size: 1.1rem;
+    color: #333;
+    cursor: pointer;
+    padding: 8px 0;
+    text-align: left;
+    font-weight: bold;
+  }
+
+  .sidebar-toggle-btn:hover {
+    color: #007acc;
+  }
+
+  .job-type-btn {
+    background: none;
+    border: none;
+    color: #007acc;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+    padding: 0;
+    text-align: left;
+  }
+
+  .job-type-btn:hover {
+    color: #0056b3;
+  }
+
+  .job-details-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+    width: 100%;
+  }
+
+  .job-details-btn:hover {
+    background: rgba(0, 123, 204, 0.1);
   }
 
   .prompt-container {
@@ -746,20 +891,6 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     background: #5a6268;
   }
 
-  .reset-btn-small {
-    background: #6c757d;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: background 0.2s;
-  }
-
-  .reset-btn-small:hover {
-    background: #5a6268;
-  }
 
   .main-content {
     display: grid;
@@ -782,7 +913,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     transition: all 0.3s ease;
     overflow: hidden;
   }
-
+  
   .jobs-sidebar.collapsed {
     padding: 10px 5px;
     width: 60px;

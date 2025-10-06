@@ -1,4 +1,4 @@
-<script>
+x<script>
   import '../app.css';
 </script>
 

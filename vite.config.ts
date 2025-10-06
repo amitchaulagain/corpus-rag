@@ -8,7 +8,7 @@ export default defineConfig({
     port: 3000,
     host: '0.0.0.0',
     watch: {
-      ignored: ['**/src/lib/prompts/**']
+      ignored: ['**/src/lib/prompts/**', '**/generated-responses/**']
     }
   }
 });

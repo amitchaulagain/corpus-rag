@@ -3,6 +3,7 @@
   "ext": "ts,js,svelte",
   "ignore": [
     "src/lib/prompts/**",
+    "generated-responses/**",
     "node_modules/**",
     "*.log"
   ],

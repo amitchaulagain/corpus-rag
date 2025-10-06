@@ -102,10 +102,45 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     }
   }
 
-  async function resetPrompt() {
-    if (confirm('Reset prompt to default? This will overwrite your current prompt.')) {
-      coverLetterPrompt = defaultPrompt;
-      await savePrompt(defaultPrompt);
+
+  async function resetToDefaultPrompt() {
+    if (confirm('Reset prompt to default from file? This will overwrite your current prompt.')) {
+      try {
+        const response = await apiRequest('/api/prompts/cover-letter-default');
+        const data = await response.json();
+        if (data.content) {
+          coverLetterPrompt = data.content;
+          await savePrompt(data.content);
+        } else {
+          // Fallback to hardcoded default
+          coverLetterPrompt = defaultPrompt;
+          await savePrompt(defaultPrompt);
+        }
+      } catch (error) {
+        console.error('Failed to load default prompt:', error);
+        // Fallback to hardcoded default
+        coverLetterPrompt = defaultPrompt;
+        await savePrompt(defaultPrompt);
+      }
+    }
+  }
+
+
+  async function saveAsDefaultPrompt() {
+    if (confirm('Save current prompt as the new default? This will affect all future sessions.')) {
+      try {
+        await apiRequest('/api/prompts/cover-letter-default', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ content: coverLetterPrompt })
+        });
+        alert('Default prompt saved successfully!');
+      } catch (error) {
+        console.error('Failed to save default prompt:', error);
+        alert('Failed to save default prompt. Please try again.');
+      }
     }
   }
 
@@ -280,14 +315,22 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     <!-- Always Visible Prompt Section -->
     <div class="prompt-section">
       <div class="prompt-header">
-        <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
+        <button 
+          class="prompt-toggle-btn"
+          on:click={() => isPromptExpanded = !isPromptExpanded} 
+          aria-expanded={isPromptExpanded}
+          aria-label="Toggle AI Prompt Editor"
+        >
           🤖 AI Prompt Editor
-        </h3>
-        {#if isPromptModified}
-          <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
+        </button>
+        <div class="prompt-actions">
+          <button class="save-default-btn" on:click={saveAsDefaultPrompt} title="Save current prompt as default">
+            💾 Save as Default
+          </button>
+          <button class="reset-btn" on:click={resetToDefaultPrompt} title="Reset to default prompt from file">
             ↺ Reset
           </button>
-        {/if}
+        </div>
       </div>
       <div class="prompt-container">
         <div class="prompt-area">
@@ -569,8 +612,53 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     user-select: none;
   }
 
-  .prompt-section h3:hover {
+  .prompt-toggle-btn {
+    background: none;
+    border: none;
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+    color: #333;
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+    font-weight: inherit;
+  }
+
+  .prompt-toggle-btn:hover {
     color: #007acc;
+  }
+
+  .prompt-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .save-default-btn, .reset-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: background 0.2s;
+  }
+
+  .save-default-btn {
+    background: #28a745;
+  }
+
+  .save-default-btn:hover {
+    background: #218838;
+  }
+
+  .reset-btn {
+    background: #007bff;
+  }
+
+  .reset-btn:hover {
+    background: #0056b3;
   }
 
   .prompt-container {
@@ -657,20 +745,6 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     background: #5a6268;
   }
 
-  .reset-btn-small {
-    background: #6c757d;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: background 0.2s;
-  }
-
-  .reset-btn-small:hover {
-    background: #5a6268;
-  }
 
 
 

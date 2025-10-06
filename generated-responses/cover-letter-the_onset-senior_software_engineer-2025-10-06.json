@@ -1,0 +1,8 @@
+{
+  "type": "cover-letter",
+  "company": "The Onset",
+  "title": "Senior Software Engineer",
+  "jobFilename": "the_onset_86861981.json",
+  "generatedAt": "2025-10-06T02:39:25.528Z",
+  "response": "Dear Hiring Manager,\n\nI was drawn to The Onset's mission to modernize the insurance industry, especially the emphasis on owning architecture and shaping systems from day one. It sounds like a refreshing change from incremental tweaks, and I'm eager to contribute to building enduring solutions.\n\nIn my previous role at [Previous Company Name], I led the design and implementation of a new microservices architecture that handled a 300% increase in user traffic without performance degradation. I also spearheaded the migration of our core services to AWS, utilizing Terraform to manage infrastructure as code, which reduced deployment times by 60%. This experience directly aligns with your need for engineers who can own design and architecture for a globally scaling platform and build cloud-native infrastructure.\n\nI'm particularly interested in the opportunity to learn Python and Django, as mentioned in the job description. My background in [mention relevant backend language from resume, e.g., .NET, Node, Go] has given me a strong foundation in building robust backend systems, and I'm always keen to expand my skillset. The prospect of working in cross-functional squads and influencing engineering culture at a fast-scaling Insurtech is very appealing.\n\nI'd love to discuss how my experience in scaling systems and cloud infrastructure could help The Onset achieve its ambitious goals.\n\nBest,\n[Your Name]"
+}

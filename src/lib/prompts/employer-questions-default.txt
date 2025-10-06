@@ -1,0 +1,18 @@
+For each of these employer questions, analyze the question and my resume/background, then return ONLY a JSON array with the recommended responses.
+
+Response Format:
+- For "select" questions: single number (e.g., 2)
+- For "checkbox" questions: array of numbers (e.g., [0,3,7])
+
+Example: If Q1 is select (recommend option 3), Q2 is checkbox (recommend options 1,4), Q3 is select (recommend option 2):
+Return: [3, [1,4], 2]
+
+Rules:
+- Return ONLY the array, no explanations or text
+- Use 0-based indexing (first option = 0, second = 1, etc.)
+- Array length must match number of questions
+- Select questions = single number, checkbox questions = array of numbers
+- Consider my actual experience and background from resume
+- Choose answers that position me as the ideal candidate
+
+Questions: [Questions List]
