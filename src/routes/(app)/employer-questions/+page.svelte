@@ -374,8 +374,14 @@ Questions: [Questions List]`;
     return (ms / 1000).toFixed(2) + 's';
   }
 
-  function formatCurrency(amount) {
-    return '$' + amount.toFixed(4);
+  function formatCurrency(amount, currency = 'USD') {
+    const formatter = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 4
+    });
+    return formatter.format(amount);
   }
 </script>
 
@@ -472,9 +478,9 @@ Questions: [Questions List]`;
 											class="quick-action-btn-inline"
 											on:click|stopPropagation={async () => {
 												await selectJob(job);
-												await generateAnswers();
+												await compareAnswers();
 											}}
-											disabled={isGenerating}
+											disabled={isComparing}
 										>
 											💡
 										</button>
@@ -517,6 +523,7 @@ Questions: [Questions List]`;
 
 					<div class="generate-section">
 						<button
+							type="button"
 							class="generate-btn"
 							on:click={compareAnswers}
 							disabled={isComparing || !jobContent}
@@ -532,74 +539,104 @@ Questions: [Questions List]`;
 
 				{#if jobContent && jobContent.questions}
 					<div class="content-section">
-						<!-- Comparison Results -->
+						<!-- AI Comparison Results -->
 						{#if comparisonResults}
-							<div class="cover-letter-section">
-								<div class="section-header">
-									<h3>🔍 AI Comparison Results</h3>
-								</div>
-								<div class="comparison-grid">
+							<div style="margin-bottom: 2rem;">
+								<h3 style="margin-bottom: 1.5rem; font-size: 1.5rem;">🔍 AI Comparison Results</h3>
+								<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
 									{#each comparisonResults as result}
-										<div
-											class="comparison-card"
-											style="border-color: {result.error ? 'red' : 'green'};"
-										>
-											<div class="comparison-header">
-												<h4>
-													{getProviderIcon(result.providerId)}
-													{getProviderName(result.providerId)}
-												</h4>
+										<div style="background: rgba(128, 128, 128, 0.05); border: 2px solid {result.error ? 'red' : 'teal'}; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column;">
+											<!-- Provider Header -->
+											<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 2px solid {result.error ? 'red' : 'teal'};">
+												<h4 style="margin: 0; font-size: 1.2rem;">{getProviderIcon(result.providerId)} {getProviderName(result.providerId)}</h4>
 												{#if result.error}
-													<span class="status-badge error">❌ Error</span>
+													<span style="background: rgba(255, 0, 0, 0.2); color: red; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">❌ Error</span>
 												{:else}
-													<span class="status-badge success">✅ Success</span>
+													<span style="background: rgba(0, 128, 128, 0.2); color: teal; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">✅ Success</span>
 												{/if}
 											</div>
-											{#if result.error}
-												<p class="error-message">{result.error}</p>
-											{:else}
-												<div class="comparison-content">
-													<pre class="cover-letter-text">{result.text}</pre>
+
+											<!-- AI Response -->
+											{#if !result.error}
+												<div style="flex: 1; margin-bottom: 1rem;">
+													<pre style="background: rgba(0, 0, 0, 0.05); padding: 1rem; border-radius: 8px; font-size: 0.9rem; white-space: pre-wrap; word-wrap: break-word; margin: 0; border: 1px solid rgba(128, 128, 128, 0.2);">{result.text}</pre>
 												</div>
-												<div class="comparison-metadata">
-													<span>⏱️ {formatTime(result.metadata.timeMs)}</span>
-													<span>📊 {result.metadata.tokensUsed} tokens</span>
-													<span>💰 {formatCurrency(result.metadata.estimatedCost)}</span>
-												</div>
+
+												<!-- Copy Button -->
 												<button
-													class="copy-btn-small"
-													on:click={() => copyToClipboard(result.text)}>📋 Copy</button
+													class="copy-btn"
+													on:click={() => copyToClipboard(result.text)}
+													style="width: 100%; margin-bottom: 1rem;"
 												>
+													📋 Copy
+												</button>
+											{:else}
+												<div style="background: rgba(255, 0, 0, 0.1); padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+													<span style="font-size: 0.9rem;">{result.error}</span>
+												</div>
 											{/if}
+
+											<!-- Metadata -->
+											<div style="border-top: 1px solid rgba(128, 128, 128, 0.3); padding-top: 1rem;">
+												{#if result.metadata}
+													<div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem; opacity: 0.8;">
+														<div style="display: flex; justify-content: space-between;">
+															<span>⏱️ Time:</span>
+															<span style="font-weight: 600;">{formatTime(result.metadata.processingTime)}</span>
+														</div>
+														{#if result.metadata.tokensUsed}
+															<div style="display: flex; justify-content: space-between;">
+																<span>🎯 Tokens:</span>
+																<span style="font-weight: 600;">{result.metadata.tokensUsed.toLocaleString()}</span>
+															</div>
+														{/if}
+														<div style="display: flex; justify-content: space-between;">
+															<span>🤖 Model:</span>
+															<span style="font-family: monospace; font-size: 0.75rem;">{result.metadata.model}</span>
+														</div>
+														{#if result.metadata.cost}
+															<div style="border-top: 1px solid rgba(128, 128, 128, 0.2); padding-top: 0.5rem; margin-top: 0.5rem;">
+																<div style="display: flex; justify-content: space-between;">
+																	<span>💰 Cost:</span>
+																	<div style="text-align: right; font-weight: 600;">
+																		<div>{formatCurrency(result.metadata.cost.usd, 'USD')}</div>
+																		<div style="opacity: 0.7; font-size: 0.8rem;">{formatCurrency(result.metadata.cost.aud, 'AUD')}</div>
+																		<div style="opacity: 0.7; font-size: 0.8rem;">{formatCurrency(result.metadata.cost.npr, 'NPR')}</div>
+																	</div>
+																</div>
+															</div>
+														{/if}
+													</div>
+												{/if}
+											</div>
 										</div>
 									{/each}
 								</div>
 							</div>
 						{/if}
 
-						<!-- Questions List -->
+						<!-- Questions List with AI Recommendations -->
 						<div class="job-description-section">
 							<h3>📝 Employer Questions ({jobContent.questions.length})</h3>
-							<div class="space-y-6">
+							<div style="display: flex; flex-direction: column; gap: 1.5rem;">
 								{#each jobContent.questions as question, index}
-									<div class="question-item">
-										<div class="question-header">
-											<h4>Question {index + 1}</h4>
-											<div class="question-type">{question.type || 'select'}</div>
+									<div style="background: rgba(128, 128, 128, 0.05); border: 2px solid purple; border-radius: 12px; padding: 1.5rem;">
+										<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+											<h4 style="margin: 0; font-size: 1.1rem;">Question {index + 1}</h4>
+											<span style="background: rgba(128, 0, 128, 0.2); color: purple; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 600;">{question.type || 'select'}</span>
 										</div>
-										<p class="question-text">{question.q}</p>
+										<p style="font-size: 1rem; margin-bottom: 1rem; line-height: 1.5;">{question.q}</p>
 										{#if question.opts && question.opts.length > 0}
-											<div class="options-list">
-												<h5>Options:</h5>
+											<div style="display: flex; flex-direction: column; gap: 0.75rem;">
+												<h5 style="font-size: 0.9rem; opacity: 0.7; margin: 0.5rem 0;">Options:</h5>
 												{#each question.opts as option, optIndex}
 													<div
-														class="option-item"
-														class:recommended={isOptionRecommended(index, optIndex)}
+														style="background: {isOptionRecommended(index, optIndex) ? 'rgba(0, 128, 128, 0.15)' : 'rgba(128, 128, 128, 0.05)'}; border: 2px solid {isOptionRecommended(index, optIndex) ? 'teal' : 'rgba(128, 128, 128, 0.3)'}; border-radius: 8px; padding: 1rem; display: flex; align-items: center; gap: 1rem; transition: all 0.2s;"
 													>
-														<div class="option-index">{optIndex}</div>
-														<span class="option-text">{option}</span>
+														<div style="background: {isOptionRecommended(index, optIndex) ? 'teal' : 'rgba(128, 128, 128, 0.3)'}; color: white; min-width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">{optIndex}</div>
+														<span style="flex: 1; font-size: 0.95rem;">{option}</span>
 														{#if isOptionRecommended(index, optIndex)}
-															<div class="recommended-badge">🤖 AI RECOMMENDED</div>
+															<span style="background: teal; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; white-space: nowrap;">🤖 AI PICK</span>
 														{/if}
 													</div>
 												{/each}

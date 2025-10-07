@@ -17,8 +17,8 @@ export const POST: RequestHandler = async ({ request }) => {
     }
 
     // Build the full prompt with questions
-    const questionsText = questions.map((q: any, i: number) => 
-      `Q${i+1} (${q.type || 'select'}): ${q.q}\nOptions: ${q.opts.join(', ')}`
+    const questionsText = questions.map((q: any, i: number) =>
+      `Q${i+1} (${q.type || 'select'}): ${q.q}\nOptions: ${(q.options || q.opts || []).join(', ')}`
     ).join('\n\n');
 
     const fullPrompt = `${prompt}\n\n${details ? `JOB DESCRIPTION:\n${details}\n\n` : ''}QUESTIONS:\n${questionsText}`;

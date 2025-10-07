@@ -1,8 +1,8 @@
 {
   "type": "employer-questions-comparison",
-  "company": "M&T Resources",
-  "title": "Full stack Developer",
-  "jobFilename": "m_t_resources_87500954.json",
-  "generatedAt": "2025-10-07T06:22:26.665Z",
+  "company": "Private Advertiser",
+  "title": "Mid/Snr Software Engineer",
+  "jobFilename": "private_advertiser_87532955.json",
+  "generatedAt": "2025-10-07T06:24:54.918Z",
   "response": "{\"error\":{\"success\":false,\"error\":\"No AI providers configured\",\"metadata\":{\"model\":\"unknown\",\"processingTime\":0}}}"
 }
