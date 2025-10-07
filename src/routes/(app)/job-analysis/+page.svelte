@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
-  import { apiRequest } from '$lib/api-client.js';
+  import '$styles/shared.css';
+  
   import JobAnalysisResult from '$lib/components/JobAnalysisResult.svelte';
 
   // all variables
@@ -30,7 +31,7 @@
 
     // Load prompt from the server
     try {
-      const response = await apiRequest('/api/prompts/job-analysis');
+      const response = await fetch('/api/prompts/job-analysis');
       const data = await response.json();
       analysisPrompt = data.content;
       lastSavedPrompt = data.content || '';
@@ -38,7 +39,7 @@
       initialLoaded = true;
 
       // Load default prompt
-      const defaultResponse = await apiRequest('/api/prompts/job-analysis?default=true');
+      const defaultResponse = await fetch('/api/prompts/job-analysis?default=true');
       const defaultData = await defaultResponse.json();
       defaultPrompt = defaultData.content || '';
     } catch (error) {
@@ -113,7 +114,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     }
 
     try {
-      const response = await apiRequest('/api/prompts/job-analysis', {
+      const response = await fetch('/api/prompts/job-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -143,7 +144,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
 
     isLoading = true;
     try {
-      const response = await apiRequest('/api/jobs');
+      const response = await fetch('/api/jobs');
       const data = await response.json();
 
       if (data.success) {
@@ -172,7 +173,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     const newSet = new Set();
     for (const job of jobs) {
       try {
-        const response = await apiRequest(`/api/save-response?type=job-analysis&jobFilename=${encodeURIComponent(job.filename)}`);
+        const response = await fetch(`/api/save-response?type=job-analysis&jobFilename=${encodeURIComponent(job.filename)}`);
         const data = await response.json();
         if (data.success && data.data) {
           newSet.add(job.filename);
@@ -192,7 +193,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     analysisResult = null;
 
     try {
-      const response = await apiRequest(`/api/jobs/${job.filename}`);
+      const response = await fetch(`/api/jobs/${job.filename}`);
       const data = await response.json();
 
       if (data.success) {
@@ -212,7 +213,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     isGenerating = true;
     analysisResult = null;
     try {
-      const response = await apiRequest('/api/generate', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -257,28 +258,28 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           // Parse the JSON
           analysisResult = JSON.parse(jsonString);
 
-          // Fetch original resume from cloud storage
+          // Fetch original resume from local storage
           try {
-            const storageResponse = await apiRequest(`/api/files?userId=${encodeURIComponent(user.email)}`);
+            const storageResponse = await fetch(`/api/upload?userId=${encodeURIComponent(user.email)}`);
             const storageData = await storageResponse.json();
 
-            if (storageData.success && storageData.data.files) {
-              const resumeFile = storageData.data.files.find(f =>
-                f.name === 'resume.txt' || f.name === 'resume.md'
+            if (storageData.success && storageData.files) {
+              const resumeFile = storageData.files.find(f =>
+                f.name === 'resume.txt' || f.name.includes('resume')
               );
 
               if (resumeFile) {
-                // Fetch the resume content with preview=true to get content
-                const resumeResponse = await apiRequest(`/api/files/${resumeFile.name}?userId=${encodeURIComponent(user.email)}&preview=true`);
+                // Fetch the resume content
+                const resumeResponse = await fetch(`/api/upload?userId=${encodeURIComponent(user.email)}&filename=${resumeFile.name}`);
                 const resumeData = await resumeResponse.json();
 
-                if (resumeData.success && resumeData.data?.preview?.content) {
-                  analysisResult.original_resume = resumeData.data.preview.content;
+                if (resumeData.success && resumeData.content) {
+                  analysisResult.original_resume = resumeData.content;
                 } else {
                   console.error('Resume data missing content:', resumeData);
                 }
               } else {
-                console.warn('No resume.txt or resume.md found in cloud storage');
+                console.warn('No resume.txt found in storage');
               }
             } else {
               console.warn('Storage list failed or no files:', storageData);
@@ -325,7 +326,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     if (!selectedJob) return;
 
     try {
-      await apiRequest('/api/save-response', {
+      await fetch('/api/save-response', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -350,7 +351,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     if (!selectedJob) return;
 
     try {
-      const response = await apiRequest(`/api/save-response?type=job-analysis&jobFilename=${encodeURIComponent(selectedJob.filename)}`);
+      const response = await fetch(`/api/save-response?type=job-analysis&jobFilename=${encodeURIComponent(selectedJob.filename)}`);
       const data = await response.json();
 
       if (data.success && data.data) {
@@ -550,7 +551,6 @@ Be honest, specific, and actionable. Include concrete examples from both the job
 
             <!-- Job Description -->
             <div class="job-description-section" style="margin-top: 2rem;">
-              <h3>📋 Job Description</h3>
               <div class="job-details-card">
                 <div class="job-meta">
                   {#if jobContent.company}
@@ -616,253 +616,26 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
-  .page-header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #e5e5e5;
-  }
-
-  .page-header h1 {
-    color: #333;
-    margin-bottom: 10px;
-    font-size: 2.2rem;
-  }
-
-  .page-header p {
-    color: #666;
-    font-size: 1.1rem;
-    margin: 0 0 20px 0;
-  }
-
-  .prompt-section {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 30px;
-    max-width: none;
-  }
-
-  .prompt-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-  }
-
-  .prompt-section h3 {
-    margin: 0;
-    color: #333;
-    font-size: 1.1rem;
-    user-select: none;
-  }
-
-  .prompt-section h3:hover {
-    color: #007acc;
-  }
-
-  .prompt-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .prompt-area {
-    width: 100%;
-  }
-
-  .prompt-editor {
-    width: 100%;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 15px;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.9rem;
-    font-weight: 600;
-    line-height: 1.5;
-    resize: vertical;
-    background: white;
-    color: #333;
-    height: auto;
-  }
-
-  .prompt-editor:focus {
-    outline: none;
-    border-color: #007acc;
-    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
-  }
-
-  .prompt-display {
-    width: 100%;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 15px;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.9rem;
-    font-weight: 600;
-    line-height: 1.5;
-    background: white;
-    color: #333;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    max-height: none;
-    overflow-y: auto;
-  }
-
-  .prompt-display:focus {
-    outline: none;
-    border-color: #007acc;
-    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
-  }
-
-  .prompt-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-start;
-  }
-
-  .save-btn, .reset-btn {
+  /* Page-specific buttons */
+  .generate-btn, .load-btn {
     background: #28a745;
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 10px 20px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     transition: background 0.2s;
-    white-space: nowrap;
   }
 
-  .save-btn:hover {
+  .generate-btn:hover:not(:disabled) {
     background: #218838;
   }
 
-  .reset-btn {
+  .generate-btn:disabled, .load-btn:disabled {
     background: #6c757d;
-  }
-
-  .reset-btn:hover {
-    background: #5a6268;
-  }
-
-  .reset-btn-small {
-    background: #6c757d;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: background 0.2s;
-  }
-
-  .reset-btn-small:hover {
-    background: #5a6268;
-  }
-
-  .main-content {
-    display: grid;
-    grid-template-columns: 400px 1fr;
-    gap: 30px;
-    min-height: 700px;
-    transition: grid-template-columns 0.3s ease;
-  }
-
-  .main-content:has(.jobs-sidebar.collapsed) {
-    grid-template-columns: 60px 1fr;
-  }
-
-  /* Jobs Sidebar */
-  .jobs-sidebar {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
-    border: 1px solid #e5e5e5;
-    transition: all 0.3s ease;
-    overflow: hidden;
-  }
-
-  .jobs-sidebar.collapsed {
-    padding: 10px 5px;
-    width: 60px;
-  }
-
-  .sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #dee2e6;
-  }
-
-  .jobs-sidebar.collapsed .sidebar-header {
-    flex-direction: column;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-  }
-
-  .sidebar-header h2 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: #495057;
-    user-select: none;
-    flex: 1;
-  }
-
-  .sidebar-header h2:hover {
-    color: #007bff;
-  }
-
-  .jobs-sidebar.collapsed .sidebar-header h2 {
-    font-size: 1.5rem;
-    text-align: center;
-  }
-
-  .refresh-btn {
-    background: none;
-    border: none;
-    font-size: 1.1rem;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-  }
-
-  .refresh-btn:hover {
-    background: #e9ecef;
-  }
-
-  .jobs-list {
-    height: 100%;
-    overflow-y: auto;
-  }
-
-  .job-item {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 15px;
-    margin-bottom: 12px;
-    transition: all 0.2s;
-  }
-
-  .job-item:hover {
-    border-color: #007bff;
-    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
-  }
-
-  .job-item.selected {
-    border-color: cornflowerblue;
-    background: #f8f9ff;
-  }
-
-  .job-item.has-saved {
-    border: 3px dashed #FFD700;
-  }
-
-  .job-item.has-saved.selected {
-    border: 3px dashed cornflowerblue;
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 
   .quick-action-btn-inline {
@@ -887,373 +660,14 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     opacity: 0.6;
   }
 
-  .job-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-
-  .job-header-right {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .job-type {
-    background: #007bff;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 500;
-  }
-
-  .job-size {
-    font-size: 0.8rem;
-    color: #6c757d;
-  }
-
-  .job-company {
-    margin: 0 0 5px 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333;
-  }
-
-  .job-title {
-    margin: 0 0 5px 0;
-    font-size: 0.9rem;
-    color: #555;
-    line-height: 1.3;
-  }
-
-  .job-location, .job-questions {
-    margin: 0 0 3px 0;
-    font-size: 0.8rem;
-    color: #666;
-  }
-
-  /* Collapsed Jobs List */
-  .jobs-list-collapsed {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 5px 0;
-  }
-
-  .job-icon {
-    background: white;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    padding: 10px;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #495057;
-    cursor: pointer;
-    transition: all 0.2s;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 45px;
-  }
-
-  .job-icon:hover {
-    border-color: #007bff;
-    background: #f8f9ff;
-    color: #007bff;
-    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.15);
-    transform: translateX(2px);
-  }
-
-  .job-icon.selected {
-    border-color: #007bff;
-    background: #007bff;
-    color: white;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
-    font-weight: 700;
-  }
-
-  /* Cover Letter Panel */
-  .cover-letter-panel {
-    background: white;
-    border-radius: 8px;
-    border: 1px solid #e5e5e5;
-    overflow: hidden;
-  }
-
-  .no-selection {
-    padding: 80px 40px;
-    text-align: center;
-    color: #666;
-  }
-
-  .placeholder-icon {
-    font-size: 4rem;
-    margin-bottom: 20px;
-    opacity: 0.5;
-  }
-
-  .no-selection h2 {
-    margin-bottom: 10px;
-    color: #333;
-  }
-
-  .job-header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 25px;
-    border-bottom: 1px solid #dee2e6;
-    background: #f8f9fa;
-  }
-
-  .job-info h2 {
-    margin: 0 0 8px 0;
-    color: #333;
-  }
-
-  .job-info h3 {
-    margin: 0 0 10px 0;
-    color: #555;
-    font-weight: 500;
-  }
-
-  .location {
-    margin: 0;
-    color: #666;
-  }
-
-  .generate-section {
-    display: flex;
-    gap: 10px;
-  }
-
-  .generate-btn, .load-btn {
-    background: #28a745;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    transition: background 0.2s;
-  }
-
-  .generate-btn:hover:not(:disabled) {
-    background: #218838;
-  }
-
-  .generate-btn:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-  }
-
-  .load-btn {
-    background: #17a2b8;
-  }
-
-  .load-btn:hover:not(:disabled) {
-    background: #138496;
-  }
-
-  .load-btn:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-  }
-
-  .content-section {
-    padding: 25px;
-  }
-
-  .cover-letter-section {
-    margin-bottom: 30px;
-  }
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-
-  .section-header h3 {
-    margin: 0;
-    color: #333;
-  }
-
-  .actions {
-    display: flex;
-    gap: 10px;
-  }
-
-  .copy-btn {
-    background: #17a2b8;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-
-  .copy-btn:hover {
-    background: #138496;
-  }
-
-
-  .generated-content {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    padding: 25px;
-    margin-bottom: 30px;
-  }
-
-  .cover-letter-text {
-    margin: 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    font-family: Georgia, serif;
-    line-height: 1.7;
-    color: #333;
-    font-size: 1.05rem;
-  }
-
-  .job-description-section h3 {
-    margin-top: 0;
-    color: #495057;
-    margin-bottom: 20px;
-  }
-
-  .job-details-card {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .job-meta {
-    background: #f8f9fa;
-    padding: 15px 20px;
-    border-bottom: 1px solid #e9ecef;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-  }
-
-  .meta-item {
-    background: white;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    border: 1px solid #dee2e6;
-    color: #495057;
-  }
-
-  .job-description-content {
-    padding: 20px;
-  }
-
-  .job-details h4 {
-    color: #495057;
-    margin: 0 0 15px 0;
-    font-size: 1rem;
-  }
-
-  .job-questions-preview {
-    margin-top: 25px;
-    padding-top: 20px;
-    border-top: 1px solid #e9ecef;
-  }
-
-  .job-questions-preview h4 {
-    color: #495057;
-    margin: 0 0 15px 0;
-    font-size: 1rem;
-  }
-
-  .questions-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .question-preview {
-    padding: 8px 0;
-    color: #666;
-    font-size: 0.9rem;
-    line-height: 1.4;
-  }
-
-  .question-preview strong {
-    color: #495057;
-  }
-
-  .job-link {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid #e9ecef;
-  }
-
-  .job-link a {
-    color: #007acc;
-    text-decoration: none;
-    font-weight: 500;
-  }
-
-  .job-link a:hover {
-    text-decoration: underline;
-  }
-
-  .job-text {
-    margin: 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    color: #333;
-  }
-
-  .loading {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: #666;
-  }
-
-  .empty-state small {
-    display: block;
-    margin-top: 5px;
-    color: #999;
-  }
-
-  .login-required {
-    text-align: center;
-    padding: 80px 20px;
-  }
-
-  .login-required a {
-    color: #007bff;
-    text-decoration: none;
-  }
-
-  .login-required a:hover {
-    text-decoration: underline;
-  }
-
-  @media (max-width: 1024px) {
+  /* Responsive */
+  @media (max-width: 768px) {
     .main-content {
       grid-template-columns: 1fr;
-      gap: 20px;
+    }
+
+    .jobs-sidebar {
+      display: none;
     }
 
     .job-header-section {

@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { apiRequest } from '$lib/api-client.js';
+  import '$styles/shared.css';
 
   // all variables
   let user = null;
@@ -20,6 +20,11 @@
   let defaultPrompt = '';
   let jobsWithSavedResponses = new Set();
 
+  // Comparison mode variables
+  let isComparing = false;
+  let comparisonResults = null;
+  let providers = [];
+
   onMount(async () => {
     const storedUser = localStorage.getItem('google_user');
     if (storedUser) {
@@ -29,7 +34,7 @@
 
     // Load prompt from the server
     try {
-      const response = await apiRequest('/api/prompts/cover-letter');
+      const response = await fetch('/api/prompts/cover-letter');
       const data = await response.json();
       coverLetterPrompt = data.content;
       lastSavedPrompt = data.content || '';
@@ -37,7 +42,7 @@
       initialLoaded = true;
 
       // Load default prompt
-      const defaultResponse = await apiRequest('/api/prompts/cover-letter?default=true');
+      const defaultResponse = await fetch('/api/prompts/cover-letter?default=true');
       const defaultData = await defaultResponse.json();
       defaultPrompt = defaultData.content;
     } catch (error) {
@@ -75,6 +80,17 @@ Instructions:
 
 Make it authentic, confident, and tailored specifically to this role. Avoid generic phrases and clichés.`;
     }
+
+    // Load providers for comparison
+    try {
+      const response = await fetch('/api/providers');
+      const data = await response.json();
+      if (data.success) {
+        providers = data.providers.filter((p) => p.enabled && p.hasApiKey);
+      }
+    } catch (error) {
+      console.error('Failed to load providers:', error);
+    }
   });
 
   async function savePrompt(content) {
@@ -84,7 +100,7 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     }
 
     try {
-      const response = await apiRequest('/api/prompts/cover-letter', {
+      const response = await fetch('/api/prompts/cover-letter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -114,7 +130,7 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
 
     isLoading = true;
     try {
-      const response = await apiRequest('/api/jobs');
+      const response = await fetch('/api/jobs');
       const data = await response.json();
 
       if (data.success) {
@@ -143,7 +159,7 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     const newSet = new Set();
     for (const job of jobs) {
       try {
-        const response = await apiRequest(`/api/save-response?type=cover-letter&jobFilename=${encodeURIComponent(job.filename)}`);
+        const response = await fetch(`/api/save-response?type=cover-letter&jobFilename=${encodeURIComponent(job.filename)}`);
         const data = await response.json();
         if (data.success && data.data) {
           newSet.add(job.filename);
@@ -161,13 +177,16 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     selectedJob = job;
     jobContent = null;
     generatedCoverLetter = '';
+    comparisonResults = null;
 
     try {
-      const response = await apiRequest(`/api/jobs/${job.filename}`);
+      const response = await fetch(`/api/jobs/${job.filename}`);
       const data = await response.json();
 
       if (data.success) {
         jobContent = data.data.content;
+        // Auto-load saved comparison results
+        await loadLastResponse();
       } else {
         alert('Failed to load job details: ' + data.error);
       }
@@ -177,62 +196,64 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     }
   }
 
-  async function generateCoverLetter() {
+
+  async function compareCoverLetters() {
     if (!selectedJob || !jobContent) return;
 
-    isGenerating = true;
+    isComparing = true;
+    comparisonResults = null;
+
     try {
-      const response = await apiRequest('/api/generate', {
+      const response = await fetch('/api/cover-letter/compare', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          type: 'cover_letter',
-          jobDetails: jobContent,
-          userEmail: user.email,
-          customPrompt: coverLetterPrompt
+          userId: user.email,
+          prompt: coverLetterPrompt,
+          jobDescription: jobContent.description || jobContent.text || JSON.stringify(jobContent)
         })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        generatedCoverLetter = data.data.generatedText;
-        // Save the response
-        await saveResponse(generatedCoverLetter);
+        comparisonResults = data.results;
+        // Auto-save the comparison results
+        await saveComparisonResults(data.results);
       } else {
-        alert('Failed to generate cover letter: ' + data.error);
+        alert('Failed to compare: ' + data.error);
       }
     } catch (error) {
-      console.error('Failed to generate cover letter:', error);
-      alert('Failed to generate cover letter: ' + error.message);
+      console.error('Failed to compare cover letters:', error);
+      alert('Failed to compare: ' + error.message);
     } finally {
-      isGenerating = false;
+      isComparing = false;
     }
   }
 
-  async function saveResponse(response) {
+  async function saveComparisonResults(results) {
     if (!selectedJob) return;
 
     try {
-      await apiRequest('/api/save-response', {
+      await fetch('/api/save-response', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          type: 'cover-letter',
+          type: 'cover-letter-comparison',
           company: selectedJob.company,
           title: selectedJob.title,
           jobFilename: selectedJob.filename,
-          response
+          response: JSON.stringify(results),
+          userEmail: user.email
         })
       });
-      // Update the set to reflect this job now has a saved response
-      jobsWithSavedResponses = new Set([...jobsWithSavedResponses, selectedJob.filename]);
+      jobsWithSavedResponses.add(selectedJob.filename);
     } catch (error) {
-      console.error('Failed to save response:', error);
+      console.error('Failed to save comparison results:', error);
     }
   }
 
@@ -240,19 +261,54 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     if (!selectedJob) return;
 
     try {
-      const response = await apiRequest(`/api/save-response?type=cover-letter&jobFilename=${encodeURIComponent(selectedJob.filename)}`);
+      const response = await fetch(
+        `/api/save-response?type=cover-letter-comparison&jobFilename=${selectedJob.filename}`
+      );
       const data = await response.json();
 
-      if (data.success && data.data) {
-        generatedCoverLetter = data.data.response;
-      } else {
-        alert('No saved cover letter found for this job.');
+      if (data.success && data.data && data.data.response) {
+        // The response is already JSON stringified, so parse it
+        comparisonResults = JSON.parse(data.data.response);
+        generatedCoverLetter = ''; // Clear old single response
       }
+      // Silently fail if no saved response - don't alert the user
     } catch (error) {
-      console.error('Failed to load saved response:', error);
-      alert('Failed to load saved response: ' + error.message);
+      // Silently fail - it's okay if there's no saved response
+      console.log('No saved response for this job');
     }
   }
+
+  function getProviderName(id) {
+    const provider = providers.find((p) => p.id === id);
+    return provider?.name || id;
+  }
+
+  function getProviderIcon(id) {
+    if (id.includes('claude')) return '🟣';
+    if (id.includes('deepseek')) return '🔵';
+    if (id.includes('gemini')) return '🟢';
+    return '🤖';
+  }
+
+  function formatTime(ms) {
+    return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
+  }
+
+  function formatCurrency(value, currency) {
+    if (value === 0 && currency === 'USD') return 'FREE';
+
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6
+      }).format(value);
+    } catch (e) {
+      return `${currency} ${value.toFixed(4)}`;
+    }
+  }
+
 
   function formatFileSize(bytes) {
     if (bytes === 0) return '0 KB';
@@ -272,7 +328,7 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
   }
 </script>
 
-<main class="container mx-auto max-w-6xl p-6">
+<main class="container mx-auto max-w-7xl p-6">
   <div class="mb-8">
     <h1 class="text-4xl font-bold mb-4 text-primary">✍️ Cover Letters</h1>
     <p class="text-base-content/70">Generate AI-powered cover letters for job applications</p>
@@ -313,87 +369,51 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
   </div>
 
   <div class="main-content">
-    <!-- Jobs List -->
-    <div class="jobs-sidebar" class:collapsed={isSidebarCollapsed}>
+    <!-- Jobs List - Horizontal -->
+    <div class="jobs-sidebar">
       <div class="sidebar-header">
-        <h2 on:click={() => isSidebarCollapsed = !isSidebarCollapsed} style="cursor: pointer;">
-          {#if isSidebarCollapsed}
-            💼
-          {:else}
-            💼 Jobs with Descriptions
-          {/if}
-        </h2>
-        {#if !isSidebarCollapsed}
-          <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
-            {#if isLoading}⏳{:else}🔄{/if}
-          </button>
-        {/if}
+        <h2>💼 Jobs with Descriptions</h2>
+        <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
+          {#if isLoading}⏳{:else}🔄{/if}
+        </button>
       </div>
 
-      {#if !isSidebarCollapsed}
-        {#if isLoading}
-          <div class="loading">Loading jobs...</div>
-        {:else if jobs.length === 0}
-          <div class="empty-state">
-            <p>No job descriptions found</p>
-            <small>Only jobs with detailed descriptions can generate cover letters</small>
-          </div>
-        {:else}
-          <div class="jobs-list">
-            {#each jobs as job}
-              <div
-                class="job-item"
-                class:selected={selectedJob?.filename === job.filename}
-                class:has-saved={jobsWithSavedResponses.has(job.filename)}
-              >
-                <div class="job-header">
-                  <span class="job-type" on:click={() => selectJob(job)} style="cursor: pointer;">
-                    {#if job.hasQuestions}
-                      💼❓ Job + Q&A
-                    {:else}
-                      💼 Job Only
-                    {/if}
-                  </span>
-                  <div class="job-header-right">
-                    <span class="job-size">{formatFileSize(job.size)}</span>
-                    <button
-                      class="quick-action-btn-inline"
-                      on:click|stopPropagation={async () => {
-                        await selectJob(job);
-                        await generateCoverLetter();
-                      }}
-                      disabled={isGenerating}
-                    >
-                      📝
-                    </button>
-                  </div>
-                </div>
-                <div on:click={() => selectJob(job)} style="cursor: pointer;">
-                  <h3 class="job-company">{job.company}</h3>
-                  <p class="job-title">{job.title}</p>
-                  {#if job.location}
-                    <p class="job-location">📍 {job.location}</p>
-                  {/if}
+      {#if isLoading}
+        <div class="loading">Loading jobs...</div>
+      {:else if jobs.length === 0}
+        <div class="empty-state">
+          <p>No job descriptions found</p>
+          <small>Only jobs with detailed descriptions can generate cover letters</small>
+        </div>
+      {:else}
+        <div class="jobs-list">
+          {#each jobs as job}
+            <div
+              class="job-item"
+              class:selected={selectedJob?.filename === job.filename}
+              class:has-saved={jobsWithSavedResponses.has(job.filename)}
+              on:click={() => selectJob(job)}
+            >
+              <div class="job-header">
+                <span class="job-type">
                   {#if job.hasQuestions}
-                    <p class="job-questions">❓ {job.questionCount} questions</p>
+                    💼❓
+                  {:else}
+                    💼
                   {/if}
+                </span>
+                <div class="job-header-right">
+                  <span class="job-size">{formatFileSize(job.size)}</span>
                 </div>
               </div>
-            {/each}
-          </div>
-        {/if}
-      {:else}
-        <!-- Collapsed view: Numbered list -->
-        <div class="jobs-list-collapsed">
-          {#each jobs as job, index}
-            <button
-              class="job-icon"
-              class:selected={selectedJob?.filename === job.filename}
-              on:click={() => selectJob(job)}
-              title="{job.company} - {job.title}"
-            >
-              {index + 1}
-            </button>
+              <div>
+                <h3 class="job-company">{job.company}</h3>
+                <p class="job-title">{job.title}</p>
+                {#if job.location}
+                  <p class="job-location">📍 {job.location}</p>
+                {/if}
+              </div>
+            </div>
           {/each}
         </div>
       {/if}
@@ -420,23 +440,16 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
           <div class="generate-section">
             <button
               class="generate-btn"
-              on:click={generateCoverLetter}
-              disabled={isGenerating || !jobContent}
+              on:click={compareCoverLetters}
+              disabled={isComparing || !jobContent || providers.length === 0}
+              style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"
             >
-              {#if isGenerating}
-                ⏳ Generating Cover Letter...
+              {#if isComparing}
+                ⏳ Comparing...
               {:else}
-                ✍️ Generate Cover Letter
+                🔍 Compare All AIs
               {/if}
             </button>
-            {#if selectedJob && jobsWithSavedResponses.has(selectedJob.filename)}
-              <button
-                class="load-btn"
-                on:click={loadLastResponse}
-              >
-                📂 Load Saved
-              </button>
-            {/if}
           </div>
         </div>
 
@@ -459,9 +472,84 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
               </div>
             {/if}
 
+            <!-- Comparison Results -->
+            {#if comparisonResults}
+              <div class="comparison-section" style="margin-bottom: 2rem;">
+                <h3 style="margin-bottom: 1.5rem; font-size: 1.5rem;">🔍 AI Comparison Results</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
+                  {#each Object.entries(comparisonResults) as [providerId, result]}
+                    <div style="background: rgba(128, 128, 128, 0.1); border: 2px solid {result.success ? 'green' : 'red'}; border-radius: 8px; padding: 1.5rem;">
+                      <!-- Provider Header -->
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h4 style="margin: 0; font-size: 1.1rem;">
+                          {getProviderIcon(providerId)} {getProviderName(providerId)}
+                        </h4>
+                        {#if result.success}
+                          <span style="background: green; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem;">Success</span>
+                        {:else}
+                          <span style="background: red; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.8rem;">Failed</span>
+                        {/if}
+                      </div>
+
+                      <!-- Answer -->
+                      {#if result.success && result.answer}
+                        <div style="margin-bottom: 1rem;">
+                          <pre style="white-space: pre-wrap; font-family: Georgia, serif; line-height: 1.6; font-size: 0.95rem; margin: 0;">{result.answer}</pre>
+                        </div>
+                        <button
+                          class="copy-btn"
+                          on:click={() => copyToClipboard(result.answer)}
+                          style="width: 100%; margin-bottom: 1rem;"
+                        >
+                          📋 Copy
+                        </button>
+                      {:else if result.error}
+                        <div style="background: rgba(255, 0, 0, 0.1); padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                          <span style="font-size: 0.9rem;">{result.error}</span>
+                        </div>
+                      {/if}
+
+                      <!-- Metadata -->
+                      <div style="border-top: 1px solid rgba(128, 128, 128, 0.3); padding-top: 1rem;">
+                        {#if result.metadata}
+                          <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem; opacity: 0.8;">
+                            <div style="display: flex; justify-content: space-between;">
+                              <span>⏱️ Time:</span>
+                              <span style="font-weight: 600;">{formatTime(result.metadata.processingTime)}</span>
+                            </div>
+                            {#if result.metadata.tokensUsed}
+                              <div style="display: flex; justify-content: space-between;">
+                                <span>🎯 Tokens:</span>
+                                <span style="font-weight: 600;">{result.metadata.tokensUsed.toLocaleString()}</span>
+                              </div>
+                            {/if}
+                            <div style="display: flex; justify-content: space-between;">
+                              <span>🤖 Model:</span>
+                              <span style="font-family: monospace; font-size: 0.75rem;">{result.metadata.model}</span>
+                            </div>
+                            {#if result.metadata.cost}
+                              <div style="border-top: 1px solid rgba(128, 128, 128, 0.2); padding-top: 0.5rem; margin-top: 0.5rem;">
+                                <div style="display: flex; justify-content: space-between;">
+                                  <span>💰 Cost:</span>
+                                  <div style="text-align: right; font-weight: 600;">
+                                    <div>{formatCurrency(result.metadata.cost.usd, 'USD')}</div>
+                                    <div style="opacity: 0.7; font-size: 0.8rem;">{formatCurrency(result.metadata.cost.aud, 'AUD')}</div>
+                                    <div style="opacity: 0.7; font-size: 0.8rem;">{formatCurrency(result.metadata.cost.npr, 'NPR')}</div>
+                                  </div>
+                                </div>
+                              </div>
+                            {/if}
+                          </div>
+                        {/if}
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              </div>
+            {/if}
+
             <!-- Job Description -->
             <div class="job-description-section">
-              <h3>📋 Job Description</h3>
               <div class="job-details-card">
                 <div class="job-meta">
                   {#if jobContent.company}
@@ -527,255 +615,26 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
-  .page-header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #e5e5e5;
-  }
-
-  .page-header h1 {
-    color: #333;
-    margin-bottom: 10px;
-    font-size: 2.2rem;
-  }
-
-  .page-header p {
-    color: #666;
-    font-size: 1.1rem;
-    margin: 0 0 20px 0;
-  }
-
-  .prompt-section {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 30px;
-    max-width: none;
-  }
-
-  .prompt-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-  }
-
-  .prompt-section h3 {
-    margin: 0;
-    color: #333;
-    font-size: 1.1rem;
-    user-select: none;
-  }
-
-  .prompt-section h3:hover {
-    color: #007acc;
-  }
-
-  .prompt-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .prompt-area {
-    width: 100%;
-  }
-
-  .prompt-editor {
-    width: 100%;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 15px;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.9rem;
-    font-weight: 600;
-    line-height: 1.5;
-    resize: vertical;
-    background: white;
-    color: #333;
-    height: auto;
-  }
-
-  .prompt-editor:focus {
-    outline: none;
-    border-color: #007acc;
-    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
-  }
-
-  .prompt-display {
-    width: 100%;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 15px;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.9rem;
-    font-weight: 600;
-    line-height: 1.5;
-    background: white;
-    color: #333;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    max-height: none;
-    overflow-y: auto;
-  }
-
-  .prompt-display:focus {
-    outline: none;
-    border-color: #007acc;
-    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
-  }
-
-  .prompt-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-start;
-  }
-
-  .save-btn, .reset-btn {
+  /* Page-specific buttons */
+  .generate-btn, .load-btn {
     background: #28a745;
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 10px 20px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     transition: background 0.2s;
-    white-space: nowrap;
   }
 
-  .save-btn:hover {
+  .generate-btn:hover:not(:disabled) {
     background: #218838;
   }
 
-  .reset-btn {
+  .generate-btn:disabled, .load-btn:disabled {
     background: #6c757d;
-  }
-
-  .reset-btn:hover {
-    background: #5a6268;
-  }
-
-  .reset-btn-small {
-    background: #6c757d;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: background 0.2s;
-  }
-
-  .reset-btn-small:hover {
-    background: #5a6268;
-  }
-
-
-
-  .main-content {
-    display: grid;
-    grid-template-columns: 400px 1fr;
-    gap: 30px;
-    min-height: 700px;
-    transition: grid-template-columns 0.3s ease;
-  }
-
-  .main-content:has(.jobs-sidebar.collapsed) {
-    grid-template-columns: 60px 1fr;
-  }
-
-  /* Jobs Sidebar */
-  .jobs-sidebar {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
-    border: 1px solid #e5e5e5;
-    transition: all 0.3s ease;
-    overflow: hidden;
-  }
-
-  .jobs-sidebar.collapsed {
-    padding: 10px 5px;
-    width: 60px;
-  }
-
-  .sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #dee2e6;
-  }
-
-  .jobs-sidebar.collapsed .sidebar-header {
-    flex-direction: column;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-  }
-
-  .sidebar-header h2 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: #495057;
-    user-select: none;
-    flex: 1;
-  }
-
-  .sidebar-header h2:hover {
-    color: #007bff;
-  }
-
-  .jobs-sidebar.collapsed .sidebar-header h2 {
-    font-size: 1.5rem;
-    text-align: center;
-  }
-
-  .refresh-btn {
-    background: none;
-    border: none;
-    font-size: 1.1rem;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-  }
-
-  .refresh-btn:hover {
-    background: #e9ecef;
-  }
-
-  .jobs-list {
-    height: 100%;
-    overflow-y: auto;
-  }
-
-  .job-item {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 15px;
-    margin-bottom: 12px;
-    transition: all 0.2s;
-  }
-
-  .job-item:hover {
-    border-color: #007bff;
-    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
-  }
-
-  .job-item.selected {
-    border-color: cornflowerblue;
-    background: #f8f9ff;
-  }
-
-  .job-item.has-saved {
-    border: 3px dashed #FFD700;
-  }
-
-  .job-item.has-saved.selected {
-    border: 3px dashed cornflowerblue;
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 
   .quick-action-btn-inline {
@@ -800,392 +659,14 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     opacity: 0.6;
   }
 
-  .job-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-
-  .job-header-right {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .job-type {
-    background: #007bff;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 500;
-  }
-
-  .job-size {
-    font-size: 0.8rem;
-    color: #6c757d;
-  }
-
-  .job-company {
-    margin: 0 0 5px 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333;
-  }
-
-  .job-title {
-    margin: 0 0 5px 0;
-    font-size: 0.9rem;
-    color: #555;
-    line-height: 1.3;
-  }
-
-  .job-location, .job-questions {
-    margin: 0 0 3px 0;
-    font-size: 0.8rem;
-    color: #666;
-  }
-
-  /* Collapsed Jobs List */
-  .jobs-list-collapsed {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    padding: 5px 0;
-  }
-
-  .job-icon {
-    background: white;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    padding: 10px;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #495057;
-    cursor: pointer;
-    transition: all 0.2s;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 45px;
-  }
-
-  .job-icon:hover {
-    border-color: #007bff;
-    background: #f8f9ff;
-    color: #007bff;
-    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.15);
-    transform: translateX(2px);
-  }
-
-  .job-icon.selected {
-    border-color: #007bff;
-    background: #007bff;
-    color: white;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
-    font-weight: 700;
-  }
-
-  /* Cover Letter Panel */
-  .cover-letter-panel {
-    background: white;
-    border-radius: 8px;
-    border: 1px solid #e5e5e5;
-    overflow: hidden;
-  }
-
-  .no-selection {
-    padding: 80px 40px;
-    text-align: center;
-    color: #666;
-  }
-
-  .placeholder-icon {
-    font-size: 4rem;
-    margin-bottom: 20px;
-    opacity: 0.5;
-  }
-
-  .no-selection h2 {
-    margin-bottom: 10px;
-    color: #333;
-  }
-
-  .job-header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 25px;
-    border-bottom: 1px solid #dee2e6;
-    background: #f8f9fa;
-  }
-
-  .job-info h2 {
-    margin: 0 0 8px 0;
-    color: #333;
-  }
-
-  .job-info h3 {
-    margin: 0 0 10px 0;
-    color: #555;
-    font-weight: 500;
-  }
-
-  .location {
-    margin: 0;
-    color: #666;
-  }
-
-  .generate-section {
-    display: flex;
-    gap: 10px;
-  }
-
-  .generate-btn, .load-btn {
-    background: #28a745;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    transition: background 0.2s;
-  }
-
-  .generate-btn:hover:not(:disabled) {
-    background: #218838;
-  }
-
-  .generate-btn:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-  }
-
-  .load-btn {
-    background: #17a2b8;
-  }
-
-  .load-btn:hover:not(:disabled) {
-    background: #138496;
-  }
-
-  .load-btn:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-  }
-
-  .content-section {
-    padding: 25px;
-  }
-
-  .cover-letter-section {
-    margin-bottom: 30px;
-  }
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-  }
-
-  .section-header h3 {
-    margin: 0;
-    color: #333;
-  }
-
-  .actions {
-    display: flex;
-    gap: 10px;
-  }
-
-  .copy-btn {
-    background: #17a2b8;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-
-  .copy-btn:hover {
-    background: #138496;
-  }
-
-  .regenerate-btn {
-    background: #ffc107;
-    color: #212529;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-
-  .regenerate-btn:hover:not(:disabled) {
-    background: #e0a800;
-  }
-
-  .regenerate-btn:disabled {
-    background: #6c757d;
-    color: white;
-    cursor: not-allowed;
-  }
-
-  .generated-content {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 6px;
-    padding: 25px;
-    margin-bottom: 30px;
-  }
-
-  .cover-letter-text {
-    margin: 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    font-family: Georgia, serif;
-    line-height: 1.7;
-    color: #333;
-    font-size: 1.05rem;
-  }
-
-  .job-description-section h3 {
-    margin-top: 0;
-    color: #495057;
-    margin-bottom: 20px;
-  }
-
-  .job-details-card {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .job-meta {
-    background: #f8f9fa;
-    padding: 15px 20px;
-    border-bottom: 1px solid #e9ecef;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-  }
-
-  .meta-item {
-    background: white;
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    border: 1px solid #dee2e6;
-    color: #495057;
-  }
-
-  .job-description-content {
-    padding: 20px;
-  }
-
-  .job-details h4 {
-    color: #495057;
-    margin: 0 0 15px 0;
-    font-size: 1rem;
-  }
-
-  .job-questions-preview {
-    margin-top: 25px;
-    padding-top: 20px;
-    border-top: 1px solid #e9ecef;
-  }
-
-  .job-questions-preview h4 {
-    color: #495057;
-    margin: 0 0 15px 0;
-    font-size: 1rem;
-  }
-
-  .questions-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .question-preview {
-    padding: 8px 0;
-    color: #666;
-    font-size: 0.9rem;
-    line-height: 1.4;
-  }
-
-  .question-preview strong {
-    color: #495057;
-  }
-
-  .job-link {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid #e9ecef;
-  }
-
-  .job-link a {
-    color: #007acc;
-    text-decoration: none;
-    font-weight: 500;
-  }
-
-  .job-link a:hover {
-    text-decoration: underline;
-  }
-
-  .job-text {
-    margin: 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    color: #333;
-  }
-
-  .loading {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 40px 20px;
-    color: #666;
-  }
-
-  .empty-state small {
-    display: block;
-    margin-top: 5px;
-    color: #999;
-  }
-
-  .login-required {
-    text-align: center;
-    padding: 80px 20px;
-  }
-
-  .login-required a {
-    color: #007bff;
-    text-decoration: none;
-  }
-
-  .login-required a:hover {
-    text-decoration: underline;
-  }
-
-  @media (max-width: 1024px) {
+  /* Responsive */
+  @media (max-width: 768px) {
     .main-content {
       grid-template-columns: 1fr;
-      gap: 20px;
+    }
+
+    .jobs-sidebar {
+      display: none;
     }
 
     .job-header-section {

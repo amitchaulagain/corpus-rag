@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
-  import { apiRequest } from '$lib/api-client.js';
+  import '$styles/shared.css';
+  
 
   let user = null;
   let jobs = [];
@@ -44,7 +45,7 @@
 
     // Load prompt from the server
     try {
-      const response = await apiRequest('/api/prompts/employer-questions');
+      const response = await fetch('/api/prompts/employer-questions');
       const data = await response.json();
       employerQuestionsPrompt = data.content;
       isPromptModified = data.isModified || false;
@@ -73,7 +74,7 @@ Questions: [Questions List]`;
 
     // Load default prompt
     try {
-      const response = await apiRequest('/api/prompts/employer-questions?default=true');
+      const response = await fetch('/api/prompts/employer-questions?default=true');
       const data = await response.json();
       defaultPrompt = data.content;
     } catch (error) {
@@ -83,7 +84,7 @@ Questions: [Questions List]`;
 
   async function savePrompt(content) {
     try {
-      await apiRequest('/api/prompts/employer-questions', {
+      await fetch('/api/prompts/employer-questions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -108,7 +109,7 @@ Questions: [Questions List]`;
 
     isLoading = true;
     try {
-      const response = await apiRequest('/api/jobs');
+      const response = await fetch('/api/jobs');
       const data = await response.json();
 
       if (data.success) {
@@ -137,7 +138,7 @@ Questions: [Questions List]`;
     const newSet = new Set();
     for (const job of jobs) {
       try {
-        const response = await apiRequest(`/api/save-response?type=employer-questions&jobFilename=${encodeURIComponent(job.filename)}`);
+        const response = await fetch(`/api/save-response?type=employer-questions&jobFilename=${encodeURIComponent(job.filename)}`);
         const data = await response.json();
         if (data.success && data.data) {
           newSet.add(job.filename);
@@ -158,7 +159,7 @@ Questions: [Questions List]`;
     parsedAnswers = [];
 
     try {
-      const response = await apiRequest(`/api/jobs/${job.filename}`);
+      const response = await fetch(`/api/jobs/${job.filename}`);
       const data = await response.json();
 
       if (data.success) {
@@ -177,7 +178,7 @@ Questions: [Questions List]`;
 
     isGenerating = true;
     try {
-      const response = await apiRequest('/api/generate', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -215,7 +216,7 @@ Questions: [Questions List]`;
     if (!selectedJob) return;
 
     try {
-      await apiRequest('/api/save-response', {
+      await fetch('/api/save-response', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -239,7 +240,7 @@ Questions: [Questions List]`;
     if (!selectedJob) return;
 
     try {
-      const response = await apiRequest(`/api/save-response?type=employer-questions&jobFilename=${encodeURIComponent(selectedJob.filename)}`);
+      const response = await fetch(`/api/save-response?type=employer-questions&jobFilename=${encodeURIComponent(selectedJob.filename)}`);
       const data = await response.json();
 
       if (data.success && data.data) {
@@ -564,202 +565,26 @@ Questions: [Questions List]`;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
-  .page-header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #e5e5e5;
-  }
-
-  .page-header h1 {
-    color: #333;
-    margin-bottom: 10px;
-    font-size: 2.2rem;
-  }
-
-  .page-header p {
-    color: #666;
-    font-size: 1.1rem;
-    margin: 0 0 20px 0;
-  }
-
-  .prompt-section {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 30px;
-    max-width: none;
-  }
-
-  .prompt-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-  }
-
-  .prompt-section h3 {
-    margin: 0;
-    color: #333;
-    font-size: 1.1rem;
-    user-select: none;
-  }
-
-  .prompt-section h3:hover {
-    color: #007acc;
-  }
-
-  .prompt-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-  }
-
-  .prompt-area {
-    width: 100%;
-  }
-
-  .prompt-editor {
-    width: 100%;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 15px;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.9rem;
-    font-weight: 600;
-    line-height: 1.5;
-    resize: vertical;
-    background: white;
-    color: #333;
-    height: auto;
-  }
-
-  .prompt-editor:focus {
-    outline: none;
-    border-color: #007acc;
-    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
-  }
-
-  .prompt-display {
-    width: 100%;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    padding: 15px;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.9rem;
-    font-weight: 600;
-    line-height: 1.5;
-    background: white;
-    color: #333;
-    white-space: pre-wrap;
-    overflow-wrap: break-word;
-    min-height: 200px;
-    max-height: 600px;
-    overflow-y: auto;
-  }
-
-  .prompt-display:focus {
-    outline: none;
-    border-color: #007acc;
-    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
-  }
-
-  .main-content {
-    display: grid;
-    grid-template-columns: 400px 1fr;
-    gap: 30px;
-    min-height: 700px;
-    transition: grid-template-columns 0.3s ease;
-  }
-
-  .main-content:has(.jobs-sidebar.collapsed) {
-    grid-template-columns: 60px 1fr;
-  }
-
-  /* Jobs Sidebar */
-  .jobs-sidebar {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
-    border: 1px solid #e5e5e5;
-    transition: all 0.3s ease;
-  }
-
-  .jobs-sidebar.collapsed {
-    padding: 10px 5px;
-    width: 60px;
-  }
-
-  .sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #dee2e6;
-  }
-
-  .sidebar-header h2 {
-    margin: 0;
-    font-size: 1.2rem;
-    color: #495057;
-    user-select: none;
-    flex: 1;
-  }
-
-  .sidebar-header h2:hover {
-    color: #007bff;
-  }
-
-  .jobs-sidebar.collapsed .sidebar-header h2 {
-    font-size: 1.5rem;
-    text-align: center;
-  }
-
-  .refresh-btn {
-    background: none;
+  /* Page-specific buttons */
+  .generate-btn, .load-btn {
+    background: #28a745;
+    color: white;
     border: none;
-    font-size: 1.1rem;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-  }
-
-  .refresh-btn:hover {
-    background: #e9ecef;
-  }
-
-  .jobs-list {
-    height: 100%;
-    overflow-y: auto;
-  }
-
-  .job-item {
-    background: white;
-    border: 1px solid #dee2e6;
+    padding: 10px 20px;
     border-radius: 6px;
-    padding: 15px;
-    margin-bottom: 12px;
-    transition: all 0.2s;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
   }
 
-  .job-item:hover {
-    border-color: #007bff;
-    box-shadow: 0 2px 4px rgba(0, 123, 255, 0.1);
+  .generate-btn:hover:not(:disabled) {
+    background: #218838;
   }
 
-  .job-item.selected {
-    border-color: cornflowerblue;
-    background: #f8f9ff;
-  }
-
-  .job-item.has-saved {
-    border: 3px dashed #FFD700;
-  }
-
-  .job-item.has-saved.selected {
-    border: 3px dashed cornflowerblue;
+  .generate-btn:disabled, .load-btn:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 
   .quick-action-btn-inline {
@@ -784,259 +609,23 @@ Questions: [Questions List]`;
     opacity: 0.6;
   }
 
-  .job-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
+  /* Responsive */
+  @media (max-width: 768px) {
+    .main-content {
+      grid-template-columns: 1fr;
+    }
 
-  .job-header-right {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
+    .jobs-sidebar {
+      display: none;
+    }
 
-  .job-type {
-    background: #007bff;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 500;
-  }
+    .job-header-section {
+      flex-direction: column;
+      gap: 15px;
+    }
 
-  .job-size {
-    font-size: 0.8rem;
-    color: #6c757d;
-  }
-
-  .job-company {
-    margin: 0 0 5px 0;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #333;
-  }
-
-  .job-title {
-    margin: 0 0 5px 0;
-    font-size: 0.9rem;
-    color: #555;
-    line-height: 1.3;
-  }
-
-  .job-location, .job-questions {
-    margin: 0 0 3px 0;
-    font-size: 0.8rem;
-    color: #666;
-  }
-
-  /* Q&A Panel */
-  .cover-letter-panel {
-    background: white;
-    border-radius: 8px;
-    border: 1px solid #e5e5e5;
-    overflow: hidden;
-  }
-
-  .no-selection {
-    padding: 80px 40px;
-    text-align: center;
-    color: #666;
-  }
-
-  .placeholder-icon {
-    font-size: 4rem;
-    margin-bottom: 20px;
-    opacity: 0.5;
-  }
-
-  .no-selection h2 {
-    margin-bottom: 10px;
-    color: #333;
-  }
-
-  .job-header-section {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 25px;
-    border-bottom: 1px solid #dee2e6;
-    background: #f8f9fa;
-  }
-
-  .job-info h2 {
-    margin: 0 0 8px 0;
-    color: #333;
-  }
-
-  .job-info h3 {
-    margin: 0 0 10px 0;
-    color: #555;
-    font-weight: 500;
-  }
-
-  .location {
-    margin: 0;
-    color: #666;
-  }
-
-  .generate-section {
-    display: flex;
-    gap: 10px;
-  }
-
-  .generate-btn, .load-btn {
-    background: #28a745;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    transition: background-color 0.2s;
-  }
-
-  .generate-btn:hover:not(:disabled) {
-    background: #218838;
-  }
-
-  .generate-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  .load-btn {
-    background: #17a2b8;
-  }
-
-  .load-btn:hover:not(:disabled) {
-    background: #138496;
-  }
-
-  .load-btn:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-  }
-
-  .question-item {
-    background: white;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
-  }
-
-  .question-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-  }
-
-  .question-header h4 {
-    margin: 0;
-    color: #333;
-  }
-
-  .question-type {
-    background: #6c757d;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-  }
-
-  .question-text {
-    margin: 0 0 15px 0;
-    color: #555;
-  }
-
-  .options-list h5 {
-    margin: 0 0 10px 0;
-    color: #495057;
-    font-size: 0.9rem;
-  }
-
-  .option-item {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    padding: 12px;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    margin-bottom: 8px;
-    transition: all 0.2s;
-  }
-
-  .option-item.recommended {
-    border-color: #28a745;
-    background: #f0fff4;
-  }
-
-  .option-index {
-    background: #e9ecef;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-weight: 600;
-  }
-
-  .option-text {
-    flex: 1;
-  }
-
-  .recommended-badge {
-    background: #28a745;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 500;
-  }
-
-  .job-icon {
-    background: white;
-    border: 2px solid #dee2e6;
-    border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 8px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #495057;
-    width: 100%;
-    min-height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-  }
-
-  .job-icon:hover {
-    border-color: #007bff;
-    background: #f8f9ff;
-  }
-
-  .job-icon.selected {
-    border-color: #007bff;
-    background: #007bff;
-    color: white;
-  }
-
-  .reset-btn-small {
-    background: #6c757d;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: background 0.2s;
-  }
-
-  .reset-btn-small:hover {
-    background: #5a6268;
+    .container {
+      padding: 15px;
+    }
   }
 </style>

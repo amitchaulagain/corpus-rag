@@ -1,0 +1,25 @@
+{
+  "providers": [
+    {
+      "id": "claude-sonnet",
+      "name": "Claude 3.5 Sonnet",
+      "type": "claude",
+      "model": "claude-3-5-sonnet-20241022",
+      "enabled": true
+    },
+    {
+      "id": "deepseek-chat",
+      "name": "DeepSeek Chat",
+      "type": "deepseek",
+      "model": "deepseek-chat",
+      "enabled": true
+    },
+    {
+      "id": "gemini-flash",
+      "name": "Gemini 2.0 Flash",
+      "type": "gemini",
+      "model": "gemini-2.0-flash-exp",
+      "enabled": true
+    }
+  ]
+}

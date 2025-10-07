@@ -121,7 +121,7 @@
         <!-- Navigation Menu -->
         <ul class="menu p-4 space-y-2">
           <li>
-            <a href="/files" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/files'} title={isSidebarCollapsed ? 'Files' : ''}>
+            <a href="/upload" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/upload'} title={isSidebarCollapsed ? 'Files' : ''}>
               <span class="text-xl">🗄️</span>
               {#if !isSidebarCollapsed}<span>Files</span>{/if}
             </a>
@@ -166,6 +166,19 @@
             <a href="/help" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/help'} title={isSidebarCollapsed ? 'Help' : ''}>
               <span class="text-xl">📚</span>
               {#if !isSidebarCollapsed}<span>Help</span>{/if}
+            </a>
+          </li>
+
+          <!-- Divider -->
+          {#if !isSidebarCollapsed}
+            <li><hr class="my-2" /></li>
+          {/if}
+
+          <!-- Settings -->
+          <li>
+            <a href="/settings" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/settings'} title={isSidebarCollapsed ? 'Settings' : ''}>
+              <span class="text-xl">⚙️</span>
+              {#if !isSidebarCollapsed}<span>Settings</span>{/if}
             </a>
           </li>
         </ul>

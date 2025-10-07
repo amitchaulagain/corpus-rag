@@ -2,10 +2,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-import { GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET } from '$env/static/private';
-
-const CLIENT_ID = GOOGLE_OAUTH_CLIENT_ID;
-const CLIENT_SECRET = GOOGLE_OAUTH_CLIENT_SECRET;
+import { VITE_GOOGLE_CLIENT_ID, VITE_GOOGLE_CLIENT_SECRET } from '$env/static/private';
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
@@ -21,8 +18,6 @@ export const POST: RequestHandler = async ({ request }) => {
     console.log('🔐 Exchanging OAuth code for access token...');
     console.log('Redirect URI:', redirect_uri);
     console.log('Code:', code.substring(0, 20) + '...');
-    console.log('Client ID:', CLIENT_ID);
-    console.log('Client Secret:', CLIENT_SECRET ? 'SET' : 'NOT SET');
 
     // Exchange authorization code for access token
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -31,9 +26,9 @@ export const POST: RequestHandler = async ({ request }) => {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: new URLSearchParams({
-        client_id: CLIENT_ID!,
-        client_secret: CLIENT_SECRET!,
         code: code,
+        client_id: VITE_GOOGLE_CLIENT_ID,
+        client_secret: VITE_GOOGLE_CLIENT_SECRET,
         grant_type: 'authorization_code',
         redirect_uri: redirect_uri,
       }),
