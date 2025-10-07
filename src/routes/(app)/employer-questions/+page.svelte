@@ -21,6 +21,11 @@
   let defaultPrompt = '';
   let jobsWithSavedResponses = new Set();
 
+  // Comparison mode variables
+  let isComparing = false;
+  let comparisonResults = null;
+  let providers = [];
+
   // $: makes this a reactive statement that runs when employerQuestionsPrompt changes
   $: if (employerQuestionsPrompt) {
     clearTimeout(debounceTimeout);
@@ -80,6 +85,17 @@ Questions: [Questions List]`;
     } catch (error) {
       console.error('Failed to load default prompt:', error);
     }
+
+    // Load providers for comparison
+    try {
+      const response = await fetch('/api/providers');
+      const data = await response.json();
+      if (data.success) {
+        providers = data.providers.filter((p) => p.enabled && p.hasApiKey);
+      }
+    } catch (error) {
+      console.error('Failed to load providers:', error);
+    }
   });
 
   async function savePrompt(content) {
@@ -138,7 +154,7 @@ Questions: [Questions List]`;
     const newSet = new Set();
     for (const job of jobs) {
       try {
-        const response = await fetch(`/api/save-response?type=employer-questions&jobFilename=${encodeURIComponent(job.filename)}`);
+        const response = await fetch(`/api/save-response?type=employer-questions-comparison&jobFilename=${encodeURIComponent(job.filename)}`);
         const data = await response.json();
         if (data.success && data.data) {
           newSet.add(job.filename);
@@ -157,6 +173,7 @@ Questions: [Questions List]`;
     jobContent = null;
     generatedAnswers = '';
     parsedAnswers = [];
+    comparisonResults = null;
 
     try {
       const response = await fetch(`/api/jobs/${job.filename}`);
@@ -164,6 +181,8 @@ Questions: [Questions List]`;
 
       if (data.success) {
         jobContent = data.data.content;
+        // Auto-load saved comparison results
+        await loadLastResponse();
       } else {
         alert('Failed to load job details: ' + data.error);
       }
@@ -173,46 +192,45 @@ Questions: [Questions List]`;
     }
   }
 
-  async function generateAnswers() {
+  async function compareAnswers() {
     if (!selectedJob || !jobContent || !jobContent.questions) return;
 
-    isGenerating = true;
+    isComparing = true;
+    comparisonResults = null;
+
     try {
-      const response = await fetch('/api/generate', {
+      const response = await fetch('/api/employer-questions/compare', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: 'employer_answers',
-          ...(jobDescriptionStates[selectedJob.filename] && { details: jobContent.details }),
-          questions: jobContent.questions,
-          prompt: employerQuestionsPrompt
+          userId: user.email,
+          prompt: employerQuestionsPrompt,
+          questions: jobContent.questions.map((q) => ({
+            q: q.q,
+            type: q.type || 'select',
+            options: q.opts || []
+          })),
+          details: jobDescriptionStates[selectedJob.filename] ? jobContent.details : null
         })
       });
 
       const data = await response.json();
 
       if (data.success) {
-        generatedAnswers = data.data.generatedText;
-        parsedAnswers = parseAIAnswers(data.data.generatedText);
-        console.log('Generated answers:', generatedAnswers);
-        console.log('Parsed answers:', parsedAnswers);
-
-        // Save the response
-        await saveResponse({ raw: generatedAnswers, parsed: parsedAnswers });
+        comparisonResults = data.results;
+        await saveComparisonResults(data.results);
       } else {
-        alert('Failed to generate answers: ' + data.error);
+        alert('Failed to compare: ' + data.error);
       }
     } catch (error) {
-      console.error('Failed to generate answers:', error);
-      alert('Failed to generate answers: ' + error.message);
+      console.error('Failed to compare answers:', error);
+      alert('Failed to compare: ' + error.message);
     } finally {
-      isGenerating = false;
+      isComparing = false;
     }
   }
 
-  async function saveResponse(response) {
+  async function saveComparisonResults(results) {
     if (!selectedJob) return;
 
     try {
@@ -222,11 +240,11 @@ Questions: [Questions List]`;
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          type: 'employer-questions',
+          type: 'employer-questions-comparison',
           company: selectedJob.company,
           title: selectedJob.title,
           jobFilename: selectedJob.filename,
-          response
+          response: JSON.stringify(results)
         })
       });
       // Update the set to reflect this job now has a saved response
@@ -240,18 +258,19 @@ Questions: [Questions List]`;
     if (!selectedJob) return;
 
     try {
-      const response = await fetch(`/api/save-response?type=employer-questions&jobFilename=${encodeURIComponent(selectedJob.filename)}`);
+      const response = await fetch(
+        `/api/save-response?type=employer-questions-comparison&jobFilename=${selectedJob.filename}`
+      );
       const data = await response.json();
 
-      if (data.success && data.data) {
-        generatedAnswers = data.data.response.raw;
-        parsedAnswers = data.data.response.parsed || parseAIAnswers(data.data.response.raw);
-      } else {
-        alert('No saved answers found for this job.');
+      if (data.success && data.data && data.data.response) {
+        comparisonResults = JSON.parse(data.data.response);
+        generatedAnswers = '';
+        parsedAnswers = [];
       }
+      // Silently fail if no saved response
     } catch (error) {
-      console.error('Failed to load saved response:', error);
-      alert('Failed to load saved response: ' + error.message);
+      console.log('No saved response for this job');
     }
   }
 
@@ -336,296 +355,265 @@ Questions: [Questions List]`;
       alert('Failed to copy to clipboard');
     });
   }
+
+  function getProviderName(providerId) {
+    if (providerId.includes('claude')) return 'Claude';
+    if (providerId.includes('deepseek')) return 'DeepSeek';
+    if (providerId.includes('gemini')) return 'Gemini';
+    return providerId;
+  }
+
+  function getProviderIcon(providerId) {
+    if (providerId.includes('claude')) return '🧠';
+    if (providerId.includes('deepseek')) return '🤖';
+    if (providerId.includes('gemini')) return '💎';
+    return '🤖';
+  }
+
+  function formatTime(ms) {
+    return (ms / 1000).toFixed(2) + 's';
+  }
+
+  function formatCurrency(amount) {
+    return '$' + amount.toFixed(4);
+  }
 </script>
 
-<main class="container mx-auto max-w-6xl p-6">
-  <div class="mb-8">
-    <h1 class="text-4xl font-bold mb-4 text-primary">❓ Employer Questions</h1>
-    <p class="text-base-content/70">Get AI-powered recommendations for employer screening questions</p>
+<main class="container mx-auto max-w-7xl p-6">
+	<div class="page-header">
+		<h1 class="text-4xl font-bold mb-4 text-primary">❓ Employer Questions</h1>
+		<p class="text-base-content/70">Get AI-powered recommendations for employer screening questions</p>
+	</div>
 
-    <!-- Always Visible Prompt Section -->
-    <div class="prompt-section">
-      <div class="prompt-header">
-        <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
-          🤖 AI Prompt Editor
-        </h3>
-        {#if isPromptModified}
-          <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
-            ↺ Reset
-          </button>
-        {/if}
-      </div>
-      <div class="prompt-container">
-        <div class="prompt-area">
-          {#if isPromptExpanded}
-            <pre
-              class="prompt-display"
-              contenteditable="true"
-              bind:textContent={employerQuestionsPrompt}
-              on:blur={() => savePrompt(employerQuestionsPrompt)}
-            >{employerQuestionsPrompt}</pre>
-          {:else}
-            <textarea
-              class="prompt-editor"
-              bind:value={employerQuestionsPrompt}
-              placeholder="Enter your AI prompt here..."
-              rows="10"
-              on:blur={() => savePrompt(employerQuestionsPrompt)}
-            ></textarea>
-          {/if}
-        </div>
-      </div>
-    </div>
-  </div>
+	<!-- Always Visible Prompt Section -->
+	<div class="prompt-section">
+		<div class="prompt-header">
+			<h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
+				🤖 AI Prompt Editor
+			</h3>
+			{#if isPromptModified}
+				<button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
+					↺ Reset
+				</button>
+			{/if}
+		</div>
+		<div class="prompt-container">
+			<div class="prompt-area">
+				{#if isPromptExpanded}
+					<pre
+						class="prompt-display"
+						contenteditable="true"
+						bind:textContent={employerQuestionsPrompt}
+						on:blur={() => savePrompt(employerQuestionsPrompt)}
+					>{employerQuestionsPrompt}</pre>
+				{:else}
+					<textarea
+						class="prompt-editor"
+						bind:value={employerQuestionsPrompt}
+						placeholder="Enter your AI prompt here..."
+						rows="10"
+						on:blur={() => savePrompt(employerQuestionsPrompt)}
+					></textarea>
+				{/if}
+			</div>
+		</div>
+	</div>
 
-  <div class="main-content">
-    <!-- Jobs List -->
-    <div class="jobs-sidebar" class:collapsed={isSidebarCollapsed}>
-      <div class="sidebar-header">
-        <h2 on:click={() => isSidebarCollapsed = !isSidebarCollapsed} style="cursor: pointer;">
-          {#if isSidebarCollapsed}
-            ❓
-          {:else}
-            💼 Jobs with Questions
-          {/if}
-        </h2>
-        {#if !isSidebarCollapsed}
-          <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
-            {#if isLoading}⏳{:else}🔄{/if}
-          </button>
-        {/if}
-      </div>
+	<div class="main-content">
+		<!-- Jobs List -->
+		<div class="jobs-sidebar" class:collapsed={isSidebarCollapsed}>
+			<div class="sidebar-header">
+				<h2 on:click={() => isSidebarCollapsed = !isSidebarCollapsed} style="cursor: pointer;">
+					{#if isSidebarCollapsed}
+						❓
+					{:else}
+						💼 Jobs with Questions
+					{/if}
+				</h2>
+				{#if !isSidebarCollapsed}
+					<button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
+						{#if isLoading}⏳{:else}🔄{/if}
+					</button>
+				{/if}
+			</div>
 
-      {#if isLoading}
-        <div class="loading">Loading jobs...</div>
-      {:else if jobs.length === 0}
-        <div class="empty-state">
-          <p>No employer questions found</p>
-          <small>Only jobs with screening questions will appear here</small>
-        </div>
-      {:else}
-        <div class="jobs-list">
-          {#each jobs as job, index}
-            {#if isSidebarCollapsed}
-              <button
-                class="job-icon"
-                class:selected={selectedJob?.filename === job.filename}
-                on:click={() => selectJob(job)}
-                title="{job.company} - {job.title}"
-              >
-                {index + 1}
-              </button>
-            {:else}
-              <div
-                class="job-item"
-                class:selected={selectedJob?.filename === job.filename}
-                class:has-saved={jobsWithSavedResponses.has(job.filename)}
-              >
-                <div class="job-header">
-                  <span class="job-type" on:click={() => selectJob(job)} style="cursor: pointer;">
-                    ❓ {job.questionCount} Questions
-                  </span>
-                  <div class="job-header-right">
-                    <span class="job-size">{formatFileSize(job.size)}</span>
-                    <button
-                      class="quick-action-btn-inline"
-                      on:click|stopPropagation={async () => {
-                        await selectJob(job);
-                        await generateAnswers();
-                      }}
-                      disabled={isGenerating}
-                    >
-                      💡
-                    </button>
-                  </div>
-                </div>
-                <div on:click={() => selectJob(job)} style="cursor: pointer;">
-                  <h3 class="job-company">{job.company}</h3>
-                  <p class="job-title">{job.title}</p>
-                  {#if job.location}
-                    <p class="job-location">📍 {job.location}</p>
-                  {/if}
-                  {#if job.hasJobDetails}
-                    <p class="job-questions">💼 Has job description too</p>
-                  {/if}
-                </div>
-              </div>
-            {/if}
-          {/each}
-        </div>
-      {/if}
-    </div>
+			{#if isLoading}
+				<div class="loading">Loading jobs...</div>
+			{:else if jobs.length === 0}
+				<div class="empty-state">
+					<p>No employer questions found</p>
+					<small>Only jobs with screening questions will appear here</small>
+				</div>
+			{:else}
+				<div class="jobs-list">
+					{#each jobs as job, index}
+						{#if isSidebarCollapsed}
+							<button
+								class="job-icon"
+								class:selected={selectedJob?.filename === job.filename}
+								on:click={() => selectJob(job)}
+								title="{job.company} - {job.title}"
+							>
+								{index + 1}
+							</button>
+						{:else}
+							<div
+								class="job-item"
+								class:selected={selectedJob?.filename === job.filename}
+								class:has-saved={jobsWithSavedResponses.has(job.filename)}
+							>
+								<div class="job-header">
+									<span class="job-type" on:click={() => selectJob(job)} style="cursor: pointer;">
+										❓ {job.questionCount} Questions
+									</span>
+									<div class="job-header-right">
+										<span class="job-size">{formatFileSize(job.size)}</span>
+										<button
+											class="quick-action-btn-inline"
+											on:click|stopPropagation={async () => {
+												await selectJob(job);
+												await generateAnswers();
+											}}
+											disabled={isGenerating}
+										>
+											💡
+										</button>
+									</div>
+								</div>
+								<div on:click={() => selectJob(job)} style="cursor: pointer;">
+									<h3 class="job-company">{job.company}</h3>
+									<p class="job-title">{job.title}</p>
+									{#if job.location}
+										<p class="job-location">📍 {job.location}</p>
+									{/if}
+									{#if job.hasJobDetails}
+										<p class="job-questions">💼 Has job description too</p>
+									{/if}
+								</div>
+							</div>
+						{/if}
+					{/each}
+				</div>
+			{/if}
+		</div>
 
-    <!-- Q&A Panel -->
-    <div class="cover-letter-panel">
-      {#if !selectedJob}
-        <div class="no-selection">
-          <div class="placeholder-icon">❓</div>
-          <h2>Select a job to see questions</h2>
-          <p>Choose from the jobs on the left to start getting answer recommendations</p>
-        </div>
-      {:else}
-        <div class="job-header-section">
-          <div class="job-info">
-            <h2>{selectedJob.company}</h2>
-            <h3>{selectedJob.title}</h3>
-            {#if selectedJob.location}
-              <p class="location">📍 {selectedJob.location}</p>
-            {/if}
-          </div>
+		<!-- Q&A Panel -->
+		<div class="cover-letter-panel">
+			{#if !selectedJob}
+				<div class="no-selection">
+					<div class="placeholder-icon">❓</div>
+					<h2>Select a job to see questions</h2>
+					<p>Choose from the jobs on the left to start getting answer recommendations</p>
+				</div>
+			{:else}
+				<div class="job-header-section">
+					<div class="job-info">
+						<h2>{selectedJob.company}</h2>
+						<h3>{selectedJob.title}</h3>
+						{#if selectedJob.location}
+							<p class="location">📍 {selectedJob.location}</p>
+						{/if}
+					</div>
 
-          <div class="generate-section">
-            <button
-              class="generate-btn"
-              on:click={generateAnswers}
-              disabled={isGenerating || !jobContent}
-            >
-              {#if isGenerating}
-                ⏳ Generating...
-              {:else}
-                ✅ Get Recommendations
-              {/if}
-            </button>
-            {#if selectedJob && jobsWithSavedResponses.has(selectedJob.filename)}
-              <button
-                class="load-btn"
-                on:click={loadLastResponse}
-              >
-                📂 Load Saved
-              </button>
-            {/if}
-          </div>
-        </div>
+					<div class="generate-section">
+						<button
+							class="generate-btn"
+							on:click={compareAnswers}
+							disabled={isComparing || !jobContent}
+						>
+							{#if isComparing}
+								⏳ Comparing...
+							{:else}
+								🔍 Compare AI Answers
+							{/if}
+						</button>
+					</div>
+				</div>
 
-        {#if jobContent && jobContent.questions}
-          <div class="content-section">
-            <!-- Generated Answers -->
-            {#if generatedAnswers}
-              <div class="cover-letter-section">
-                <div class="section-header">
-                  <h3>🎯 AI Recommendations</h3>
-                  <div class="actions">
-                    <button class="copy-btn" on:click={() => copyToClipboard(generatedAnswers)}>
-                      📋 Copy
-                    </button>
-                  </div>
-                </div>
-                <div class="generated-content">
-                  <pre class="cover-letter-text">{generatedAnswers}</pre>
-                </div>
-              </div>
-            {/if}
+				{#if jobContent && jobContent.questions}
+					<div class="content-section">
+						<!-- Comparison Results -->
+						{#if comparisonResults}
+							<div class="cover-letter-section">
+								<div class="section-header">
+									<h3>🔍 AI Comparison Results</h3>
+								</div>
+								<div class="comparison-grid">
+									{#each comparisonResults as result}
+										<div
+											class="comparison-card"
+											style="border-color: {result.error ? 'red' : 'green'};"
+										>
+											<div class="comparison-header">
+												<h4>
+													{getProviderIcon(result.providerId)}
+													{getProviderName(result.providerId)}
+												</h4>
+												{#if result.error}
+													<span class="status-badge error">❌ Error</span>
+												{:else}
+													<span class="status-badge success">✅ Success</span>
+												{/if}
+											</div>
+											{#if result.error}
+												<p class="error-message">{result.error}</p>
+											{:else}
+												<div class="comparison-content">
+													<pre class="cover-letter-text">{result.text}</pre>
+												</div>
+												<div class="comparison-metadata">
+													<span>⏱️ {formatTime(result.metadata.timeMs)}</span>
+													<span>📊 {result.metadata.tokensUsed} tokens</span>
+													<span>💰 {formatCurrency(result.metadata.estimatedCost)}</span>
+												</div>
+												<button
+													class="copy-btn-small"
+													on:click={() => copyToClipboard(result.text)}>📋 Copy</button
+												>
+											{/if}
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
 
-            <!-- Questions List -->
-            <div class="job-description-section">
-              <h3>📝 Employer Questions ({jobContent.questions.length})</h3>
-              <div class="space-y-6">
-                {#each jobContent.questions as question, index}
-                  <div class="question-item">
-                    <div class="question-header">
-                      <h4>Question {index + 1}</h4>
-                      <div class="question-type">{question.type || 'select'}</div>
-                    </div>
-                    <p class="question-text">{question.q}</p>
-                    {#if question.opts && question.opts.length > 0}
-                      <div class="options-list">
-                        <h5>Options:</h5>
-                        {#each question.opts as option, optIndex}
-                          <div
-                            class="option-item"
-                            class:recommended={isOptionRecommended(index, optIndex)}
-                          >
-                            <div class="option-index">{optIndex}</div>
-                            <span class="option-text">{option}</span>
-                            {#if isOptionRecommended(index, optIndex)}
-                              <div class="recommended-badge">🤖 AI RECOMMENDED</div>
-                            {/if}
-                          </div>
-                        {/each}
-                      </div>
-                    {/if}
-                  </div>
-                {/each}
-              </div>
-            </div>
-          </div>
-        {:else}
-          <div class="loading">Loading questions...</div>
-        {/if}
-      {/if}
-    </div>
-  </div>
+						<!-- Questions List -->
+						<div class="job-description-section">
+							<h3>📝 Employer Questions ({jobContent.questions.length})</h3>
+							<div class="space-y-6">
+								{#each jobContent.questions as question, index}
+									<div class="question-item">
+										<div class="question-header">
+											<h4>Question {index + 1}</h4>
+											<div class="question-type">{question.type || 'select'}</div>
+										</div>
+										<p class="question-text">{question.q}</p>
+										{#if question.opts && question.opts.length > 0}
+											<div class="options-list">
+												<h5>Options:</h5>
+												{#each question.opts as option, optIndex}
+													<div
+														class="option-item"
+														class:recommended={isOptionRecommended(index, optIndex)}
+													>
+														<div class="option-index">{optIndex}</div>
+														<span class="option-text">{option}</span>
+														{#if isOptionRecommended(index, optIndex)}
+															<div class="recommended-badge">🤖 AI RECOMMENDED</div>
+														{/if}
+													</div>
+												{/each}
+											</div>
+										{/if}
+									</div>
+								{/each}
+							</div>
+						</div>
+					</div>
+				{:else}
+					<div class="loading">Loading questions...</div>
+				{/if}
+			{/if}
+		</div>
+	</div>
 </main>
-
-<style>
-  .container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  }
-
-  /* Page-specific buttons */
-  .generate-btn, .load-btn {
-    background: #28a745;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: background 0.2s;
-  }
-
-  .generate-btn:hover:not(:disabled) {
-    background: #218838;
-  }
-
-  .generate-btn:disabled, .load-btn:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  .quick-action-btn-inline {
-    padding: 4px 10px;
-    background: #ff6b6b;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background 0.2s;
-    margin-left: 8px;
-  }
-
-  .quick-action-btn-inline:hover:not(:disabled) {
-    background: #ee5a52;
-  }
-
-  .quick-action-btn-inline:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-    opacity: 0.6;
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .main-content {
-      grid-template-columns: 1fr;
-    }
-
-    .jobs-sidebar {
-      display: none;
-    }
-
-    .job-header-section {
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .container {
-      padding: 15px;
-    }
-  }
-</style>

@@ -350,3 +350,75 @@
 .question-preview strong {
   color: inherit;
 }
+
+.question-item {
+  background: rgba(128, 128, 128, 0.1);
+  border: 1px solid rgba(128, 128, 128, 0.2);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.question-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: inherit;
+}
+
+.question-type {
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(128, 128, 128, 0.2);
+}
+
+.question-text {
+  margin: 0 0 15px 0;
+  line-height: 1.6;
+}
+
+.options-list h5 {
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: inherit;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.option-item.recommended {
+  border-color: purple;
+  background: rgba(128, 0, 128, 0.1);
+}
+
+.option-index {
+  font-size: 0.8rem;
+  font-weight: bold;
+  background: rgba(128, 128, 128, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.recommended-badge {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: purple;
+}
