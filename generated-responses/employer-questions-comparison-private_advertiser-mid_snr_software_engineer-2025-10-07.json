@@ -3,6 +3,6 @@
   "company": "Private Advertiser",
   "title": "Mid/Snr Software Engineer",
   "jobFilename": "private_advertiser_87532955.json",
-  "generatedAt": "2025-10-07T06:24:54.918Z",
-  "response": "{\"error\":{\"success\":false,\"error\":\"No AI providers configured\",\"metadata\":{\"model\":\"unknown\",\"processingTime\":0}}}"
+  "generatedAt": "2025-10-07T14:37:33.262Z",
+  "response": "[{\"providerId\":\"deepseek-chat\",\"text\":\"[3,0,11]\",\"metadata\":{\"model\":\"deepseek-chat\",\"tokensUsed\":659,\"inputTokens\":652,\"outputTokens\":7,\"processingTime\":258,\"cost\":{\"usd\":0.0001855,\"aud\":0.00028196000000000004,\"npr\":0.026341}}},{\"providerId\":\"gemini-flash\",\"text\":\"[3, 0, 4]\\n\",\"metadata\":{\"model\":\"gemini-2.0-flash-exp\",\"tokensUsed\":737,\"inputTokens\":727,\"outputTokens\":10,\"processingTime\":1565,\"cost\":{\"usd\":0,\"aud\":0,\"npr\":0}}}]"
 }

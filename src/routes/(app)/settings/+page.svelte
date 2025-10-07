@@ -138,15 +138,30 @@
     {/if}
 
     <!-- Info Box -->
-    <div class="mt-8 card bg-base-200">
-      <div class="card-body">
-        <h4 class="font-semibold mb-2">ℹ️ How It Works</h4>
-        <ul class="space-y-2 text-sm opacity-80">
-          <li>• Toggle providers ON/OFF to control which AIs are used</li>
-          <li>• Disabled providers won't be queried in Search or Cover Letters</li>
-          <li>• Changes take effect immediately</li>
-          <li>• Providers without API keys cannot be enabled</li>
-        </ul>
+    <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card bg-base-200">
+        <div class="card-body">
+          <h4 class="font-semibold mb-2">ℹ️ How It Works</h4>
+          <ul class="space-y-2 text-sm opacity-80">
+            <li>• Toggle providers ON/OFF to control which AIs are used</li>
+            <li>• Disabled providers won't be queried in Search or Cover Letters</li>
+            <li>• Changes take effect immediately</li>
+            <li>• Providers without API keys cannot be enabled</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card bg-info/10 border-2 border-info">
+        <div class="card-body">
+          <h4 class="font-semibold mb-2">🔑 Configure API Keys</h4>
+          <p class="text-sm opacity-90 mb-3">Add your API keys to the <code class="bg-base-300 px-2 py-1 rounded">.env</code> file in your project root:</p>
+          <div class="mockup-code text-xs">
+            <pre data-prefix="$"><code>CLAUDE_API_KEY=sk-ant-...</code></pre>
+            <pre data-prefix="$"><code>DEEPSEEK_API_KEY=sk-...</code></pre>
+            <pre data-prefix="$"><code>GEMINI_API_KEY=...</code></pre>
+          </div>
+          <p class="text-xs opacity-70 mt-3">⚠️ Restart the server after adding API keys</p>
+        </div>
       </div>
     </div>
   {/if}

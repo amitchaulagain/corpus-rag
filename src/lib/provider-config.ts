@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import type { ProviderConfig } from './providers/base-provider';
+import { env } from '$env/dynamic/private';
 
 export class ProviderConfigManager {
   private configPath: string;
@@ -21,13 +22,13 @@ export class ProviderConfigManager {
       const providers = config.providers.map((p: ProviderConfig) => {
         let apiKey = p.apiKey; // Use existing if present
 
-        // Override with env vars if available
-        if (p.type === 'claude' && process.env.CLAUDE_API_KEY) {
-          apiKey = process.env.CLAUDE_API_KEY;
-        } else if (p.type === 'deepseek' && process.env.DEEPSEEK_API_KEY) {
-          apiKey = process.env.DEEPSEEK_API_KEY;
-        } else if (p.type === 'gemini' && process.env.GEMINI_API_KEY) {
-          apiKey = process.env.GEMINI_API_KEY;
+        // Override with env vars if available (try both env module and process.env)
+        if (p.type === 'claude' && (env.CLAUDE_API_KEY || process.env.CLAUDE_API_KEY)) {
+          apiKey = env.CLAUDE_API_KEY || process.env.CLAUDE_API_KEY;
+        } else if (p.type === 'deepseek' && (env.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY)) {
+          apiKey = env.DEEPSEEK_API_KEY || process.env.DEEPSEEK_API_KEY;
+        } else if (p.type === 'gemini' && (env.GEMINI_API_KEY || process.env.GEMINI_API_KEY)) {
+          apiKey = env.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
         }
 
         return { ...p, apiKey };

@@ -23,7 +23,15 @@ export const POST: RequestHandler = async ({ request }) => {
 
     const fullPrompt = `${prompt}\n\n${details ? `JOB DESCRIPTION:\n${details}\n\n` : ''}QUESTIONS:\n${questionsText}`;
 
-    const results = await multiProvider.queryAll(userId, fullPrompt);
+    const resultsMap = await multiProvider.queryAll(userId, fullPrompt);
+
+    // Transform the results map into an array format expected by the frontend
+    const results = Object.entries(resultsMap).map(([providerId, response]) => ({
+      providerId,
+      error: response.success ? undefined : response.error,
+      text: response.answer,
+      metadata: response.metadata
+    }));
 
     return json({
       success: true,

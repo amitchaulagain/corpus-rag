@@ -3,6 +3,6 @@
   "company": "M&T Resources",
   "title": "Full stack Developer",
   "jobFilename": "m_t_resources_87500954.json",
-  "generatedAt": "2025-10-07T06:22:26.665Z",
-  "response": "{\"error\":{\"success\":false,\"error\":\"No AI providers configured\",\"metadata\":{\"model\":\"unknown\",\"processingTime\":0}}}"
+  "generatedAt": "2025-10-07T14:37:18.889Z",
+  "response": "[{\"providerId\":\"deepseek-chat\",\"text\":\"[3, 0]\",\"metadata\":{\"model\":\"deepseek-chat\",\"tokensUsed\":552,\"inputTokens\":546,\"outputTokens\":6,\"processingTime\":585,\"cost\":{\"usd\":0.0001554,\"aud\":0.000236208,\"npr\":0.0220668}}},{\"providerId\":\"gemini-flash\",\"text\":\"[3, \\\"Insufficient information to answer the question\\\"]\\n\",\"metadata\":{\"model\":\"gemini-2.0-flash-exp\",\"tokensUsed\":595,\"inputTokens\":583,\"outputTokens\":12,\"processingTime\":1669,\"cost\":{\"usd\":0,\"aud\":0,\"npr\":0}}}]"
 }
