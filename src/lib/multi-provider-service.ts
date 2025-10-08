@@ -60,10 +60,16 @@ export class MultiProviderService {
   async querySingle(
     userId: string,
     question: string,
-    providerId: string
+    providerId: string,
+    resumeText?: string
   ): Promise<QueryResponse> {
-    // Get all user documents
-    const documentsText = await this.getAllUserDocuments(userId);
+    // Use provided resume text or get all user documents
+    let documentsText: string;
+    if (resumeText) {
+      documentsText = resumeText;
+    } else {
+      documentsText = await this.getAllUserDocuments(userId);
+    }
 
     // Build prompt - work even without documents
     const prompt = documentsText && documentsText.trim().length > 0

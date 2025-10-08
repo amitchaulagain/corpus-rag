@@ -1,41 +1,40 @@
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { authenticateRequest, handleApiRequest, requireScope, handleOptions, addCorsHeaders } from '$lib/api-utils.js';
+import { MultiProviderService } from '$lib/multi-provider-service';
 
-export const OPTIONS: RequestHandler = () => {
-  return handleOptions();
-};
+const multiProvider = new MultiProviderService();
 
-export const POST: RequestHandler = async (event) => {
-  const auth = await authenticateRequest(event);
-  if (auth instanceof Response) {
-    return addCorsHeaders(auth);
-  }
+export const POST: RequestHandler = async ({ request }) => {
+  try {
+    const requestBody = await request.json();
+    const { job_id, job_details, resume_text, useAi, prompt } = requestBody;
 
-  if (!requireScope(auth, 'rag:query')) {
-    return addCorsHeaders(new Response(JSON.stringify({ success: false, error: 'Insufficient permissions' }), {
-      status: 403,
-      headers: { 'Content-Type': 'application/json' }
-    }));
-  }
-
-  const response = await handleApiRequest(async () => {
-    const requestBody = await event.request.json();
-    const { jobDetails, userEmail, customPrompt } = requestBody;
-
-    if (!jobDetails || !userEmail) {
-      throw new Error('jobDetails and userEmail are required');
+    // Validate required fields
+    if (!job_id || !job_details || !resume_text || !useAi) {
+      return json(
+        {
+          success: false,
+          error: 'Missing required fields: job_id, job_details, resume_text, useAi are required'
+        },
+        { status: 400 }
+      );
     }
 
-    let prompt = '';
+    // Build the full prompt for AI
+    // Use user's custom prompt if provided, otherwise use default
+    let fullPrompt = '';
 
-    if (customPrompt) {
-      prompt = `${customPrompt}
+    if (prompt) {
+      // User provided their own prompt - use it as the main instruction
+      fullPrompt = `${prompt}
 
-Job Details: ${JSON.stringify(jobDetails, null, 2)}`;
+JOB DESCRIPTION:
+${typeof job_details === 'string' ? job_details : JSON.stringify(job_details, null, 2)}`;
     } else {
-      prompt = `Write a compelling cover letter for this position: ${JSON.stringify(jobDetails, null, 2)}
+      // Fallback to default prompt
+      fullPrompt = `Write a compelling cover letter for this position: ${typeof job_details === 'string' ? job_details : JSON.stringify(job_details, null, 2)}
 
-Use my background from the resume and user info to:
+Use my background from the resume to:
 - Address their specific pain points mentioned in the job posting
 - Highlight 2-3 most relevant experiences
 - Match their company tone/culture if discernible
@@ -45,42 +44,37 @@ Use my background from the resume and user info to:
 Please format as a professional cover letter with proper greeting and closing.`;
     }
 
-    const ragResponse = await fetch(`${event.url.origin}/api/rag/query`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': event.request.headers.get('Authorization') || ''
-      },
-      body: JSON.stringify({
-        userId: userEmail,
-        question: prompt,
-        maxTokens: 2000,
-        temperature: 0.7
-      })
+    // Query the AI provider with resume text
+    const result = await multiProvider.querySingle(
+      'external', // dummy userId since we're not using file storage
+      fullPrompt,
+      useAi,
+      resume_text
+    );
+
+    if (!result.success) {
+      return json(
+        {
+          success: false,
+          error: result.error || 'Cover letter generation failed'
+        },
+        { status: 500 }
+      );
+    }
+
+    // Return only cover_letter and job_id
+    return json({
+      cover_letter: result.answer,
+      job_id
     });
 
-    if (!ragResponse.ok) {
-      const errorData = await ragResponse.text();
-      throw new Error(`Cover letter generation failed: ${ragResponse.status} - ${errorData}`);
-    }
-
-    const ragResult = await ragResponse.json();
-
-    if (!ragResult.success) {
-      throw new Error(`Cover letter generation failed: ${ragResult.error}`);
-    }
-
-    const answer = ragResult.data ? ragResult.data.answer : ragResult.answer;
-
-    if (!answer) {
-      throw new Error('Generated cover letter is empty or invalid');
-    }
-
-    return {
-      coverLetter: answer,
-      prompt: prompt.substring(0, 200) + '...'
-    };
-  });
-
-  return addCorsHeaders(response);
+  } catch (error) {
+    return json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Internal server error'
+      },
+      { status: 500 }
+    );
+  }
 };

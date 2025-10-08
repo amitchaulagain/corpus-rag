@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite dev\" \"nodemon\" \"npm run dev:test\"",
-    "dev:test": "nodemon --delay 5 --watch src/routes/api --exec 'sleep 3 && node dev-test.js'",
+    "dev": "vite dev",
     "dev:simple": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
