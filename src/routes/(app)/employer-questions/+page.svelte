@@ -544,7 +544,7 @@ Questions: [Questions List]`;
 							<div style="margin-bottom: 2rem;">
 								<h3 style="margin-bottom: 1.5rem; font-size: 1.5rem;">🔍 AI Comparison Results</h3>
 								<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
-									{#each comparisonResults as result}
+									{#each comparisonResults.filter(result => providers.some(p => p.id === result.providerId)) as result}
 										<div style="background: rgba(128, 128, 128, 0.05); border: 2px solid {result.error ? 'red' : 'teal'}; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column;">
 											<!-- Provider Header -->
 											<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 2px solid {result.error ? 'red' : 'teal'};">

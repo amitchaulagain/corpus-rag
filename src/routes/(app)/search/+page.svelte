@@ -208,7 +208,7 @@
     <!-- Comparison Results -->
     {#if comparisonResults && !isLoading}
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {#each Object.entries(comparisonResults) as [providerId, result]}
+        {#each Object.entries(comparisonResults).filter(([providerId]) => providers.some(p => p.id === providerId)) as [providerId, result]}
           <div class="card bg-base-100 shadow-xl border-2 {result.success ? 'border-success' : 'border-error'}">
             <div class="card-body">
               <!-- Provider Header -->

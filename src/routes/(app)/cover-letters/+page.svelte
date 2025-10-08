@@ -477,7 +477,7 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
               <div class="comparison-section" style="margin-bottom: 2rem;">
                 <h3 style="margin-bottom: 1.5rem; font-size: 1.5rem;">🔍 AI Comparison Results</h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
-                  {#each Object.entries(comparisonResults) as [providerId, result]}
+                  {#each Object.entries(comparisonResults).filter(([providerId]) => providers.some(p => p.id === providerId)) as [providerId, result]}
                     <div style="background: rgba(128, 128, 128, 0.1); border: 2px solid {result.success ? 'green' : 'red'}; border-radius: 8px; padding: 1.5rem;">
                       <!-- Provider Header -->
                       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
