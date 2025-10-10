@@ -1,7 +1,8 @@
 <script>
   import { onMount } from 'svelte';
   import '$styles/shared.css';
-  
+  import AdminGuard from '$lib/components/AdminGuard.svelte';
+
   import JobAnalysisResult from '$lib/components/JobAnalysisResult.svelte';
 
   // all variables
@@ -374,6 +375,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
   }
 </script>
 
+<AdminGuard>
 <main class="container mx-auto max-w-6xl p-6">
   <div class="mb-8">
     <h1 class="text-4xl font-bold mb-4 text-primary">🎯 Job Analysis</h1>
@@ -680,3 +682,4 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     }
   }
 </style>
+</AdminGuard>

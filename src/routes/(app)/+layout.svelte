@@ -9,8 +9,8 @@
   let isSidebarCollapsed = false;
 
   onMount(() => {
-    const storedToken = localStorage.getItem('google_access_token');
-    const storedUser = localStorage.getItem('google_user');
+    const storedToken = localStorage.getItem('session_token');
+    const storedUser = localStorage.getItem('user');
 
     if (storedToken && storedUser) {
       isAuthenticated = true;
@@ -26,8 +26,8 @@
   });
 
   function logout() {
-    localStorage.removeItem('google_access_token');
-    localStorage.removeItem('google_user');
+    localStorage.removeItem('session_token');
+    localStorage.removeItem('user');
     window.location.href = '/';
   }
 
@@ -119,27 +119,63 @@
         </div>
 
         <!-- Navigation Menu -->
-        <ul class="menu p-4 space-y-2">
-          <li>
-            <a href="/upload" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/upload'} title={isSidebarCollapsed ? 'Files' : ''}>
+        <ul class="menu p-4 space-y-2 w-full">
+          <!-- Admin Section -->
+          {#if !isSidebarCollapsed}
+            <li class="menu-title">
+              <span class="text-xs text-base-content/60">Admin</span>
+            </li>
+          {/if}
+          <li class="w-full">
+            <a href="/dashboard" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/dashboard'} title={isSidebarCollapsed ? 'Dashboard' : ''}>
+              <span class="text-xl">📊</span>
+              {#if !isSidebarCollapsed}<span>Dashboard</span>{/if}
+            </a>
+          </li>
+          <li class="w-full">
+            <a href="/users" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/users'} title={isSidebarCollapsed ? 'Users' : ''}>
+              <span class="text-xl">👥</span>
+              {#if !isSidebarCollapsed}<span>Users</span>{/if}
+            </a>
+          </li>
+          <li class="w-full">
+            <a href="/jobs" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/jobs'} title={isSidebarCollapsed ? 'Job Tracking' : ''}>
+              <span class="text-xl">💼</span>
+              {#if !isSidebarCollapsed}<span>Job Tracking</span>{/if}
+            </a>
+          </li>
+
+          <!-- Divider -->
+          {#if !isSidebarCollapsed}
+            <li><hr class="my-2" /></li>
+          {/if}
+
+          <!-- Tools Section -->
+          {#if !isSidebarCollapsed}
+            <li class="menu-title">
+              <span class="text-xs text-base-content/60">Tools</span>
+            </li>
+          {/if}
+          <li class="w-full">
+            <a href="/upload" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/upload'} title={isSidebarCollapsed ? 'Files' : ''}>
               <span class="text-xl">🗄️</span>
               {#if !isSidebarCollapsed}<span>Files</span>{/if}
             </a>
           </li>
-          <li>
-            <a href="/search" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/search'} title={isSidebarCollapsed ? 'Search' : ''}>
+          <li class="w-full">
+            <a href="/search" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/search'} title={isSidebarCollapsed ? 'Search' : ''}>
               <span class="text-xl">🔍</span>
               {#if !isSidebarCollapsed}<span>Search</span>{/if}
             </a>
           </li>
-          <li>
-            <a href="/cover-letters" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/cover-letters'} title={isSidebarCollapsed ? 'Cover Letters' : ''}>
+          <li class="w-full">
+            <a href="/cover-letters" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/cover-letters'} title={isSidebarCollapsed ? 'Cover Letters' : ''}>
               <span class="text-xl">✍️</span>
               {#if !isSidebarCollapsed}<span>Cover Letters</span>{/if}
             </a>
           </li>
-          <li>
-            <a href="/employer-questions" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/employer-questions'} title={isSidebarCollapsed ? 'Q&A' : ''}>
+          <li class="w-full">
+            <a href="/employer-questions" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/employer-questions'} title={isSidebarCollapsed ? 'Q&A' : ''}>
               <span class="text-xl">❓</span>
               {#if !isSidebarCollapsed}<span>Q&A</span>{/if}
             </a>
@@ -156,16 +192,10 @@
               <span class="text-xs text-base-content/60">Resume Analysis</span>
             </li>
           {/if}
-          <li>
-            <a href="/job-analysis" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/job-analysis'} title={isSidebarCollapsed ? 'Job Analysis' : ''}>
+          <li class="w-full">
+            <a href="/job-analysis" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/job-analysis'} title={isSidebarCollapsed ? 'Job Analysis' : ''}>
               <span class="text-xl">🎯</span>
               {#if !isSidebarCollapsed}<span>Job Analysis</span>{/if}
-            </a>
-          </li>
-          <li>
-            <a href="/help" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/help'} title={isSidebarCollapsed ? 'Help' : ''}>
-              <span class="text-xl">📚</span>
-              {#if !isSidebarCollapsed}<span>Help</span>{/if}
             </a>
           </li>
 
@@ -174,9 +204,15 @@
             <li><hr class="my-2" /></li>
           {/if}
 
-          <!-- Settings -->
-          <li>
-            <a href="/settings" class="flex items-center gap-3 {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/settings'} title={isSidebarCollapsed ? 'Settings' : ''}>
+          <!-- Help & Settings -->
+          <li class="w-full">
+            <a href="/help" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/help'} title={isSidebarCollapsed ? 'Help' : ''}>
+              <span class="text-xl">📚</span>
+              {#if !isSidebarCollapsed}<span>Help</span>{/if}
+            </a>
+          </li>
+          <li class="w-full">
+            <a href="/settings" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/settings'} title={isSidebarCollapsed ? 'Settings' : ''}>
               <span class="text-xl">⚙️</span>
               {#if !isSidebarCollapsed}<span>Settings</span>{/if}
             </a>

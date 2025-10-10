@@ -19,7 +19,7 @@
       "name": "Gemini 2.0 Flash",
       "type": "gemini",
       "model": "gemini-2.0-flash-exp",
-      "enabled": true
+      "enabled": false
     }
   ]
 }

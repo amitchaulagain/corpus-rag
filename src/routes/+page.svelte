@@ -1,93 +1,59 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
   import GoogleAuth from '$lib/components/GoogleAuth.svelte';
 
   let isAuthenticated = false;
   let user: any = null;
 
   onMount(() => {
-    // Handle OAuth redirect - if code is in URL, process it here
-    const urlParams = new URLSearchParams(window.location.search);
-    const code = urlParams.get('code');
-
-    // Check if already authenticated
-    const storedToken = localStorage.getItem('google_access_token');
-    const storedUser = localStorage.getItem('google_user');
+    // Check if already authenticated with new session token system
+    const storedToken = localStorage.getItem('session_token');
+    const storedUser = localStorage.getItem('user');
 
     if (storedToken && storedUser) {
       user = JSON.parse(storedUser);
       isAuthenticated = true;
+
+      // Redirect admin users to dashboard
+      if (user.userType === 'admin') {
+        goto('/dashboard');
+      }
     }
   });
 
   function handleAuthenticated(event: CustomEvent) {
     isAuthenticated = true;
     user = event.detail.user;
+
+    // Redirect admin users to dashboard
+    if (user.userType === 'admin') {
+      goto('/dashboard');
+    }
   }
 
   function handleLogout() {
     isAuthenticated = false;
     user = null;
-    localStorage.removeItem('google_access_token');
-    localStorage.removeItem('google_user');
+    localStorage.removeItem('session_token');
+    localStorage.removeItem('user');
   }
 </script>
 
 <main class="container mx-auto max-w-4xl p-10 min-h-screen relative">
-  {#if isAuthenticated && user}
-    <!-- Logout button -->
-    <div class="absolute top-4 left-4 z-50">
-      <button
-        class="btn text-white bg-red-700 hover:bg-red-900 border-none shadow-lg"
-        on:click={handleLogout}
-      >
-        {user.name} Out!
-      </button>
+  {#if isAuthenticated && user && user.userType !== 'admin'}
+    <!-- Non-admin users see access denied message -->
+    <div class="text-center mt-20">
+      <div class="card bg-error/10 border-2 border-error shadow-xl p-10 max-w-lg mx-auto">
+        <span class="text-6xl mb-6">🚫</span>
+        <h1 class="text-3xl font-bold mb-4 text-error">Access Denied</h1>
+        <p class="text-base-content/70 mb-6">This application is restricted to administrators only.</p>
+        <p class="text-sm text-base-content/60 mb-6">Please contact an administrator to request access.</p>
+        <button class="btn btn-error" on:click={handleLogout}>
+          🚪 Logout
+        </button>
+      </div>
     </div>
-
-    <!-- Main navigation for authenticated users -->
-    <nav class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
-      <a href="/upload" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary">
-        <div class="card-body items-center text-center">
-          <span class="text-6xl mb-4">🗄️</span>
-          <h3 class="card-title text-2xl mb-2">Files</h3>
-          <p class="text-base-content/70">Upload and manage documents</p>
-        </div>
-      </a>
-
-      <a href="/search" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary">
-        <div class="card-body items-center text-center">
-          <span class="text-6xl mb-4">🔍</span>
-          <h3 class="card-title text-2xl mb-2">Search</h3>
-          <p class="text-base-content/70">Query your documents with AI</p>
-        </div>
-      </a>
-
-      <a href="/cover-letters" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary">
-        <div class="card-body items-center text-center">
-          <span class="text-6xl mb-4">✍️</span>
-          <h3 class="card-title text-2xl mb-2">Cover Letters</h3>
-          <p class="text-base-content/70">AI-generated cover letters</p>
-        </div>
-      </a>
-
-      <a href="/employer-questions" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary">
-        <div class="card-body items-center text-center">
-          <span class="text-6xl mb-4">❓</span>
-          <h3 class="card-title text-2xl mb-2">Q&A</h3>
-          <p class="text-base-content/70">Employer screening answers</p>
-        </div>
-      </a>
-
-      <a href="/job-analysis" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border-2 hover:border-primary">
-        <div class="card-body items-center text-center">
-          <span class="text-6xl mb-4">🎯</span>
-          <h3 class="card-title text-2xl mb-2">Job Analysis</h3>
-          <p class="text-base-content/70">Analyze job requirements</p>
-        </div>
-      </a>
-
-    </nav>
   {:else}
     <!-- Login page for unauthenticated users -->
     <div class="text-center">

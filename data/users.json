@@ -1,0 +1,36 @@
+[
+  {
+    "email": "puskarwagle17@gmail.com",
+    "googleId": "107411674893141862021",
+    "name": "Puskar wagle",
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocLTulfTI9YgWeQfnpQANsMhOEwycZG42pLBDUytx4DxQd9V3X7TZg=s96-c",
+    "userType": "admin",
+    "isPaid": true,
+    "apiPermissions": {
+      "cover_letter": true,
+      "resume": true,
+      "questionAndAnswers": true,
+      "upload": true,
+      "jobs": true
+    },
+    "id": "fb2dafa2045e5a627a1332f37c2497ad",
+    "createdAt": "2025-10-09T21:29:51.965Z",
+    "lastLogin": "2025-10-09T21:29:51.973Z"
+  },
+  {
+    "email": "achaulagain123@gmail.com",
+    "name": "amit chaulagain",
+    "userType": "admin",
+    "isPaid": true,
+    "apiPermissions": {
+      "cover_letter": true,
+      "resume": true,
+      "questionAndAnswers": true,
+      "upload": true,
+      "jobs": true
+    },
+    "id": "98e0da81230f5822f7236d849866b23d",
+    "createdAt": "2025-10-09T21:31:09.883Z",
+    "lastLogin": "2025-10-09T21:31:09.883Z"
+  }
+]

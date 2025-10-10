@@ -1,13 +1,29 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { MultiProviderService } from '$lib/multi-provider-service';
+import { requirePermission } from '$lib/auth-middleware';
+import { jobService } from '$lib/db/job-service';
 
 const multiProvider = new MultiProviderService();
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async (event) => {
   try {
-    const requestBody = await request.json();
-    const { job_id, questions, resume_text, useAi, prompt, job_details } = requestBody;
+    // Check authentication and permission
+    const auth = await requirePermission(event, 'questionAndAnswers');
+
+    const requestBody = await event.request.json();
+    const {
+      job_id,
+      questions,
+      resume_text,
+      useAi,
+      prompt,
+      job_details,
+      platform = 'other',
+      job_title,
+      company,
+      platform_job_id
+    } = requestBody;
 
     // Validate required fields
     if (!job_id || !questions || !Array.isArray(questions) || !resume_text || !useAi) {
@@ -19,6 +35,8 @@ export const POST: RequestHandler = async ({ request }) => {
         { status: 400 }
       );
     }
+
+    const startTime = Date.now();
 
     // Format questions for the prompt
     const questionsText = questions.map((q, index) =>
@@ -56,7 +74,7 @@ ${job_details ? `\nJob Context: ${typeof job_details === 'string' ? job_details 
 
     // Query the AI provider with resume text
     const result = await multiProvider.querySingle(
-      'external', // dummy userId since we're not using file storage
+      auth.user.email, // Use actual user email
       fullPrompt,
       useAi,
       resume_text
@@ -72,6 +90,74 @@ ${job_details ? `\nJob Context: ${typeof job_details === 'string' ? job_details 
       );
     }
 
+    const processingTime = Date.now() - startTime;
+
+    // Track this job and API call in database
+    try {
+      let jobRecord = platform_job_id
+        ? await jobService.findJobByPlatformId(auth.user.id!, platform, platform_job_id)
+        : null;
+
+      if (!jobRecord && platform_job_id) {
+        jobRecord = await jobService.createJob({
+          userId: auth.user.id!,
+          platform,
+          platformJobId: platform_job_id,
+          title: job_title || 'Unknown Position',
+          company: company || 'Unknown Company',
+          description: typeof job_details === 'string' ? job_details : JSON.stringify(job_details),
+          status: 'pending'
+        });
+      }
+
+      if (jobRecord) {
+        let application = await jobService.getJobApplication(jobRecord.id!);
+
+        const apiCallRecord = {
+          timestamp: new Date(),
+          endpoint: '/api/questionAndAnswers',
+          aiProvider: useAi,
+          request: {
+            prompt,
+            jobDetails: job_details,
+            resumeText: resume_text,
+            questions
+          },
+          response: {
+            success: true,
+            data: result.answer
+          },
+          tokensUsed: result.tokensUsed,
+          cost: result.cost || 0,
+          processingTime
+        };
+
+        // Parse questions and answers for storage
+        const questionAnswers = questions.map((q: any, index: number) => ({
+          question: q.q || q.question || q.text,
+          answer: result.answer // The AI will provide structured answers
+        }));
+
+        if (!application) {
+          await jobService.createApplication({
+            userId: auth.user.id!,
+            jobId: jobRecord.id!,
+            platform,
+            status: 'pending',
+            questionAnswers,
+            apiCalls: [apiCallRecord]
+          });
+        } else {
+          await jobService.addApiCall(jobRecord.id!, apiCallRecord);
+          await jobService.updateApplication(jobRecord.id!, {
+            questionAnswers
+          });
+        }
+      }
+    } catch (trackingError) {
+      console.error('Job tracking error:', trackingError);
+    }
+
     // Return answers and job_id
     return json({
       answers: result.answer,
@@ -85,7 +171,8 @@ ${job_details ? `\nJob Context: ${typeof job_details === 'string' ? job_details 
         success: false,
         error: error instanceof Error ? error.message : 'Internal server error'
       },
-      { status: 500 }
+      { status: error instanceof Error && error.message.includes('Permission') ? 403 :
+               error instanceof Error && error.message.includes('Authentication') ? 401 : 500 }
     );
   }
 };

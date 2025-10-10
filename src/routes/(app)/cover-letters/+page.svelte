@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import '$styles/shared.css';
+  import AdminGuard from '$lib/components/AdminGuard.svelte';
 
   // all variables
   let user = null;
@@ -328,6 +329,7 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
   }
 </script>
 
+<AdminGuard>
 <main class="container mx-auto max-w-7xl p-6">
   <div class="mb-8">
     <h1 class="text-4xl font-bold mb-4 text-primary">✍️ Cover Letters</h1>
@@ -679,3 +681,4 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     }
   }
 </style>
+</AdminGuard>

@@ -39,6 +39,7 @@
     "@tailwindcss/vite": "^4.1.13",
     "google-auth-library": "^9.15.0",
     "mammoth": "^1.11.0",
+    "mongodb": "^6.20.0",
     "pdf-parse": "^2.1.7"
   }
 }
