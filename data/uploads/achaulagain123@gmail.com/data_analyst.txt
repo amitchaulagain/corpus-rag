@@ -1,0 +1,59 @@
+JANE SMITH
+Data Analyst
+Email: jane.smith@email.com | Phone: (555) 987-6543
+LinkedIn: linkedin.com/in/janesmith
+
+SUMMARY
+Detail-oriented Data Analyst with 4+ years of experience in data visualization, statistical analysis, and business intelligence. Proficient in SQL, Python, and Tableau. Strong background in transforming complex data into actionable business insights.
+
+EXPERIENCE
+
+Senior Data Analyst | DataCorp Solutions | New York, NY | 2021 - Present
+• Created interactive dashboards using Tableau serving 50+ stakeholders
+• Performed statistical analysis on customer data leading to 15% increase in retention
+• Automated reporting processes using Python, saving 20+ hours weekly
+• Led A/B testing initiatives that improved conversion rates by 12%
+• Technologies: SQL, Python, Tableau, Power BI, Excel
+
+Data Analyst | Marketing Insights LLC | Boston, MA | 2020 - 2021
+• Analyzed marketing campaign performance and provided recommendations
+• Developed predictive models using Python and scikit-learn
+• Created SQL queries to extract data from large databases (5M+ records)
+• Collaborated with marketing team to optimize ad spend and targeting
+• Technologies: SQL, Python, pandas, matplotlib, Google Analytics
+
+Junior Data Analyst | Business Analytics Inc. | Boston, MA | 2019 - 2020
+• Prepared weekly and monthly reports for management team
+• Cleaned and processed raw data using Excel and SQL
+• Assisted in data collection and validation processes
+• Created basic visualizations using Excel and Tableau
+• Technologies: SQL, Excel, Tableau, SPSS
+
+EDUCATION
+Master of Science in Statistics | MIT | 2019
+Bachelor of Science in Mathematics | Boston University | 2017
+GPA: 3.9/4.0
+
+SKILLS
+Programming: SQL, Python, R
+Data Visualization: Tableau, Power BI, matplotlib, seaborn
+Databases: MySQL, PostgreSQL, MongoDB
+Statistical Analysis: Hypothesis testing, Regression analysis, A/B testing
+Tools: Excel, SPSS, Google Analytics, Jupyter Notebooks
+Cloud: AWS, Google Cloud Platform
+
+CERTIFICATIONS
+• Tableau Desktop Certified Professional (2022)
+• Google Analytics Certified (2021)
+• AWS Certified Cloud Practitioner (2021)
+
+PROJECTS
+Customer Segmentation Analysis | Freelance Project | 2021
+• Analyzed customer purchase patterns for e-commerce client
+• Developed K-means clustering model to identify 5 distinct customer segments
+• Created Tableau dashboard showing segment characteristics and recommendations
+
+Sales Forecasting Model | Personal Project | 2020
+• Built time series forecasting model using Python and ARIMA
+• Achieved 85% accuracy in predicting monthly sales
+• Deployed model using Flask web application

@@ -7,10 +7,11 @@ import { UserModel } from '$lib/models/user';
 import { SessionModel } from '$lib/models/session';
 
 const CLIENT_ID = process.env.VITE_GOOGLE_CLIENT_ID || process.env.PUBLIC_GOOGLE_CLIENT_ID;
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || 'puskarwagle17@gmail.com,achaulagain123@gmail.com').split(',').map(e => e.trim());
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
-    const { credential } = await request.json();
+    const { credential, userInfo } = await request.json();
 
     if (!credential) {
       return json(
@@ -42,16 +43,22 @@ export const POST: RequestHandler = async ({ request }) => {
     let user = await userModel.findByEmail(payload.email);
 
     if (!user) {
-      // Create new user - default to freetier
+      // Check if email is in admin list
+      const isAdmin = ADMIN_EMAILS.includes(payload.email);
+      const userType = isAdmin ? 'admin' : 'freetier';
+      
+      // Create new user
       user = await userModel.create({
         email: payload.email,
         googleId: payload.sub,
         name: payload.name || payload.email,
         picture: payload.picture,
-        userType: 'freetier',
-        isPaid: false,
-        apiPermissions: UserModel.getDefaultPermissions('freetier')
+        userType,
+        isPaid: isAdmin,
+        apiPermissions: UserModel.getDefaultPermissions(userType)
       });
+      
+      console.log(`✅ Created new user: ${payload.email} (${userType})`);
     } else {
       // Update last login
       await userModel.updateLastLogin(user._id!);

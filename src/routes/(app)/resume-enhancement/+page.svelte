@@ -29,6 +29,7 @@
   let isLoadingResume: boolean = false;
   let isEditingJob: boolean = false;
   let editedJobDescription: string = '';
+  let editedJobData: any = null;
   let showJobForm: boolean = false;
   let newJob = { company: '', title: '', location: '', description: '' };
   let isSavingPrompt: boolean = false;
@@ -292,31 +293,59 @@ Format your response clearly showing:
   function startEditingJob() {
     isEditingJob = true;
     editedJobDescription = jobDescription;
+    // Create a deep copy of jobContent for editing
+    if (jobContent) {
+      editedJobData = JSON.parse(JSON.stringify(jobContent));
+    }
   }
 
   function cancelEditingJob() {
     isEditingJob = false;
     editedJobDescription = jobDescription;
+    editedJobData = null;
   }
 
   function saveEditedJob() {
-    // Check if content looks like JSON and validate it
-    const trimmed = editedJobDescription.trim();
-    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-        (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
-      try {
-        JSON.parse(trimmed);
-        // Valid JSON
-      } catch (e) {
-        if (!confirm('⚠️ This looks like JSON but has syntax errors. Save anyway?')) {
-          return;
-        }
+    if (editedJobData) {
+      // Update jobContent with edited data
+      jobContent = JSON.parse(JSON.stringify(editedJobData));
+      // Update jobDescription from the edited data
+      if (editedJobData.details) {
+        jobDescription = editedJobData.details;
+      } else if (editedJobData.description) {
+        jobDescription = editedJobData.description;
+      } else {
+        jobDescription = JSON.stringify(editedJobData, null, 2);
       }
     }
-
-    jobDescription = editedJobDescription;
     isEditingJob = false;
+    editedJobData = null;
     alert('✅ Job description updated for this session');
+  }
+  
+  // Helper function to check if a value is a nested object
+  function isNestedObject(value: any): boolean {
+    return typeof value === 'object' && value !== null && !Array.isArray(value);
+  }
+  
+  // Helper function to get display label for field names
+  function getFieldLabel(key: string): string {
+    return key
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+  
+  // Helper function to check if a field should be readonly
+  function isReadonlyField(key: string): boolean {
+    const readonlyFields = [
+      'jobId', 'jobid', 'job_id',
+      'createdAt', 'createdat', 'created_at',
+      'lastModified', 'lastmodified', 'last_modified', 'updatedAt', 'updatedat', 'updated_at',
+      'size',
+      'scrapedAt', 'scrapedat', 'scraped_at'
+    ];
+    return readonlyFields.includes(key.toLowerCase()) || key.toLowerCase().startsWith('custom_');
   }
 
   async function enhanceResume() {
@@ -799,15 +828,109 @@ Format your response clearly showing:
                 {/if}
               </div>
               <div class="job-description-content">
-                {#if isEditingJob}
-                  <textarea
-                    class="job-text-editor"
-                    bind:value={editedJobDescription}
-                    placeholder="Edit job description here..."
-                    rows="20"
-                  ></textarea>
+                {#if isEditingJob && editedJobData}
+                  <div class="dynamic-form">
+                    {#each Object.keys(editedJobData) as key}
+                      {#if !isNestedObject(editedJobData[key])}
+                        <div class="form-field">
+                          <label for="job-{key}">
+                            {getFieldLabel(key)}
+                            {#if key === 'details' || key === 'description'}
+                              <span class="field-badge">Main Content</span>
+                            {:else if isReadonlyField(key)}
+                              <span class="field-badge readonly">Readonly</span>
+                            {/if}
+                          </label>
+                          {#if key === 'details' || key === 'description'}
+                            <textarea
+                              id="job-{key}"
+                              bind:value={editedJobData[key]}
+                              rows="12"
+                              class="form-textarea large"
+                            ></textarea>
+                          {:else if typeof editedJobData[key] === 'boolean'}
+                            <label class="checkbox-label">
+                              <input
+                                type="checkbox"
+                                id="job-{key}"
+                                bind:checked={editedJobData[key]}
+                                disabled={isReadonlyField(key)}
+                              />
+                              <span>Enabled</span>
+                            </label>
+                          {:else if typeof editedJobData[key] === 'number'}
+                            <input
+                              type="number"
+                              id="job-{key}"
+                              bind:value={editedJobData[key]}
+                              class="form-input"
+                              class:readonly={isReadonlyField(key)}
+                              readonly={isReadonlyField(key)}
+                            />
+                          {:else}
+                            <input
+                              type="text"
+                              id="job-{key}"
+                              bind:value={editedJobData[key]}
+                              class="form-input"
+                              class:readonly={isReadonlyField(key)}
+                              readonly={isReadonlyField(key)}
+                            />
+                          {/if}
+                        </div>
+                      {:else}
+                        <div class="form-field nested">
+                          <div class="nested-label">
+                            {getFieldLabel(key)}
+                            <span class="field-badge">Object</span>
+                          </div>
+                          <div class="nested-object">
+                            {#each Object.keys(editedJobData[key]) as nestedKey}
+                              <div class="nested-field">
+                                <label for="job-{key}-{nestedKey}" class="nested-field-label">
+                                  {getFieldLabel(nestedKey)}
+                                  {#if isReadonlyField(nestedKey)}
+                                    <span class="field-badge readonly small">Readonly</span>
+                                  {/if}
+                                </label>
+                                {#if typeof editedJobData[key][nestedKey] === 'boolean'}
+                                  <label class="checkbox-label">
+                                    <input
+                                      type="checkbox"
+                                      id="job-{key}-{nestedKey}"
+                                      bind:checked={editedJobData[key][nestedKey]}
+                                      disabled={isReadonlyField(nestedKey)}
+                                    />
+                                    <span>Enabled</span>
+                                  </label>
+                                {:else if typeof editedJobData[key][nestedKey] === 'number'}
+                                  <input
+                                    type="number"
+                                    id="job-{key}-{nestedKey}"
+                                    bind:value={editedJobData[key][nestedKey]}
+                                    class="form-input nested"
+                                    class:readonly={isReadonlyField(nestedKey)}
+                                    readonly={isReadonlyField(nestedKey)}
+                                  />
+                                {:else}
+                                  <input
+                                    type="text"
+                                    id="job-{key}-{nestedKey}"
+                                    bind:value={editedJobData[key][nestedKey]}
+                                    class="form-input nested"
+                                    class:readonly={isReadonlyField(nestedKey)}
+                                    readonly={isReadonlyField(nestedKey)}
+                                  />
+                                {/if}
+                              </div>
+                            {/each}
+                          </div>
+                        </div>
+                      {/if}
+                    {/each}
+                  </div>
                   <div class="edit-hint">
-                    💡 <strong>Tip:</strong> Edit the job description text freely. If content is JSON, syntax will be validated on save. Changes apply to this session only (not saved to file).
+                    💡 <strong>Tip:</strong> Edit fields directly in the form. Changes apply to this session only (not saved to file).
                   </div>
                 {:else}
                   <pre class="job-text">{jobDescription}</pre>
@@ -1397,6 +1520,179 @@ Format your response clearly showing:
 
   .job-description-content {
     padding: 20px;
+  }
+
+  /* Dynamic Form Styles */
+  .dynamic-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding-right: 10px;
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-field label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .field-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(102, 126, 234, 0.2);
+    color: #667eea;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .field-badge.readonly {
+    background: rgba(128, 128, 128, 0.2);
+    color: #666;
+  }
+
+  .field-badge.small {
+    font-size: 0.65rem;
+    padding: 1px 6px;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid rgba(128, 128, 128, 0.3);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: rgba(255, 255, 255, 0.8);
+    color: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  }
+
+  .form-input.readonly,
+  .form-input:read-only {
+    background: rgba(128, 128, 128, 0.1);
+    color: #666;
+    cursor: not-allowed;
+    border-color: rgba(128, 128, 128, 0.2);
+  }
+
+  .form-input.readonly:focus,
+  .form-input:read-only:focus {
+    border-color: rgba(128, 128, 128, 0.3);
+    box-shadow: none;
+  }
+
+  .form-textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid rgba(128, 128, 128, 0.3);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: 'Monaco', 'Courier New', monospace;
+    background: rgba(255, 255, 255, 0.8);
+    color: inherit;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .form-textarea.large {
+    min-height: 200px;
+  }
+
+  .form-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-weight: normal;
+  }
+
+  .checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+
+  /* Nested Object Styles */
+  .form-field.nested {
+    background: rgba(102, 126, 234, 0.05);
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+  }
+
+  .nested-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 10px;
+  }
+
+  .nested-object {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+  }
+
+  .nested-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .nested-field-label {
+    font-weight: 500;
+    font-size: 0.85rem;
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  .form-input.nested {
+    font-size: 0.85rem;
+    padding: 8px 10px;
+  }
+
+  /* Scrollbar Styling */
+  .dynamic-form::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .dynamic-form::-webkit-scrollbar-track {
+    background: rgba(128, 128, 128, 0.1);
+    border-radius: 4px;
+  }
+
+  .dynamic-form::-webkit-scrollbar-thumb {
+    background: rgba(102, 126, 234, 0.5);
+    border-radius: 4px;
+  }
+
+  .dynamic-form::-webkit-scrollbar-thumb:hover {
+    background: rgba(102, 126, 234, 0.7);
   }
 
   .job-text {
