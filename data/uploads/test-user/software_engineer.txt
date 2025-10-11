@@ -1,0 +1,50 @@
+JOHN DOE
+Software Engineer
+Email: john.doe@email.com | Phone: (555) 123-4567
+LinkedIn: linkedin.com/in/johndoe | GitHub: github.com/johndoe
+
+SUMMARY
+Experienced Software Engineer with 5+ years of experience developing scalable web applications and distributed systems. Proficient in Python, JavaScript, and cloud technologies. Strong background in REST APIs, Docker, and CI/CD pipelines.
+
+EXPERIENCE
+
+Senior Software Engineer | TechCorp Inc. | San Francisco, CA | 2021 - Present
+• Developed and maintained microservices architecture serving 1M+ daily users
+• Implemented CI/CD pipelines using Jenkins and Docker, reducing deployment time by 60%
+• Led a team of 3 junior developers and mentored new hires
+• Technologies: Python, Flask, PostgreSQL, AWS, Docker, Kubernetes
+
+Software Engineer | StartupXYZ | Austin, TX | 2019 - 2021
+• Built REST APIs for mobile and web applications using Python and Django
+• Collaborated with cross-functional teams to deliver features on tight deadlines
+• Optimized database queries improving application performance by 40%
+• Technologies: Python, Django, MySQL, Redis, Git
+
+Junior Developer | DevShop LLC | Austin, TX | 2018 - 2019
+• Developed frontend components using React and JavaScript
+• Participated in code reviews and followed agile development practices
+• Fixed bugs and implemented small features under senior guidance
+• Technologies: JavaScript, React, Node.js, MongoDB
+
+EDUCATION
+Bachelor of Science in Computer Science | University of Texas at Austin | 2018
+GPA: 3.8/4.0
+Relevant Coursework: Data Structures, Algorithms, Database Systems, Software Engineering
+
+SKILLS
+Programming Languages: Python, JavaScript, Java, Go
+Frameworks: Django, Flask, React, Node.js
+Databases: PostgreSQL, MySQL, MongoDB, Redis
+Cloud & DevOps: AWS, Docker, Kubernetes, Jenkins, Git
+Other: REST APIs, Microservices, Agile Development, Testing
+
+CERTIFICATIONS
+• AWS Certified Solutions Architect - Associate (2022)
+• Docker Certified Associate (2021)
+
+PROJECTS
+E-commerce Platform | Personal Project | 2020
+• Built a full-stack e-commerce application using Python/Django and React
+• Implemented payment processing with Stripe API
+• Deployed on AWS using Docker containers
+• GitHub: github.com/johndoe/ecommerce-platform

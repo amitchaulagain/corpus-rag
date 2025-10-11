@@ -19,13 +19,15 @@ export const POST: RequestHandler = async (event) => {
     console.log('=== GENERATE API DEBUG ===');
     console.log('Raw request body:', JSON.stringify(requestBody, null, 2));
     
-    const { type, jobDetails, details, questions, userEmail, customPrompt, enhancementFocus, filename, jobId, jobTitle, prompt: userPrompt } = requestBody;
+    const { type, jobDetails, details, questions, userEmail, customPrompt, enhancementFocus, filename, jobId, jobTitle, prompt: userPrompt, resumeText } = requestBody;
     
     console.log('Extracted values:');
     console.log('- type:', type);
     console.log('- jobDetails:', jobDetails);
     console.log('- jobDetails type:', typeof jobDetails);
     console.log('- userEmail:', userEmail);
+    console.log('- resumeText:', resumeText ? `✓ ${resumeText.length} characters` : '✗ not provided');
+    console.log('- enhancementFocus:', enhancementFocus);
     console.log('- filename:', filename);
     console.log('- jobId:', jobId);
     console.log('- jobTitle:', jobTitle);
@@ -243,7 +245,13 @@ Focus areas based on selection:
 
 Provide specific, actionable enhancements with clear before/after comparisons.`;
       }
-      analysisContext = `Job Details:\n${typeof jobDetails === 'string' ? jobDetails : JSON.stringify(jobDetails)}`;
+      
+      // Include both job details and resume text in context
+      analysisContext = `Job Details:\n${typeof jobDetails === 'string' ? jobDetails : JSON.stringify(jobDetails)}\n\nOriginal Resume:\n${resumeText || '[Resume will be loaded from user uploads]'}`;
+      
+      console.log('>>> Resume Enhancement Context Created:');
+      console.log('>>> Resume text length:', resumeText ? resumeText.length : 0);
+      console.log('>>> Context preview:', analysisContext.substring(0, 300) + '...');
 
     } else if (type === 'resume_comparison') {
       if (!jobDetails) {

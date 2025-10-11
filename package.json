@@ -37,7 +37,10 @@
   "dependencies": {
     "@google-cloud/storage": "^7.17.1",
     "@tailwindcss/vite": "^4.1.13",
+    "docx": "^9.5.1",
     "google-auth-library": "^9.15.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.3",
     "mammoth": "^1.11.0",
     "mongodb": "^6.20.0",
     "pdf-parse": "^2.1.7"

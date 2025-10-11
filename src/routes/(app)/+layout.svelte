@@ -198,6 +198,12 @@
               {#if !isSidebarCollapsed}<span>Job Analysis</span>{/if}
             </a>
           </li>
+          <li class="w-full">
+            <a href="/resume-enhancement" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/resume-enhancement'} title={isSidebarCollapsed ? 'Resume Enhancement' : ''}>
+              <span class="text-xl">✨</span>
+              {#if !isSidebarCollapsed}<span>Resume Enhancement</span>{/if}
+            </a>
+          </li>
 
           <!-- Divider -->
           {#if !isSidebarCollapsed}

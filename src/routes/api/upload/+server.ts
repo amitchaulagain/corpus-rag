@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { LocalFileStorage } from '$lib/local-storage';
+import fs from 'fs/promises';
 
 const storage = new LocalFileStorage('./data/uploads');
 
@@ -58,7 +59,62 @@ export const GET: RequestHandler = async ({ url }) => {
 
     // If filename is provided, return file content
     if (filename) {
-      const content = await storage.getFileContent(userId, filename);
+      let content: string = '';
+      
+      // Handle different file types
+      if (filename.endsWith('.pdf')) {
+        // For PDF files, try to read from text-cache first
+        try {
+          const cacheDir = './data/text-cache';
+          const cachedTextPath = `${cacheDir}/${userId}/${filename}.txt`;
+          
+          console.log('Checking for cached PDF text at:', cachedTextPath);
+          
+          try {
+            const cachedContent = await fs.readFile(cachedTextPath, 'utf-8');
+            if (cachedContent && cachedContent.trim()) {
+              content = cachedContent;
+              console.log('✅ PDF text loaded from cache:', content.length, 'characters');
+            } else {
+              throw new Error('Cached content is empty');
+            }
+          } catch (cacheError) {
+            // If cache doesn't exist, try to parse PDF directly
+            console.log('No cache found, attempting PDF parsing...');
+            
+            const { createRequire } = await import('module');
+            const require = createRequire(import.meta.url);
+            const pdfParse = require('pdf-parse');
+            
+            const filePath = storage.getFilePath(userId, filename);
+            const dataBuffer = await fs.readFile(filePath);
+            const pdfData = await pdfParse(dataBuffer);
+            content = pdfData.text;
+            
+            // Cache the extracted text for future use
+            await fs.mkdir(`${cacheDir}/${userId}`, { recursive: true });
+            await fs.writeFile(cachedTextPath, content, 'utf-8');
+            
+            console.log('✅ PDF text extracted and cached:', content.length, 'characters');
+          }
+        } catch (error: any) {
+          console.error('❌ Failed to parse PDF:', error);
+          return json({ 
+            success: false, 
+            error: `Failed to extract text from PDF: ${error.message}. Please upload a .txt file instead.` 
+          }, { status: 500 });
+        }
+      } else if (filename.endsWith('.txt')) {
+        // Read text file directly
+        content = await storage.getFileContent(userId, filename);
+        console.log('✅ TXT file read:', content.length, 'characters');
+      } else {
+        return json({ 
+          success: false, 
+          error: 'Unsupported file type. Only .txt and .pdf files are supported.' 
+        }, { status: 400 });
+      }
+      
       return json({
         success: true,
         filename,
@@ -73,7 +129,7 @@ export const GET: RequestHandler = async ({ url }) => {
       success: true,
       files: files.map((filename) => ({
         name: filename,
-        type: 'txt'
+        type: filename.endsWith('.pdf') ? 'pdf' : 'txt'
       }))
     });
   } catch (error) {

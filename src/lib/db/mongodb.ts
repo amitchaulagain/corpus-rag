@@ -52,7 +52,7 @@ async function createIndexes(db: Db) {
     //   }],
     //   preferences: {                          // EMBEDDED: User preferences
     //     notifications: boolean,
-    //     autoApply: boolean,
+    //     autoApply: boolean,xon
     //     preferredAIProvider: string
     //   },
     //   createdAt, lastLogin, updatedAt
