@@ -20,10 +20,10 @@ This application uses **MongoDB** to store:
 #### Ubuntu/Debian
 ```bash
 # Import MongoDB public GPG key
-wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
+wget -qO - https://www.mongodb.org/static/pgp/server-8.0.asc | sudo apt-key add -
 
 # Create list file for MongoDB
-echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
 
 # Update package database
 sudo apt-get update
@@ -43,10 +43,10 @@ mongod --version
 ```bash
 # Install with Homebrew
 brew tap mongodb/brew
-brew install mongodb-community@7.0
+brew install mongodb-community@8.0
 
 # Start MongoDB service
-brew services start mongodb-community@7.0
+brew services start mongodb-community@8.0
 
 # Verify installation
 mongod --version

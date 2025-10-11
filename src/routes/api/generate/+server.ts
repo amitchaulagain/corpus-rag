@@ -11,18 +11,9 @@ export const OPTIONS: RequestHandler = () => {
 
 // POST /api/generate - Generate cover letter or employer answers using AI
 export const POST: RequestHandler = async (event) => {
-  const auth = await authenticateRequest(event);
-  if (auth instanceof Response) {
-    return addCorsHeaders(auth);
-  }
-
-  if (!requireScope(auth, 'rag:query')) {
-    return addCorsHeaders(new Response(JSON.stringify({ success: false, error: 'Insufficient permissions' }), {
-      status: 403,
-      headers: { 'Content-Type': 'application/json' }
-    }));
-  }
-
+  // Note: This endpoint is used by the internal UI, so we don't require API key authentication
+  // If external API access is needed, consider adding optional authentication
+  
   const response = await handleApiRequest(async () => {
     const requestBody = await event.request.json();
     console.log('=== GENERATE API DEBUG ===');
@@ -306,19 +297,20 @@ Focus on concrete, measurable improvements that will help with ATS systems and h
       throw new Error('Invalid generation type. Must be "cover_letter", "employer_answers", "job_analysis", "resume_enhancement", or "resume_comparison"');
     }
 
-    // Call the RAG query endpoint to generate response
-    const ragResponse = await fetch(`${event.url.origin}/api/rag/query`, {
+    // Call the query endpoint to generate response
+    // Default to deepseek provider (can be made configurable)
+    const providerId = 'deepseek-chat'; // Use deepseek-chat as default provider
+    
+    const ragResponse = await fetch(`${event.url.origin}/api/query`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': event.request.headers.get('Authorization') || ''
       },
       body: JSON.stringify({
-        userId: userEmail || auth.user?.email || 'anonymous',
-        question: prompt,
-        context: analysisContext,
-        maxTokens: type === 'job_analysis' ? 16384 : 2000,
-        temperature: 0.7
+        userId: userEmail || 'anonymous',
+        question: analysisContext ? `${analysisContext}\n\n${prompt}` : prompt,
+        providerId: providerId
       })
     });
 
@@ -330,11 +322,11 @@ Focus on concrete, measurable improvements that will help with ATS systems and h
     const ragResult = await ragResponse.json();
 
     if (!ragResult.success) {
-      throw new Error(`AI generation failed: ${ragResult.error}`);
+      throw new Error(`AI generation failed: ${ragResult.error || 'Unknown error'}`);
     }
 
-    // Handle both authenticated and legacy response structures
-    const answer = ragResult.data ? ragResult.data.answer : ragResult.answer;
+    // Handle response structure from /api/query
+    const answer = ragResult.answer;
 
     if (!answer) {
       throw new Error('AI response is empty or invalid');

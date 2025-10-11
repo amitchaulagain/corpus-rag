@@ -5,7 +5,7 @@ Complete step-by-step guide to install and run this application on a new machine
 ## 📋 Prerequisites
 
 - **Node.js** v18+
-- **MongoDB** v7.0+
+- **MongoDB** v7.0+ (tested with v8.0)
 - **Google OAuth Client** credentials
 - **AI Provider API Keys** (Claude, DeepSeek, Gemini)
 
@@ -20,9 +20,9 @@ Complete step-by-step guide to install and run this application on a new machine
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-# Install MongoDB 7.0
-wget -qO - https://www.mongodb.org/static/pgp/server-7.0.asc | sudo apt-key add -
-echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
+# Install MongoDB 8.0
+wget -qO - https://www.mongodb.org/static/pgp/server-8.0.asc | sudo apt-key add -
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/8.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-8.0.list
 sudo apt-get update
 sudo apt-get install -y mongodb-org
 
@@ -39,8 +39,8 @@ brew install node
 
 # Install MongoDB
 brew tap mongodb/brew
-brew install mongodb-community@7.0
-brew services start mongodb-community@7.0
+brew install mongodb-community@8.0
+brew services start mongodb-community@8.0
 ```
 
 ### Verify Installations
@@ -48,7 +48,7 @@ brew services start mongodb-community@7.0
 ```bash
 node --version  # Should be v18+
 npm --version
-mongod --version  # Should be v7.0+
+mongod --version  # Should be v7.0+ (or v8.0)
 mongosh --version
 ```
 
@@ -413,7 +413,7 @@ DEBUG=* npm run dev
 ## ✅ Installation Checklist
 
 - [ ] Node.js v18+ installed
-- [ ] MongoDB v7.0+ installed and running
+- [ ] MongoDB v7.0+ (or v8.0) installed and running
 - [ ] Repository cloned
 - [ ] Dependencies installed (`npm install`)
 - [ ] `.env` file created with all required keys
