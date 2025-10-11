@@ -1,6 +1,7 @@
 // Jobs API endpoint
 import type { RequestHandler } from './$types';
 import { authenticateRequest, handleApiRequest, requireScope, handleOptions, addCorsHeaders } from '$lib/api-utils.js';
+import { json } from '@sveltejs/kit';
 import fs from 'fs';
 import path from 'path';
 
@@ -115,4 +116,57 @@ export const GET: RequestHandler = async (event) => {
   });
 
   return response;
+};
+
+// POST /api/jobs - Create a new job
+export const POST: RequestHandler = async ({ request }) => {
+  try {
+    const body = await request.json();
+    const { company, title, location, description } = body;
+
+    if (!company || !title || !description) {
+      return json({
+        success: false,
+        error: 'Missing required fields: company, title, and description are required'
+      }, { status: 400 });
+    }
+
+    // Create filename from company and title
+    const sanitizedCompany = company.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const sanitizedTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const timestamp = Date.now();
+    const filename = `${sanitizedCompany}_${sanitizedTitle}_${timestamp}.json`;
+    const filePath = path.join(JOBS_DIR, filename);
+
+    // Create job object
+    const jobData = {
+      company,
+      title,
+      location: location || '',
+      details: description,
+      raw_title: title,
+      jobId: `custom_${timestamp}`,
+      createdAt: new Date().toISOString()
+    };
+
+    // Ensure jobs directory exists
+    if (!fs.existsSync(JOBS_DIR)) {
+      fs.mkdirSync(JOBS_DIR, { recursive: true });
+    }
+
+    // Write job file
+    fs.writeFileSync(filePath, JSON.stringify(jobData, null, 2), 'utf8');
+
+    return json({
+      success: true,
+      filename,
+      message: 'Job created successfully'
+    });
+  } catch (error: any) {
+    console.error('Error creating job:', error);
+    return json({
+      success: false,
+      error: error.message || 'Failed to create job'
+    }, { status: 500 });
+  }
 };

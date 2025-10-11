@@ -22,9 +22,10 @@
   let isPromptModified = false;
   let defaultPrompt = '';
   let jobsWithSavedResponses = new Set();
+  let isSavingPrompt = false;
 
   onMount(async () => {
-    const storedUser = localStorage.getItem('google_user');
+    const storedUser = localStorage.getItem('user');
     if (storedUser) {
       user = JSON.parse(storedUser);
       loadJobs();
@@ -108,35 +109,45 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     }
   });
 
-  async function savePrompt(content) {
-    // Only save if content has actually changed
-    if (content === lastSavedPrompt) {
+  function onPromptChange() {
+    isPromptModified = analysisPrompt !== lastSavedPrompt;
+  }
+
+  async function savePromptToFile() {
+    if (analysisPrompt === lastSavedPrompt) {
+      alert('No changes to save');
       return;
     }
 
+    isSavingPrompt = true;
     try {
       const response = await fetch('/api/prompts/job-analysis', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ content })
+        body: JSON.stringify({ content: analysisPrompt })
       });
       const result = await response.json().catch(() => ({}));
       if (result && result.success === true) {
-        lastSavedPrompt = content;
-        isPromptModified = content !== defaultPrompt;
-        console.log('Prompt saved successfully');
+        lastSavedPrompt = analysisPrompt;
+        isPromptModified = false;
+        alert('✅ Prompt saved to file');
+      } else {
+        alert('❌ Failed to save prompt');
       }
     } catch (error) {
       console.error('Failed to save prompt:', error);
+      alert('❌ Failed to save prompt');
+    } finally {
+      isSavingPrompt = false;
     }
   }
 
   async function resetPrompt() {
     if (confirm('Reset prompt to default? This will overwrite your current prompt.')) {
       analysisPrompt = defaultPrompt;
-      await savePrompt(defaultPrompt);
+      await savePromptToFile();
     }
   }
 
@@ -388,9 +399,14 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           🤖 AI Prompt Editor
         </h3>
         {#if isPromptModified}
-          <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
-            ↺ Reset
-          </button>
+          <div class="prompt-actions">
+            <button class="save-btn-small" on:click={savePromptToFile} disabled={isSavingPrompt} title="Save to file">
+              {#if isSavingPrompt}💾 Saving...{:else}💾 Save{/if}
+            </button>
+            <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
+              ↺ Reset
+            </button>
+          </div>
         {/if}
       </div>
       <div class="prompt-container">
@@ -400,7 +416,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
               class="prompt-display"
               contenteditable="true"
               bind:textContent={analysisPrompt}
-              on:blur={() => savePrompt(analysisPrompt)}
+              on:input={onPromptChange}
             >{analysisPrompt}</pre>
           {:else}
             <textarea
@@ -408,7 +424,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
               bind:value={analysisPrompt}
               placeholder="Enter your AI prompt here..."
               rows="10"
-              on:blur={() => savePrompt(analysisPrompt)}
+              on:input={onPromptChange}
             ></textarea>
           {/if}
         </div>
@@ -660,6 +676,45 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     background: #6c757d;
     cursor: not-allowed;
     opacity: 0.6;
+  }
+
+  /* Prompt Editor Styles */
+  .prompt-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .save-btn-small {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .save-btn-small:hover:not(:disabled) {
+    background: #218838;
+    transform: translateY(-1px);
+  }
+
+  .save-btn-small:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .prompt-hint {
+    padding: 10px 15px;
+    background: rgba(102, 126, 234, 0.1);
+    border-left: 4px solid #667eea;
+    margin-top: 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: inherit;
   }
 
   /* Responsive */

@@ -20,6 +20,7 @@
   let isPromptModified = false;
   let defaultPrompt = '';
   let jobsWithSavedResponses = new Set();
+  let isSavingPrompt = false;
 
   // Comparison mode variables
   let isComparing = false;
@@ -27,7 +28,7 @@
   let providers = [];
 
   onMount(async () => {
-    const storedUser = localStorage.getItem('google_user');
+    const storedUser = localStorage.getItem('user');
     if (storedUser) {
       user = JSON.parse(storedUser);
       loadJobs();
@@ -94,35 +95,45 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     }
   });
 
-  async function savePrompt(content) {
-    // Only save if content has actually changed
-    if (content === lastSavedPrompt) {
+  function onPromptChange() {
+    isPromptModified = coverLetterPrompt !== lastSavedPrompt;
+  }
+
+  async function savePromptToFile() {
+    if (coverLetterPrompt === lastSavedPrompt) {
+      alert('No changes to save');
       return;
     }
 
+    isSavingPrompt = true;
     try {
       const response = await fetch('/api/prompts/cover-letter', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ content })
+        body: JSON.stringify({ content: coverLetterPrompt })
       });
       const result = await response.json().catch(() => ({}));
       if (result && result.success === true) {
-        lastSavedPrompt = content;
-        isPromptModified = content !== defaultPrompt;
-        console.log('Prompt saved successfully');
+        lastSavedPrompt = coverLetterPrompt;
+        isPromptModified = false;
+        alert('✅ Prompt saved to file');
+      } else {
+        alert('❌ Failed to save prompt');
       }
     } catch (error) {
       console.error('Failed to save prompt:', error);
+      alert('❌ Failed to save prompt');
+    } finally {
+      isSavingPrompt = false;
     }
   }
 
   async function resetPrompt() {
     if (confirm('Reset prompt to default? This will overwrite your current prompt.')) {
       coverLetterPrompt = defaultPrompt;
-      await savePrompt(defaultPrompt);
+      await savePromptToFile();
     }
   }
 
@@ -342,9 +353,14 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
           🤖 AI Prompt Editor
         </h3>
         {#if isPromptModified}
-          <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
-            ↺ Reset
-          </button>
+          <div class="prompt-actions">
+            <button class="save-btn-small" on:click={savePromptToFile} disabled={isSavingPrompt} title="Save to file">
+              {#if isSavingPrompt}💾 Saving...{:else}💾 Save{/if}
+            </button>
+            <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
+              ↺ Reset
+            </button>
+          </div>
         {/if}
       </div>
       <div class="prompt-container">
@@ -354,7 +370,7 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
               class="prompt-display"
               contenteditable="true"
               bind:textContent={coverLetterPrompt}
-              on:blur={() => savePrompt(coverLetterPrompt)}
+              on:input={onPromptChange}
             >{coverLetterPrompt}</pre>
           {:else}
             <textarea
@@ -362,7 +378,7 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
               bind:value={coverLetterPrompt}
               placeholder="Enter your AI prompt here..."
               rows="10"
-              on:blur={() => savePrompt(coverLetterPrompt)}
+              on:input={onPromptChange}
             ></textarea>
           {/if}
         </div>
@@ -659,6 +675,45 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
     background: #6c757d;
     cursor: not-allowed;
     opacity: 0.6;
+  }
+
+  /* Prompt Editor Styles */
+  .prompt-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .save-btn-small {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .save-btn-small:hover:not(:disabled) {
+    background: #218838;
+    transform: translateY(-1px);
+  }
+
+  .save-btn-small:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .prompt-hint {
+    padding: 10px 15px;
+    background: rgba(102, 126, 234, 0.1);
+    border-left: 4px solid #667eea;
+    margin-top: 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: inherit;
   }
 
   /* Responsive */

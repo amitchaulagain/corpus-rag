@@ -16,19 +16,23 @@ export const POST: RequestHandler = async ({ request }) => {
       return json({ success: false, error: 'Missing file or userId' }, { status: 400 });
     }
 
-    // Only allow TXT files
-    if (!file.name.endsWith('.txt')) {
+    // Allow TXT and PDF files
+    const fileExt = file.name.toLowerCase();
+    if (!fileExt.endsWith('.txt') && !fileExt.endsWith('.pdf')) {
       return json(
-        { success: false, error: 'Only .txt files are allowed' },
+        { success: false, error: 'Only .txt and .pdf files are allowed' },
         { status: 400 }
       );
     }
 
     const filePath = await storage.saveFile(userId, file);
 
-    // Read the text content
-    const buffer = await file.arrayBuffer();
-    const textContent = new TextDecoder().decode(buffer);
+    // For text files, read the content; for PDFs, just confirm upload
+    let textContent = '';
+    if (fileExt.endsWith('.txt')) {
+      const buffer = await file.arrayBuffer();
+      textContent = new TextDecoder().decode(buffer);
+    }
 
     return json({
       success: true,

@@ -27,9 +27,14 @@
   let availableResumes: any[] = [];
   let selectedResumeFile: string = '';
   let isLoadingResume: boolean = false;
+  let isEditingJob: boolean = false;
+  let editedJobDescription: string = '';
+  let showJobForm: boolean = false;
+  let newJob = { company: '', title: '', location: '', description: '' };
+  let isSavingPrompt: boolean = false;
 
   onMount(async () => {
-    const storedUser = localStorage.getItem('google_user');
+    const storedUser = localStorage.getItem('user');
     if (storedUser) {
       user = JSON.parse(storedUser);
       loadJobs();
@@ -154,29 +159,79 @@ Format your response clearly showing:
 - [Then provide the complete enhanced resume text]`;
   }
 
-  async function savePrompt(content: string) {
-    if (content === lastSavedPrompt) return;
+  function onPromptChange() {
+    isPromptModified = enhancementPrompt !== lastSavedPrompt;
+  }
 
+  async function savePromptToFile() {
+    if (enhancementPrompt === lastSavedPrompt) {
+      alert('No changes to save');
+      return;
+    }
+
+    isSavingPrompt = true;
     try {
       const response = await fetch('/api/prompts/resume-enhancement', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content })
+        body: JSON.stringify({ content: enhancementPrompt })
       });
       const result = await response.json().catch(() => ({}));
       if (result && result.success === true) {
-        lastSavedPrompt = content;
-        isPromptModified = content !== defaultPrompt;
+        lastSavedPrompt = enhancementPrompt;
+        isPromptModified = false;
+        alert('✅ Prompt saved to file');
+      } else {
+        alert('❌ Failed to save prompt');
       }
     } catch (error) {
       console.error('Failed to save prompt:', error);
+      alert('❌ Failed to save prompt');
+    } finally {
+      isSavingPrompt = false;
     }
   }
 
   async function resetPrompt() {
     if (confirm('Reset prompt to default? This will overwrite your current prompt.')) {
       enhancementPrompt = defaultPrompt;
-      await savePrompt(defaultPrompt);
+      await savePromptToFile();
+    }
+  }
+
+  function toggleJobForm() {
+    showJobForm = !showJobForm;
+    if (showJobForm) {
+      newJob = { company: '', title: '', location: '', description: '' };
+    }
+  }
+
+  async function saveNewJob() {
+    if (!newJob.company || !newJob.title || !newJob.description) {
+      alert('Please fill in company, title, and description');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newJob)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('✅ Job saved successfully');
+        showJobForm = false;
+        newJob = { company: '', title: '', location: '', description: '' };
+        await loadJobs();
+      } else {
+        alert('❌ Failed to save job: ' + data.error);
+      }
+    } catch (error: any) {
+      console.error('Failed to save job:', error);
+      alert('❌ Failed to save job: ' + error.message);
     }
   }
 
@@ -206,16 +261,17 @@ Format your response clearly showing:
     selectedJob = job;
     jobContent = null;
     jobDescription = '';
-    
+    isEditingJob = false;
+
     try {
       const response = await fetch(`/api/jobs/${job.filename}`);
       const data = await response.json();
-      
+
       if (data.success && data.data) {
         jobContent = data.data;
         const content = data.data;
         let description = '';
-        
+
         if (content.details) {
           description = content.details;
         } else if (content.description) {
@@ -223,13 +279,44 @@ Format your response clearly showing:
         } else {
           description = JSON.stringify(content, null, 2);
         }
-        
+
         jobDescription = description;
+        editedJobDescription = description;
       }
     } catch (error: any) {
       console.error('Failed to load job details:', error);
       alert('Failed to load job details: ' + error.message);
     }
+  }
+
+  function startEditingJob() {
+    isEditingJob = true;
+    editedJobDescription = jobDescription;
+  }
+
+  function cancelEditingJob() {
+    isEditingJob = false;
+    editedJobDescription = jobDescription;
+  }
+
+  function saveEditedJob() {
+    // Check if content looks like JSON and validate it
+    const trimmed = editedJobDescription.trim();
+    if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+        (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+      try {
+        JSON.parse(trimmed);
+        // Valid JSON
+      } catch (e) {
+        if (!confirm('⚠️ This looks like JSON but has syntax errors. Save anyway?')) {
+          return;
+        }
+      }
+    }
+
+    jobDescription = editedJobDescription;
+    isEditingJob = false;
+    alert('✅ Job description updated for this session');
   }
 
   async function enhanceResume() {
@@ -246,10 +333,8 @@ Format your response clearly showing:
     isGenerating = true;
     enhancedResume = null;
     analysisResult = null;
-    
-    try {
-      await savePrompt(enhancementPrompt);
 
+    try {
       console.log('=== ENHANCEMENT REQUEST ===');
       console.log('✓ Original resume:', originalResume.length, 'characters');
       console.log('✓ Job description:', jobDescription.length, 'characters');
@@ -495,9 +580,14 @@ Format your response clearly showing:
           🤖 AI Prompt Editor
         </h3>
         {#if isPromptModified}
-          <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
-            ↺ Reset
-          </button>
+          <div class="prompt-actions">
+            <button class="save-btn-small" on:click={savePromptToFile} disabled={isSavingPrompt} title="Save to file">
+              {#if isSavingPrompt}💾 Saving...{:else}💾 Save{/if}
+            </button>
+            <button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
+              ↺ Reset
+            </button>
+          </div>
         {/if}
       </div>
       <div class="prompt-container">
@@ -507,7 +597,7 @@ Format your response clearly showing:
               class="prompt-display"
               contenteditable="true"
               bind:textContent={enhancementPrompt}
-              on:blur={() => savePrompt(enhancementPrompt)}
+              on:input={onPromptChange}
             >{enhancementPrompt}</pre>
           {:else}
             <textarea
@@ -515,7 +605,7 @@ Format your response clearly showing:
               bind:value={enhancementPrompt}
               placeholder="Enter your AI prompt here..."
               rows="8"
-              on:blur={() => savePrompt(enhancementPrompt)}
+              on:input={onPromptChange}
             ></textarea>
           {/if}
         </div>
@@ -524,97 +614,97 @@ Format your response clearly showing:
   </div>
 
   <div class="main-content">
-    <!-- Debug Info (Always Visible) -->
-    <div class="debug-section">
-      <strong>Debug Info:</strong>
-      User: {user?.email || 'Not loaded'} | 
-      Loading: {isLoadingResume ? 'Yes' : 'No'} | 
-      Available Resumes: {availableResumes.length} | 
-      Selected: {selectedResumeFile || 'None'} |
-      Resume Loaded: {originalResume ? `Yes (${originalResume.length} chars)` : 'No'}
-    </div>
-
-    <!-- Resume File Selector -->
+    <!-- Resume Selection -->
     <div class="resume-selector-section">
-      <div class="section-header-with-action">
-        <h3 class="section-title">📄 Select Your Resume</h3>
-        <button class="refresh-btn" on:click={loadAvailableResumes} disabled={isLoadingResume}>
-          {#if isLoadingResume}⏳{:else}🔄{/if} Refresh
-        </button>
-      </div>
       {#if isLoadingResume}
-        <div class="loading-small">⏳ Loading resumes...</div>
+        <div class="resume-loading">
+          <div class="spinner"></div>
+          <span>Loading resumes...</span>
+        </div>
       {:else if availableResumes.length === 0}
-        <div class="status-card warning">
-          ⚠️ <strong>No Resume Found:</strong> Please <a href="/upload">upload your resume</a> first (.txt or .pdf file)
+        <div class="resume-empty">
+          <span class="empty-icon">📄</span>
+          <p>No resumes found. <a href="/upload">Upload your resume</a> to get started.</p>
         </div>
       {:else}
-        <div class="resume-files-list">
-          {#each availableResumes as resumeFile}
-            <label class="resume-file-option" class:selected={selectedResumeFile === resumeFile.name}>
-              <input 
-                type="radio" 
-                bind:group={selectedResumeFile} 
-                value={resumeFile.name}
-                on:change={onResumeFileChange}
-              />
-              <div class="resume-file-info">
-                <span class="file-icon">{resumeFile.type === 'pdf' ? '📕' : '📄'}</span>
-                <div class="file-details">
-                  <span class="file-name">{resumeFile.name}</span>
-                  <span class="file-type-badge">{resumeFile.type.toUpperCase()}</span>
-                </div>
-              </div>
-            </label>
-          {/each}
+        <div class="resume-selector">
+          <label for="resume-select" class="selector-label">
+            <span class="label-icon">📄</span>
+            <span class="label-text">Select Resume</span>
+          </label>
+          <div class="selector-wrapper">
+            <select
+              id="resume-select"
+              class="resume-dropdown"
+              bind:value={selectedResumeFile}
+              on:change={onResumeFileChange}
+            >
+              {#each availableResumes as file}
+                <option value={file.name}>
+                  {file.name} ({file.type.toUpperCase()})
+                </option>
+              {/each}
+            </select>
+            <button class="refresh-icon-btn" on:click={loadAvailableResumes} disabled={isLoadingResume} title="Refresh files">
+              🔄
+            </button>
+          </div>
+          {#if originalResume}
+            <div class="resume-loaded-indicator">
+              <span class="indicator-icon">✓</span>
+              <span class="indicator-text">
+                {originalResume.split('\n').length} lines · {originalResume.length} characters
+              </span>
+            </div>
+          {/if}
         </div>
-        {#if originalResume}
-          <div class="status-card success">
-            ✅ <strong>Resume Loaded:</strong> {originalResume.split('\n').length} lines, {originalResume.length} characters from <em>{selectedResumeFile}</em>
-          </div>
-        {:else}
-          <div class="status-card warning">
-            ⏳ <strong>Loading resume content...</strong> Please wait
-          </div>
-        {/if}
       {/if}
-    </div>
-
-    <!-- Enhancement Focus Selection -->
-    <div class="focus-section">
-      <h3 class="section-title">🎯 Enhancement Focus</h3>
-      <div class="focus-options">
-        <label class="focus-option">
-          <input type="radio" bind:group={enhancementFocus} value="general" />
-          <span>General Enhancement</span>
-        </label>
-        <label class="focus-option">
-          <input type="radio" bind:group={enhancementFocus} value="ats" />
-          <span>ATS Optimization</span>
-        </label>
-        <label class="focus-option">
-          <input type="radio" bind:group={enhancementFocus} value="skills" />
-          <span>Skills Matching</span>
-        </label>
-        <label class="focus-option">
-          <input type="radio" bind:group={enhancementFocus} value="keywords" />
-          <span>Keyword Enhancement</span>
-        </label>
-        <label class="focus-option">
-          <input type="radio" bind:group={enhancementFocus} value="experience" />
-          <span>Experience Boost</span>
-        </label>
-      </div>
     </div>
 
     <!-- Jobs List - Horizontal -->
     <div class="jobs-sidebar">
       <div class="sidebar-header">
         <h2>💼 Available Jobs</h2>
-        <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
-          {#if isLoading}⏳{:else}🔄{/if}
-        </button>
+        <div class="header-buttons">
+          <button class="add-job-btn" on:click={toggleJobForm}>
+            {#if showJobForm}✖️ Cancel{:else}➕ New Job{/if}
+          </button>
+          <button class="refresh-btn" on:click={loadJobs} disabled={isLoading}>
+            {#if isLoading}⏳{:else}🔄{/if}
+          </button>
+        </div>
       </div>
+
+      <!-- New Job Form -->
+      {#if showJobForm}
+        <div class="job-form">
+          <h3 class="form-title">Add New Job</h3>
+          <div class="form-group">
+            <label for="company">Company Name *</label>
+            <input type="text" id="company" bind:value={newJob.company} placeholder="e.g., Google" />
+          </div>
+          <div class="form-group">
+            <label for="title">Job Title *</label>
+            <input type="text" id="title" bind:value={newJob.title} placeholder="e.g., Senior Software Engineer" />
+          </div>
+          <div class="form-group">
+            <label for="location">Location</label>
+            <input type="text" id="location" bind:value={newJob.location} placeholder="e.g., Remote, USA" />
+          </div>
+          <div class="form-group">
+            <label for="description">Job Description *</label>
+            <textarea
+              id="description"
+              bind:value={newJob.description}
+              placeholder="Paste the full job description here..."
+              rows="10"
+            ></textarea>
+          </div>
+          <button class="save-job-btn" on:click={saveNewJob}>
+            💾 Save Job
+          </button>
+        </div>
+      {/if}
 
       {#if isLoading}
         <div class="loading">Loading jobs...</div>
@@ -693,9 +783,35 @@ Format your response clearly showing:
               <div class="job-meta">
                 <span class="meta-item">📝 Job Description</span>
                 <span class="meta-item">{jobDescription.length} characters</span>
+                {#if !isEditingJob}
+                  <button class="edit-btn" on:click={startEditingJob}>
+                    ✏️ Edit
+                  </button>
+                {:else}
+                  <div class="edit-actions">
+                    <button class="save-btn" on:click={saveEditedJob}>
+                      ✅ Save
+                    </button>
+                    <button class="cancel-btn" on:click={cancelEditingJob}>
+                      ❌ Cancel
+                    </button>
+                  </div>
+                {/if}
               </div>
               <div class="job-description-content">
-                <pre class="job-text">{jobDescription}</pre>
+                {#if isEditingJob}
+                  <textarea
+                    class="job-text-editor"
+                    bind:value={editedJobDescription}
+                    placeholder="Edit job description here..."
+                    rows="20"
+                  ></textarea>
+                  <div class="edit-hint">
+                    💡 <strong>Tip:</strong> Edit the job description text freely. If content is JSON, syntax will be validated on save. Changes apply to this session only (not saved to file).
+                  </div>
+                {:else}
+                  <pre class="job-text">{jobDescription}</pre>
+                {/if}
               </div>
             </div>
           </div>
@@ -808,151 +924,161 @@ Format your response clearly showing:
 </AdminGuard>
 
 <style>
-  /* Debug Section */
-  .debug-section {
-    background: rgba(255, 255, 0, 0.2);
-    border: 2px solid orange;
-    border-radius: 8px;
-    padding: 12px 18px;
-    margin-bottom: 15px;
-    font-size: 0.9rem;
-    font-family: monospace;
-    color: inherit;
-  }
-
   /* Resume Selector Section */
   .resume-selector-section {
-    background: rgba(128, 128, 128, 0.1);
-    border: 2px solid mediumvioletred;
+    background: rgba(102, 126, 234, 0.05);
+    border: 1px solid rgba(102, 126, 234, 0.2);
     border-radius: 8px;
-    padding: 20px;
+    padding: 16px 20px;
     margin-bottom: 20px;
   }
 
-  .resume-files-list {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-    margin-bottom: 15px;
-  }
-
-  .section-header-with-action {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-  }
-
-  .resume-file-option {
+  .resume-loading {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 18px;
-    background: rgba(255, 255, 255, 0.5);
-    border: 2px solid rgba(128, 128, 128, 0.3);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .resume-file-option:hover {
-    border-color: purple;
-    background: rgba(128, 0, 128, 0.1);
-    transform: translateY(-2px);
-  }
-
-  .resume-file-option.selected {
-    border-color: purple;
-    background: rgba(128, 0, 128, 0.15);
-    border-width: 3px;
-  }
-
-  .resume-file-option input[type="radio"]:checked ~ .resume-file-info {
-    font-weight: 600;
-  }
-
-  .resume-file-option input[type="radio"]:checked {
-    accent-color: purple;
-  }
-
-  .resume-file-option input[type="radio"] {
-    cursor: pointer;
-    width: 20px;
-    height: 20px;
-  }
-
-  .resume-file-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .file-icon {
-    font-size: 2rem;
-  }
-
-  .file-details {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .file-name {
-    font-size: 0.95rem;
-    color: inherit;
-    font-weight: 500;
-  }
-
-  .file-type-badge {
-    font-size: 0.75rem;
-    background: rgba(128, 0, 128, 0.2);
-    color: purple;
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-weight: 600;
-    width: fit-content;
-  }
-
-  .loading-small {
-    padding: 15px;
-    text-align: center;
+    justify-content: center;
+    padding: 20px;
     color: inherit;
     opacity: 0.7;
   }
 
-  /* Status Cards */
-  .status-card {
-    padding: 12px 18px;
-    border-radius: 8px;
-    margin-top: 15px;
-    border-left: 4px solid;
-    font-size: 0.9rem;
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(102, 126, 234, 0.2);
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
   }
 
-  .status-card.success {
-    background: rgba(40, 167, 69, 0.1);
-    border-left-color: #28a745;
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .resume-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 30px 20px;
+    text-align: center;
+  }
+
+  .empty-icon {
+    font-size: 2.5rem;
+    opacity: 0.5;
+  }
+
+  .resume-empty p {
+    margin: 0;
+    font-size: 0.95rem;
     color: inherit;
+    opacity: 0.7;
   }
 
-  .status-card.warning {
-    background: rgba(255, 193, 7, 0.1);
-    border-left-color: #ffc107;
-    color: inherit;
-  }
-
-  .status-card a {
-    color: purple;
+  .resume-empty a {
+    color: #667eea;
     text-decoration: underline;
+    font-weight: 600;
   }
 
-  /* Enhancement Focus Section */
-  .focus-section {
-    background: rgba(128, 128, 128, 0.1);
-    border: 2px solid mediumseagreen;
-    border-radius: 8px;
-    padding: 20px;
-    margin-bottom: 20px;
+  .resume-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .selector-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .label-icon {
+    font-size: 1.1rem;
+  }
+
+  .label-text {
+    color: inherit;
+  }
+
+  .selector-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .resume-dropdown {
+    flex: 1;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.8);
+    color: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .resume-dropdown:hover {
+    border-color: #667eea;
+  }
+
+  .resume-dropdown:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  }
+
+  .refresh-icon-btn {
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    border-radius: 6px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .refresh-icon-btn:hover:not(:disabled) {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: #667eea;
+  }
+
+  .refresh-icon-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .resume-loaded-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(40, 167, 69, 0.1);
+    border-left: 3px solid #28a745;
+    border-radius: 4px;
+    font-size: 0.85rem;
+  }
+
+  .indicator-icon {
+    color: #28a745;
+    font-weight: bold;
+    font-size: 1rem;
+  }
+
+  .indicator-text {
+    color: inherit;
+    opacity: 0.8;
   }
 
   .section-title {
@@ -960,38 +1086,6 @@ Format your response clearly showing:
     font-size: 1.1rem;
     font-weight: 600;
     color: inherit;
-  }
-
-  .focus-options {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-  }
-
-  .focus-option {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 15px;
-    background: rgba(128, 128, 128, 0.1);
-    border: 1px solid rgba(128, 128, 128, 0.3);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .focus-option:hover {
-    border-color: purple;
-    background: rgba(128, 0, 128, 0.1);
-  }
-
-  .focus-option input[type="radio"] {
-    cursor: pointer;
-  }
-
-  .focus-option input[type="radio"]:checked + span {
-    font-weight: 600;
-    color: purple;
   }
 
   /* Generate Section */
@@ -1043,6 +1137,34 @@ Format your response clearly showing:
     cursor: not-allowed;
   }
 
+  .prompt-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .save-btn-small {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .save-btn-small:hover:not(:disabled) {
+    background: #218838;
+    transform: translateY(-1px);
+  }
+
+  .save-btn-small:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
   .reset-btn-small {
     background: transparent;
     border: 1px solid rgba(128, 128, 128, 0.4);
@@ -1059,9 +1181,232 @@ Format your response clearly showing:
     background: rgba(255, 165, 0, 0.1);
   }
 
+  .prompt-hint {
+    padding: 10px 15px;
+    background: rgba(102, 126, 234, 0.1);
+    border-left: 4px solid #667eea;
+    margin-top: 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: inherit;
+  }
+
+  .header-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .add-job-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 6px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .add-job-btn:hover {
+    background: #5568d3;
+    transform: translateY(-1px);
+  }
+
+  /* Job Form */
+  .job-form {
+    background: rgba(102, 126, 234, 0.05);
+    border: 2px solid #667eea;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .form-title {
+    margin: 0 0 20px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #667eea;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: inherit;
+  }
+
+  .form-group input,
+  .form-group textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid rgba(128, 128, 128, 0.3);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: rgba(255, 255, 255, 0.8);
+    color: inherit;
+    transition: border-color 0.2s;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  }
+
+  .form-group textarea {
+    font-family: 'Monaco', 'Courier New', monospace;
+    resize: vertical;
+  }
+
+  .save-job-btn {
+    width: 100%;
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .save-job-btn:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+  }
+
   /* Content Section */
   .content-section {
     padding: 25px;
+  }
+
+  .job-meta {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    background: rgba(128, 128, 128, 0.1);
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+    flex-wrap: wrap;
+  }
+
+  .meta-item {
+    font-size: 0.9rem;
+    color: inherit;
+    opacity: 0.8;
+  }
+
+  .edit-btn {
+    margin-left: auto;
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 6px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .edit-btn:hover {
+    background: #5568d3;
+    transform: translateY(-1px);
+  }
+
+  .edit-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
+
+  .save-btn {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .save-btn:hover {
+    background: #218838;
+    transform: translateY(-1px);
+  }
+
+  .cancel-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .cancel-btn:hover {
+    background: #c82333;
+    transform: translateY(-1px);
+  }
+
+  .job-text-editor {
+    width: 100%;
+    padding: 20px;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    border: 2px solid #667eea;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.8);
+    color: inherit;
+    resize: vertical;
+    min-height: 400px;
+  }
+
+  .job-text-editor:focus {
+    outline: none;
+    border-color: #5568d3;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  }
+
+  .edit-hint {
+    padding: 12px 18px;
+    background: rgba(102, 126, 234, 0.1);
+    border-left: 4px solid #667eea;
+    margin-top: 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: inherit;
+  }
+
+  .job-description-content {
+    padding: 20px;
+  }
+
+  .job-text {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: inherit;
   }
 
   /* Analysis Stats */

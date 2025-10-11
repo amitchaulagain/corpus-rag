@@ -37,7 +37,6 @@ logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-lerna-debug.log*
 
 # Runtime data
 pids
@@ -51,9 +50,6 @@ coverage/
 
 # nyc test coverage
 .nyc_output
-
-# Dependency directories
-jspm_packages/
 
 # TypeScript cache
 *.tsbuildinfo
@@ -73,19 +69,8 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# parcel-bundler cache (https://parceljs.org/)
+# Cache
 .cache
-.parcel-cache
-
-# Next.js build output
-.next
-
-# Nuxt.js build / generate output
-.nuxt
-
-# Storybook build outputs
-.out
-.storybook-out
 
 # Temporary folders
 tmp/
@@ -94,30 +79,7 @@ temp/
 # Google Cloud credentials
 service-account.json
 *-key.json
+application_default_credentials.json
 
 # Application credentials
 oauth_credentials.json
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.pytest_cache/
-
-# Virtual environments
-ENV/
-env/
-venv/
-.venv/
-.ENV/
-.env/
-.venv/
-
-/Users/admin/extratech/corpus-rag/application_default_credentials.json

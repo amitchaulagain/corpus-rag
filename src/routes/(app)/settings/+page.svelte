@@ -6,7 +6,7 @@
   let user: any = null;
 
   onMount(async () => {
-    const storedUser = localStorage.getItem('google_user');
+    const storedUser = localStorage.getItem('user');
     if (storedUser) {
       user = JSON.parse(storedUser);
     }

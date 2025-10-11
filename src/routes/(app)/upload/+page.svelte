@@ -1,9 +1,25 @@
 <script lang="ts">
-  let userId = 'test-user'; // Simplified - no auth needed
+  import { onMount } from 'svelte';
+
+  let user: any = null;
+  let userId: string = '';
   let selectedFile: File | null = null;
   let uploadedFiles: any[] = [];
   let uploading = false;
   let message = '';
+
+  onMount(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      user = JSON.parse(storedUser);
+      userId = user.email;
+      console.log('✓ User loaded:', userId);
+      loadFiles();
+    } else {
+      console.warn('⚠️ No user found in localStorage');
+      message = '⚠️ Please log in first';
+    }
+  });
 
   async function handleFileSelect(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -13,7 +29,10 @@
   }
 
   async function uploadFile() {
-    if (!selectedFile) return;
+    if (!selectedFile || !userId) {
+      message = '⚠️ Please log in first';
+      return;
+    }
 
     uploading = true;
     message = '';
@@ -37,7 +56,7 @@
       } else {
         message = `❌ Error: ${data.error}`;
       }
-    } catch (error) {
+    } catch (error: any) {
       message = `❌ Upload failed: ${error.message}`;
     } finally {
       uploading = false;
@@ -45,12 +64,15 @@
   }
 
   async function loadFiles() {
+    if (!userId) return;
+
     try {
-      const response = await fetch(`/api/upload?userId=${userId}`);
+      const response = await fetch(`/api/upload?userId=${encodeURIComponent(userId)}`);
       const data = await response.json();
 
       if (data.success) {
-        uploadedFiles = data.files;
+        uploadedFiles = data.files || [];
+        console.log('✓ Files loaded:', uploadedFiles.length);
       }
     } catch (error) {
       console.error('Failed to load files:', error);
@@ -58,6 +80,8 @@
   }
 
   async function deleteFile(filename: string) {
+    if (!userId) return;
+
     try {
       const response = await fetch('/api/upload', {
         method: 'DELETE',
@@ -72,22 +96,26 @@
       console.error('Failed to delete:', error);
     }
   }
-
-  // Load files on mount
-  loadFiles();
 </script>
 
 <main class="container mx-auto max-w-4xl p-6">
   <h1 class="text-4xl font-bold mb-8">📄 Files</h1>
 
+  <!-- Debug Info -->
+  <div class="alert alert-info mb-6">
+    <div class="text-sm font-mono">
+      <strong>Debug:</strong> User: {userId || 'Not logged in'} | Files: {uploadedFiles.length}
+    </div>
+  </div>
+
   <!-- Upload Section -->
   <div class="card bg-base-100 shadow-xl mb-8">
     <div class="card-body">
-      <h2 class="card-title">Upload Text File</h2>
+      <h2 class="card-title">Upload Resume File</h2>
 
       <input
         type="file"
-        accept=".txt"
+        accept=".txt,.pdf"
         on:change={handleFileSelect}
         class="file-input file-input-bordered w-full max-w-xs"
       />
@@ -129,8 +157,11 @@
           {#each uploadedFiles as file}
             <div class="flex items-center justify-between p-3 bg-base-200 rounded">
               <div class="flex items-center gap-3">
-                <span class="text-2xl">📄</span>
-                <span>{file.name}</span>
+                <span class="text-2xl">{file.type === 'pdf' ? '📕' : '📄'}</span>
+                <div>
+                  <span class="font-medium">{file.name}</span>
+                  <span class="ml-2 text-xs badge badge-primary">{file.type.toUpperCase()}</span>
+                </div>
               </div>
               <button class="btn btn-error btn-sm" on:click={() => deleteFile(file.name)}>
                 Delete

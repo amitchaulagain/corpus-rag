@@ -15,25 +15,19 @@
   let employerQuestionsPrompt = '';
   let jobDescriptionStates = {}; // Track checkbox state per job filename
 
-  let debounceTimeout;
   let isSidebarCollapsed = false;
   let isPromptExpanded = false;
   let isPromptModified = false;
   let defaultPrompt = '';
   let jobsWithSavedResponses = new Set();
+  let lastSavedPrompt = '';
+  let isSavingPrompt = false;
 
   // Comparison mode variables
   let isComparing = false;
   let comparisonResults = null;
   let providers = [];
 
-  // $: makes this a reactive statement that runs when employerQuestionsPrompt changes
-  $: if (employerQuestionsPrompt) {
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(() => {
-      savePrompt(employerQuestionsPrompt);
-    }, 500); // 500ms debounce delay
-  }
 
   // Reactive statement to help with debugging
   $: {
@@ -43,7 +37,7 @@
   }
 
   onMount(async () => {
-    const storedUser = localStorage.getItem('google_user');
+    const storedUser = localStorage.getItem('user');
     if (storedUser) {
       user = JSON.parse(storedUser);
       loadJobs();
@@ -54,6 +48,7 @@
       const response = await fetch('/api/prompts/employer-questions');
       const data = await response.json();
       employerQuestionsPrompt = data.content;
+      lastSavedPrompt = data.content || '';
       isPromptModified = data.isModified || false;
     } catch (error) {
       console.error('Failed to load prompt:', error);
@@ -99,25 +94,45 @@ Questions: [Questions List]`;
     }
   });
 
-  async function savePrompt(content) {
+  function onPromptChange() {
+    isPromptModified = employerQuestionsPrompt !== lastSavedPrompt;
+  }
+
+  async function savePromptToFile() {
+    if (employerQuestionsPrompt === lastSavedPrompt) {
+      alert('No changes to save');
+      return;
+    }
+
+    isSavingPrompt = true;
     try {
-      await fetch('/api/prompts/employer-questions', {
+      const response = await fetch('/api/prompts/employer-questions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ content })
+        body: JSON.stringify({ content: employerQuestionsPrompt })
       });
-      isPromptModified = content !== defaultPrompt;
+      const result = await response.json().catch(() => ({}));
+      if (result && result.success === true) {
+        lastSavedPrompt = employerQuestionsPrompt;
+        isPromptModified = false;
+        alert('✅ Prompt saved to file');
+      } else {
+        alert('❌ Failed to save prompt');
+      }
     } catch (error) {
       console.error('Failed to save prompt:', error);
+      alert('❌ Failed to save prompt');
+    } finally {
+      isSavingPrompt = false;
     }
   }
 
   async function resetPrompt() {
     if (confirm('Reset prompt to default? This will overwrite your current prompt.')) {
       employerQuestionsPrompt = defaultPrompt;
-      await savePrompt(defaultPrompt);
+      await savePromptToFile();
     }
   }
 
@@ -400,9 +415,14 @@ Questions: [Questions List]`;
 				🤖 AI Prompt Editor
 			</h3>
 			{#if isPromptModified}
-				<button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
-					↺ Reset
-				</button>
+				<div class="prompt-actions">
+					<button class="save-btn-small" on:click={savePromptToFile} disabled={isSavingPrompt} title="Save to file">
+						{#if isSavingPrompt}💾 Saving...{:else}💾 Save{/if}
+					</button>
+					<button class="reset-btn-small" on:click={resetPrompt} title="Reset to default">
+						↺ Reset
+					</button>
+				</div>
 			{/if}
 		</div>
 		<div class="prompt-container">
@@ -412,7 +432,7 @@ Questions: [Questions List]`;
 						class="prompt-display"
 						contenteditable="true"
 						bind:textContent={employerQuestionsPrompt}
-						on:blur={() => savePrompt(employerQuestionsPrompt)}
+						on:input={onPromptChange}
 					>{employerQuestionsPrompt}</pre>
 				{:else}
 					<textarea
@@ -420,7 +440,7 @@ Questions: [Questions List]`;
 						bind:value={employerQuestionsPrompt}
 						placeholder="Enter your AI prompt here..."
 						rows="10"
-						on:blur={() => savePrompt(employerQuestionsPrompt)}
+						on:input={onPromptChange}
 					></textarea>
 				{/if}
 			</div>
@@ -656,4 +676,45 @@ Questions: [Questions List]`;
 		</div>
 	</div>
 </main>
+
+<style>
+  /* Prompt Editor Styles */
+  .prompt-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .save-btn-small {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+
+  .save-btn-small:hover:not(:disabled) {
+    background: #218838;
+    transform: translateY(-1px);
+  }
+
+  .save-btn-small:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .prompt-hint {
+    padding: 10px 15px;
+    background: rgba(102, 126, 234, 0.1);
+    border-left: 4px solid #667eea;
+    margin-top: 10px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    color: inherit;
+  }
+</style>
 </AdminGuard>
