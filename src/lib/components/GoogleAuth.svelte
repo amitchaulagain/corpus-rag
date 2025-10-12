@@ -3,6 +3,7 @@
   import { browser } from '$app/environment';
   import { goto } from '$app/navigation';
   import { PUBLIC_GOOGLE_CLIENT_ID } from '$env/static/public';
+  import { sessionToken as sessionTokenStore } from '$lib/store';
 
   const dispatch = createEventDispatcher();
 
@@ -35,22 +36,26 @@
           if (data.success) {
             user = data.user;
             isAuthenticated = true;
+            sessionTokenStore.set(storedToken);
             console.log('✅ Session valid, user authenticated:', user.email);
             dispatch('authenticated', { user, token: storedToken });
           } else {
             console.log('❌ Session expired, clearing storage');
             localStorage.removeItem('session_token');
             localStorage.removeItem('user');
+            sessionTokenStore.set(null);
           }
         } else {
           console.log('❌ Session validation failed');
           localStorage.removeItem('session_token');
           localStorage.removeItem('user');
+          sessionTokenStore.set(null);
         }
       } catch (error) {
         console.error('❌ Session validation error:', error);
         localStorage.removeItem('session_token');
         localStorage.removeItem('user');
+        sessionTokenStore.set(null);
       }
     }
 
@@ -124,6 +129,7 @@
 
         user = loginData.user;
         isAuthenticated = true;
+        sessionTokenStore.set(loginData.token);
 
         dispatch('authenticated', { user: loginData.user, token: loginData.token });
 
@@ -161,6 +167,7 @@
 
     localStorage.removeItem('session_token');
     localStorage.removeItem('user');
+    sessionTokenStore.set(null);
     isAuthenticated = false;
     user = null;
     dispatch('logout');

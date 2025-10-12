@@ -1,14 +1,13 @@
 <script>
   import { onMount } from 'svelte';
+  import { sessionToken } from '$lib/store';
 
-  let sessionToken = '';
+  let token = '';
+  sessionToken.subscribe(value => {
+    token = value || '';
+  });
 
   onMount(() => {
-    const match = document.cookie.match(new RegExp('(^| )' + 'session_token' + '=([^;]+)'));
-    if (match) {
-      sessionToken = match[2];
-    }
-
     const script1 = document.createElement('script');
     script1.src = '/swagger-ui/swagger-ui-bundle.js';
     script1.onload = () => {
@@ -44,9 +43,9 @@
       <h2 class="card-title">Authentication Token</h2>
       <p>Use the following token to authenticate your API requests. This is your session token.</p>
       <div class="form-control">
-        <input type="text" readonly bind:value={sessionToken} class="input input-bordered w-full" />
+        <input type="text" readonly bind:value={token} class="input input-bordered w-full" />
       </div>
-      <p class="text-sm mt-2">Click the "Authorize" button below and paste this token into the "BearerAuth" field in the format `Bearer {sessionToken}`.</p>
+      <p class="text-sm mt-2">Click the "Authorize" button below and paste this token into the "BearerAuth" field in the format `Bearer {token}`.</p>
     </div>
   </div>
 
