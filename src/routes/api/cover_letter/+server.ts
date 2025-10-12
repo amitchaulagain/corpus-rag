@@ -2,7 +2,9 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { MultiProviderService } from '$lib/multi-provider-service';
 import { requirePermission } from '$lib/auth-middleware';
-import { jobService } from '$lib/db/job-service';
+import { getDB } from '$lib/db/mongodb';
+import { JobModel } from '$lib/models/job';
+import { ObjectId } from 'mongodb';
 
 const multiProvider = new MultiProviderService();
 
@@ -83,14 +85,18 @@ Please format as a professional cover letter with proper greeting and closing.`;
 
     // Track this job and API call in database
     try {
+      const db = await getDB();
+      const jobModel = new JobModel(db);
+      const userId = new ObjectId(auth.user._id);
+
       // Find or create job record
       let jobRecord = platform_job_id
-        ? await jobService.findJobByPlatformId(auth.user.id!, platform, platform_job_id)
+        ? await jobModel.findByPlatformId(userId, platform, platform_job_id)
         : null;
 
       if (!jobRecord && platform_job_id) {
-        jobRecord = await jobService.createJob({
-          userId: auth.user.id!,
+        jobRecord = await jobModel.create({
+          userId,
           platform,
           platformJobId: platform_job_id,
           title: job_title || 'Unknown Position',
@@ -100,10 +106,8 @@ Please format as a professional cover letter with proper greeting and closing.`;
         });
       }
 
-      // Create or update job application record
+      // Create or update job application record (embedded in job)
       if (jobRecord) {
-        let application = await jobService.getJobApplication(jobRecord.id!);
-
         const apiCallRecord = {
           timestamp: new Date(),
           endpoint: '/api/cover_letter',
@@ -122,20 +126,18 @@ Please format as a professional cover letter with proper greeting and closing.`;
           processingTime
         };
 
-        if (!application) {
-          // Create new application
-          await jobService.createApplication({
-            userId: auth.user.id!,
-            jobId: jobRecord.id!,
-            platform,
+        if (!jobRecord.application) {
+          // Create new application (embedded)
+          await jobModel.createApplication(jobRecord._id!, {
             status: 'pending',
             coverLetter: result.answer,
-            apiCalls: [apiCallRecord]
+            apiCalls: [apiCallRecord],
+            automationLogs: []
           });
         } else {
           // Update existing application
-          await jobService.addApiCall(jobRecord.id!, apiCallRecord);
-          await jobService.updateApplication(jobRecord.id!, {
+          await jobModel.addApiCall(jobRecord._id!, apiCallRecord);
+          await jobModel.updateApplication(jobRecord._id!, {
             coverLetter: result.answer
           });
         }

@@ -1,7 +1,10 @@
 // Admin dashboard statistics
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { userService } from '$lib/db/user-service';
+import { getDB } from '$lib/db/mongodb';
+import { UserModel } from '$lib/models/user';
+import { SessionModel } from '$lib/models/session';
+import { UsageModel } from '$lib/models/usage';
 
 // Helper to verify admin auth
 async function requireAdmin(request: Request) {
@@ -10,13 +13,17 @@ async function requireAdmin(request: Request) {
     throw new Error('Missing authorization');
   }
 
+  const db = await getDB();
+  const sessionModel = new SessionModel(db);
+  const userModel = new UserModel(db);
+
   const token = authHeader.substring(7);
-  const session = await userService.findSessionByToken(token);
+  const session = await sessionModel.findByToken(token);
   if (!session) {
     throw new Error('Invalid or expired session');
   }
 
-  const user = await userService.findUserById(session.userId);
+  const user = await userModel.findById(session.userId);
   if (!user || user.userType !== 'admin') {
     throw new Error('Admin access required');
   }
@@ -28,25 +35,28 @@ export const GET: RequestHandler = async ({ request }) => {
   try {
     await requireAdmin(request);
 
-    const users = await userService.getAllUsers();
-    const usage = await userService.getAllUsage(1000); // Get last 1000 usage records
+    const db = await getDB();
+    const userModel = new UserModel(db);
+    const usageModel = new UsageModel(db);
+
+    const users = await userModel.listAll();
+
+    // Get recent usage - we'll need to aggregate across all users
+    const usageCollection = db.collection('usage');
+    const totalApiCalls = await usageCollection.countDocuments();
+
+    // Count today's API calls
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayApiCalls = await usageCollection.countDocuments({
+      timestamp: { $gte: today }
+    });
 
     // Count users by type
     const totalUsers = users.length;
     const adminUsers = users.filter(u => u.userType === 'admin').length;
     const premiumUsers = users.filter(u => u.userType === 'premium').length;
     const freeUsers = users.filter(u => u.userType === 'freetier').length;
-
-    // Count API calls
-    const totalApiCalls = usage.length;
-
-    // Count today's API calls
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayApiCalls = usage.filter(u => {
-      const timestamp = new Date(u.timestamp);
-      return timestamp >= today;
-    }).length;
 
     return json({
       success: true,

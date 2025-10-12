@@ -1,7 +1,7 @@
 // Admin: Manage users
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getDB } from '$lib/db';
+import { getDB } from '$lib/db/mongodb';
 import { UserModel, type UserType, type ApiPermissions } from '$lib/models/user';
 import { requireAdmin } from '$lib/auth-middleware';
 

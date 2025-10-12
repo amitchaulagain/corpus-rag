@@ -1,54 +1,54 @@
-<!-- API Documentation Page -->
-<script lang="ts">
-  // API Documentation removed - use API tester in main page
+<script>
+  import { onMount } from 'svelte';
+
+  let sessionToken = '';
+
+  onMount(() => {
+    const match = document.cookie.match(new RegExp('(^| )' + 'session_token' + '=([^;]+)'));
+    if (match) {
+      sessionToken = match[2];
+    }
+
+    const script1 = document.createElement('script');
+    script1.src = '/swagger-ui/swagger-ui-bundle.js';
+    script1.onload = () => {
+      const script2 = document.createElement('script');
+      script2.src = '/swagger-ui/swagger-ui-standalone-preset.js';
+      script2.onload = () => {
+        const ui = SwaggerUIBundle({
+          url: "/api/swagger.json",
+          dom_id: '#swagger-ui',
+          presets: [
+            SwaggerUIBundle.presets.apis,
+            SwaggerUIStandalonePreset
+          ],
+          layout: "StandaloneLayout"
+        });
+      };
+      document.head.appendChild(script2);
+    };
+    document.head.appendChild(script1);
+  });
 </script>
 
 <svelte:head>
-  <title>API Documentation - RAG System</title>
-  <meta name="description" content="API documentation has been moved to the main page" />
+  <title>API Docs</title>
+  <link rel="stylesheet" type="text/css" href="/swagger-ui/swagger-ui.css" />
 </svelte:head>
 
-<div class="api-docs-container">
-  <div class="redirect-notice">
-    <h1>📖 API Documentation</h1>
-    <p>API documentation and testing tools have been moved to the <a href="/">main page</a>.</p>
-    <p>You can find the interactive API tester there.</p>
+<div class="container mx-auto p-4">
+  <h1 class="text-3xl font-bold mb-4">API Documentation</h1>
+
+  <div class="card bg-base-200 shadow-xl mb-6">
+    <div class="card-body">
+      <h2 class="card-title">Authentication Token</h2>
+      <p>Use the following token to authenticate your API requests. This is your session token.</p>
+      <div class="form-control">
+        <input type="text" readonly bind:value={sessionToken} class="input input-bordered w-full" />
+      </div>
+      <p class="text-sm mt-2">Click the "Authorize" button below and paste this token into the "BearerAuth" field in the format `Bearer {sessionToken}`.</p>
+    </div>
   </div>
+
+  <div id="swagger-ui"></div>
 </div>
-
-<style>
-  .api-docs-container {
-    max-width: 800px;
-    margin: 50px auto;
-    padding: 40px;
-    text-align: center;
-  }
-
-  .redirect-notice {
-    background: #f8f9fa;
-    padding: 40px;
-    border-radius: 12px;
-    border: 1px solid #e1e5e9;
-  }
-
-  .redirect-notice h1 {
-    color: #495057;
-    margin-bottom: 20px;
-  }
-
-  .redirect-notice p {
-    color: #6c757d;
-    font-size: 16px;
-    margin-bottom: 15px;
-  }
-
-  .redirect-notice a {
-    color: #007bff;
-    text-decoration: none;
-    font-weight: 600;
-  }
-
-  .redirect-notice a:hover {
-    text-decoration: underline;
-  }
-</style>

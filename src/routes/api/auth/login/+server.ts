@@ -2,7 +2,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { OAuth2Client } from 'google-auth-library';
-import { getDB } from '$lib/db';
+import { getDB } from '$lib/db/mongodb';
 import { UserModel } from '$lib/models/user';
 import { SessionModel } from '$lib/models/session';
 
@@ -39,27 +39,50 @@ export const POST: RequestHandler = async ({ request }) => {
     const userModel = new UserModel(db);
     const sessionModel = new SessionModel(db);
 
+    // Check if email is in admin list
+    const isAdmin = ADMIN_EMAILS.includes(payload.email);
+
+    if (!isAdmin) {
+      // Reject non-admin users
+      console.log(`❌ Login rejected: ${payload.email} is not an admin`);
+      return json(
+        {
+          success: false,
+          error: 'Access denied: This application is only accessible to administrators.'
+        },
+        { status: 403 }
+      );
+    }
+
     // Check if user exists
     let user = await userModel.findByEmail(payload.email);
 
     if (!user) {
-      // Check if email is in admin list
-      const isAdmin = ADMIN_EMAILS.includes(payload.email);
-      const userType = isAdmin ? 'admin' : 'freetier';
-      
-      // Create new user
+      // Create new admin user
       user = await userModel.create({
         email: payload.email,
         googleId: payload.sub,
         name: payload.name || payload.email,
         picture: payload.picture,
-        userType,
-        isPaid: isAdmin,
-        apiPermissions: UserModel.getDefaultPermissions(userType)
+        userType: 'admin',
+        isPaid: true,
+        apiPermissions: UserModel.getDefaultPermissions('admin')
       });
-      
-      console.log(`✅ Created new user: ${payload.email} (${userType})`);
+
+      console.log(`✅ Created new admin user: ${payload.email}`);
     } else {
+      // Verify existing user is admin
+      if (user.userType !== 'admin') {
+        console.log(`❌ Login rejected: ${payload.email} exists but is not an admin`);
+        return json(
+          {
+            success: false,
+            error: 'Access denied: Your account does not have administrator privileges.'
+          },
+          { status: 403 }
+        );
+      }
+
       // Update last login
       await userModel.updateLastLogin(user._id!);
     }

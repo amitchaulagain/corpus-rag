@@ -1,7 +1,10 @@
 // API Authentication and Authorization
+// Now uses MongoDB for persistent API key storage
 
-import type { ApiKey, TokenInfo, ApiScope } from './api-types.js';
+import type { ApiScope } from './api-types.js';
 import { browser } from '$app/environment';
+import { getDB } from './db/mongodb.js';
+import { ApiKeyModel } from './models/api-key.js';
 
 // Browser-safe crypto functions
 async function generateRandomBytes(length: number): Promise<string> {
@@ -35,119 +38,62 @@ async function createHashString(data: string): Promise<string> {
 }
 
 export class ApiAuth {
-  private static apiKeys: Map<string, ApiKey> = new Map();
-  private static userSessions: Map<string, TokenInfo> = new Map();
+  // Generate a new API key (now stored in MongoDB)
+  static async generateApiKey(userId: string, name: string, scopes: ApiScope[], expiresInDays?: number) {
+    const db = await getDB();
+    const apiKeyModel = new ApiKeyModel(db);
 
-  // Generate a new API key
-  static async generateApiKey(userId: string, name: string, scopes: ApiScope[]): Promise<ApiKey> {
-    const keyId = await generateRandomBytes(16);
-    const keySecret = await generateRandomBytes(32);
-    const apiKey = `rag_${keyId}_${keySecret}`;
-
-    const keyInfo: ApiKey = {
-      id: keyId,
-      key: apiKey,
-      userId,
-      name,
-      scopes,
-      createdAt: new Date().toISOString(),
-      isActive: true
-    };
-
-    this.apiKeys.set(apiKey, keyInfo);
-    return keyInfo;
+    return await apiKeyModel.create(userId, name, scopes, expiresInDays);
   }
 
-  // Validate API key and return user info
-  static validateApiKey(apiKey: string): ApiKey | null {
-    const keyInfo = this.apiKeys.get(apiKey);
-    if (!keyInfo || !keyInfo.isActive) {
-      return null;
-    }
+  // Validate API key and return user info (now from MongoDB)
+  static async validateApiKey(apiKey: string) {
+    const db = await getDB();
+    const apiKeyModel = new ApiKeyModel(db);
 
-    // Update last used timestamp
-    keyInfo.lastUsed = new Date().toISOString();
-    return keyInfo;
+    return await apiKeyModel.validate(apiKey);
   }
 
   // Check if API key has required scope
-  static hasScope(apiKey: ApiKey, requiredScope: ApiScope): boolean {
+  static hasScope(apiKey: any, requiredScope: ApiScope): boolean {
+    if (!apiKey || !apiKey.scopes) return false;
     return apiKey.scopes.includes(requiredScope) || apiKey.scopes.includes('admin');
   }
 
-  // Create session token for OAuth flow
-  static createSession(userId: string, email: string, scopes: ApiScope[]): string {
-    const sessionId = generateRandomBytes(32);
-    const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+  // Revoke API key (now in MongoDB)
+  static async revokeApiKey(keyId: string): Promise<boolean> {
+    const db = await getDB();
+    const apiKeyModel = new ApiKeyModel(db);
 
-    const tokenInfo: TokenInfo = {
-      userId,
-      email,
-      scopes,
-      expiresAt
-    };
-
-    this.userSessions.set(sessionId, tokenInfo);
-    return sessionId;
+    return await apiKeyModel.revoke(keyId);
   }
 
-  // Validate session token
-  static validateSession(sessionToken: string): TokenInfo | null {
-    const tokenInfo = this.userSessions.get(sessionToken);
-    if (!tokenInfo || tokenInfo.expiresAt < Date.now()) {
-      if (tokenInfo) {
-        this.userSessions.delete(sessionToken);
-      }
-      return null;
-    }
-    return tokenInfo;
+  // Get all API keys for a user (now from MongoDB)
+  static async getUserApiKeys(userId: string) {
+    const db = await getDB();
+    const apiKeyModel = new ApiKeyModel(db);
+
+    const keys = await apiKeyModel.findByUserId(userId);
+
+    // Return with masked keys for display
+    return keys.map(key => ({
+      ...key,
+      keyDisplay: key.keyPrefix + '...' // Show only prefix
+    }));
   }
 
-  // Revoke API key
-  static revokeApiKey(apiKey: string): boolean {
-    const keyInfo = this.apiKeys.get(apiKey);
-    if (keyInfo) {
-      keyInfo.isActive = false;
-      return true;
-    }
-    return false;
-  }
+  // Get all API keys (admin function, now from MongoDB)
+  static async getAllApiKeys() {
+    const db = await getDB();
+    const apiKeyModel = new ApiKeyModel(db);
 
-  // Get all API keys for a user
-  static getUserApiKeys(userId: string): ApiKey[] {
-    return Array.from(this.apiKeys.values())
-      .filter(key => key.userId === userId)
-      .map(key => ({ ...key, key: this.maskApiKey(key.key) })); // Mask the actual key
-  }
-
-  // Get all API keys (admin function)
-  static getAllApiKeys(): ApiKey[] {
-    return Array.from(this.apiKeys.values());
-  }
-
-  // Mask API key for display
-  private static maskApiKey(apiKey: string): string {
-    if (apiKey.length <= 12) return apiKey;
-    return apiKey.substring(0, 8) + '...' + apiKey.substring(apiKey.length - 4);
+    return await apiKeyModel.findAll();
   }
 
   // Initialize with some default API keys (for development)
   static async initialize() {
-    // Create a default admin API key for testing
-    const adminKey = await this.generateApiKey(
-      'admin@test.com',
-      'Development Admin Key',
-      ['admin']
-    );
-    console.log('🔑 Admin API Key created:', adminKey.key);
-
-    // Create a regular user API key for testing
-    const userKey = await this.generateApiKey(
-      'user@test.com',
-      'Development User Key',
-      ['files:read', 'files:write', 'corpus:read', 'rag:query', 'rag:import']
-    );
-    console.log('🔑 User API Key created:', userKey.key);
+    // console.log('🔑 API key system initialized with MongoDB storage');
+    // console.log('💡 Use /api/auth/keys endpoint to create API keys');
   }
 }
 
@@ -185,7 +131,7 @@ export interface AuthenticatedRequest {
     email: string;
     scopes: ApiScope[];
   };
-  apiKey?: ApiKey;
+  apiKey?: any;
   rateLimit: {
     remaining: number;
     resetTime: number;

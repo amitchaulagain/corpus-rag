@@ -1,6 +1,6 @@
 // Authentication Middleware
 import type { RequestEvent } from '@sveltejs/kit';
-import { getDB } from './db';
+import { getDB } from './db/mongodb';
 import { SessionModel } from './models/session';
 import { UserModel, type User } from './models/user';
 

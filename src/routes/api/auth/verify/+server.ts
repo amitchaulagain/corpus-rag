@@ -1,7 +1,7 @@
 // Verify session token and return user info
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getDB } from '$lib/db';
+import { getDB } from '$lib/db/mongodb';
 import { SessionModel } from '$lib/models/session';
 import { UserModel } from '$lib/models/user';
 

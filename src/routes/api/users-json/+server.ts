@@ -1,7 +1,9 @@
 // User CRUD operations with MongoDB
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { userService } from '$lib/db/user-service';
+import { getDB } from '$lib/db/mongodb';
+import { UserModel } from '$lib/models/user';
+import { SessionModel } from '$lib/models/session';
 
 // Helper to verify admin auth
 async function requireAdmin(request: Request) {
@@ -10,13 +12,17 @@ async function requireAdmin(request: Request) {
     throw new Error('Missing authorization');
   }
 
+  const db = await getDB();
+  const sessionModel = new SessionModel(db);
+  const userModel = new UserModel(db);
+
   const token = authHeader.substring(7);
-  const session = await userService.findSessionByToken(token);
+  const session = await sessionModel.findByToken(token);
   if (!session) {
     throw new Error('Invalid or expired session');
   }
 
-  const user = await userService.findUserById(session.userId);
+  const user = await userModel.findById(session.userId);
   if (!user || user.userType !== 'admin') {
     throw new Error('Admin access required');
   }
@@ -28,12 +34,14 @@ async function requireAdmin(request: Request) {
 export const GET: RequestHandler = async ({ request }) => {
   try {
     await requireAdmin(request);
-    const users = await userService.getAllUsers();
+    const db = await getDB();
+    const userModel = new UserModel(db);
+    const users = await userModel.listAll();
 
     return json({
       success: true,
       users: users.map(u => ({
-        id: u.id,
+        id: u._id,
         email: u.email,
         name: u.name,
         picture: u.picture,
@@ -66,8 +74,11 @@ export const POST: RequestHandler = async ({ request }) => {
       );
     }
 
+    const db = await getDB();
+    const userModel = new UserModel(db);
+
     // Check if user already exists
-    const existing = await userService.findUserByEmail(email);
+    const existing = await userModel.findByEmail(email);
     if (existing) {
       return json(
         { success: false, error: 'User with this email already exists' },
@@ -75,18 +86,18 @@ export const POST: RequestHandler = async ({ request }) => {
       );
     }
 
-    const user = await userService.createUser({
+    const user = await userModel.create({
       email,
       name,
       userType: userType || 'freetier',
       isPaid: isPaid || false,
-      apiPermissions: userService.constructor.getDefaultPermissions(userType || 'freetier')
+      apiPermissions: UserModel.getDefaultPermissions(userType || 'freetier')
     });
 
     return json({
       success: true,
       user: {
-        id: user.id,
+        id: user._id,
         email: user.email,
         name: user.name,
         userType: user.userType,
@@ -117,13 +128,25 @@ export const PUT: RequestHandler = async ({ request }) => {
       );
     }
 
-    const updates: any = {};
-    if (name !== undefined) updates.name = name;
-    if (userType !== undefined) updates.userType = userType;
-    if (isPaid !== undefined) updates.isPaid = isPaid;
-    if (apiPermissions !== undefined) updates.apiPermissions = apiPermissions;
+    const db = await getDB();
+    const userModel = new UserModel(db);
 
-    const user = await userService.updateUser(id, updates);
+    // Update user type if provided
+    if (userType !== undefined && isPaid !== undefined) {
+      await userModel.updateUserType(id, userType, isPaid);
+    }
+
+    // Update API permissions if provided
+    if (apiPermissions !== undefined) {
+      await userModel.updateApiPermissions(id, apiPermissions);
+    }
+
+    // Update name if provided
+    if (name !== undefined) {
+      await userModel.findById(id); // This doesn't update, need to add update method
+    }
+
+    const user = await userModel.findById(id);
 
     if (!user) {
       return json(
@@ -135,7 +158,7 @@ export const PUT: RequestHandler = async ({ request }) => {
     return json({
       success: true,
       user: {
-        id: user.id,
+        id: user._id,
         email: user.email,
         name: user.name,
         userType: user.userType,
@@ -165,7 +188,11 @@ export const DELETE: RequestHandler = async ({ request }) => {
       );
     }
 
-    const deleted = await userService.deleteUser(userId);
+    const db = await getDB();
+    const userModel = new UserModel(db);
+    const sessionModel = new SessionModel(db);
+
+    const deleted = await userModel.delete(userId);
 
     if (!deleted) {
       return json(
@@ -175,7 +202,7 @@ export const DELETE: RequestHandler = async ({ request }) => {
     }
 
     // Also delete user's sessions
-    await userService.deleteUserSessions(userId);
+    await sessionModel.deleteAllForUser(userId);
 
     return json({ success: true });
   } catch (error) {

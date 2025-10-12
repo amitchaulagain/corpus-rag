@@ -8,15 +8,86 @@
   let currentTheme = 'corporate';
   let isSidebarCollapsed = false;
 
-  onMount(() => {
+  onMount(async () => {
     const storedToken = localStorage.getItem('session_token');
     const storedUser = localStorage.getItem('user');
 
-    if (storedToken && storedUser) {
-      isAuthenticated = true;
-      user = JSON.parse(storedUser);
-    } else {
+    if (!storedToken || !storedUser) {
+      // No stored credentials, redirect to login
       goto('/');
+      return;
+    }
+
+    try {
+      // Validate session with server
+      const response = await fetch('/api/auth/verify', {
+        headers: {
+          'Authorization': `Bearer ${storedToken}`
+        }
+      });
+
+      if (!response.ok) {
+        // Session invalid or expired
+        console.error('Session validation failed');
+        logout();
+        return;
+      }
+
+      const data = await response.json();
+
+      if (!data.success || !data.user) {
+        console.error('Invalid session response');
+        logout();
+        return;
+      }
+
+      // Check if user is admin
+      if (data.user.userType !== 'admin') {
+        console.error('Access denied: User is not an admin');
+        alert('Access Denied: This application is only for administrators.');
+        logout();
+        return;
+      }
+
+      // Session is valid and user is admin
+      user = data.user;
+      isAuthenticated = true;
+
+      // Update localStorage with fresh user data
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Set up periodic session validation (every 5 minutes)
+      const intervalId = setInterval(async () => {
+        try {
+          const token = localStorage.getItem('session_token');
+          if (!token) {
+            clearInterval(intervalId);
+            logout();
+            return;
+          }
+
+          const verifyResponse = await fetch('/api/auth/verify', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+
+          if (!verifyResponse.ok) {
+            clearInterval(intervalId);
+            alert('Your session has expired. Please log in again.');
+            logout();
+          }
+        } catch (error) {
+          console.error('Periodic session check failed:', error);
+          clearInterval(intervalId);
+          logout();
+        }
+      }, 5 * 60 * 1000); // 5 minutes
+
+    } catch (error) {
+      console.error('Session validation error:', error);
+      logout();
+      return;
     }
 
     // Load theme from localStorage
@@ -71,12 +142,12 @@
             {/if}
           </button>
           <div class="dropdown dropdown-end">
-            <label tabindex="0" class="btn btn-ghost btn-circle avatar">
+            <button class="btn btn-ghost btn-circle avatar">
               <div class="w-8 rounded-full">
                 <img src={user.picture} alt={user.name} />
               </div>
-            </label>
-            <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+            </button>
+            <ul class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
               <li><span class="font-medium">{user.name}</span></li>
               <li><span class="text-sm opacity-70">{user.email}</span></li>
               <li><hr class="my-2" /></li>
@@ -211,6 +282,12 @@
           {/if}
 
           <!-- Help & Settings -->
+          <li class="w-full">
+            <a href="/api-docs" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/api-docs'} title={isSidebarCollapsed ? 'API Docs' : ''}>
+              <span class="text-xl">📖</span>
+              {#if !isSidebarCollapsed}<span>API Docs</span>{/if}
+            </a>
+          </li>
           <li class="w-full">
             <a href="/help" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/help'} title={isSidebarCollapsed ? 'Help' : ''}>
               <span class="text-xl">📚</span>

@@ -1,7 +1,7 @@
 // Logout endpoint
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getDB } from '$lib/db';
+import { getDB } from '$lib/db/mongodb';
 import { SessionModel } from '$lib/models/session';
 
 export const POST: RequestHandler = async ({ request }) => {

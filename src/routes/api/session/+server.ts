@@ -12,7 +12,7 @@ export const OPTIONS: RequestHandler = () => {
 export const GET: RequestHandler = async (event) => {
   try {
     // Get all API keys and find the user key
-    const allKeys = ApiAuth.getAllApiKeys();
+    const allKeys = await ApiAuth.getAllApiKeys();
     const userKey = allKeys.find(key => key.scopes.includes('files:read') && !key.scopes.includes('admin'));
 
     if (!userKey) {
@@ -28,7 +28,7 @@ export const GET: RequestHandler = async (event) => {
     return addCorsHeaders(new Response(JSON.stringify({
       success: true,
       data: {
-        apiKey: userKey.key,
+        apiKey: userKey.keyPrefix + '...', // Only show prefix, not full key
         scopes: userKey.scopes,
         keyName: userKey.name
       }

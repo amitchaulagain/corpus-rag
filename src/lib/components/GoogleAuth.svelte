@@ -168,54 +168,44 @@
 </script>
 
 {#if !browser}
-  <div class="card bg-base-100 shadow-xl p-8 text-center">
+  <div class="text-center py-12">
     <span class="loading loading-spinner loading-lg text-primary"></span>
-    <p class="mt-4 text-base-content/70">Loading...</p>
   </div>
 {:else if isLoading}
-  <div class="card bg-base-100 shadow-xl p-8 text-center">
+  <div class="text-center py-12">
     <span class="loading loading-spinner loading-lg text-primary"></span>
     <p class="mt-4 text-base-content/70">Checking authentication...</p>
   </div>
 {:else if isAuthenticated && user}
-  <div class="card bg-success/20 border-2 border-success shadow-xl">
+  <div class="card bg-base-100 shadow-2xl border border-base-300">
     <div class="card-body">
-      <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
-        <div class="flex items-center gap-4">
-          <div class="avatar">
-            <div class="w-12 rounded-full ring ring-success ring-offset-2">
-              {#if user.picture}
-                <img src={user.picture} alt={user.name} />
-              {:else}
-                <div class="bg-primary text-primary-content flex items-center justify-center text-xl font-bold">
-                  {user.name?.charAt(0) || user.email?.charAt(0) || '?'}
-                </div>
-              {/if}
-            </div>
-          </div>
-          <div>
-            <h3 class="font-bold text-success-content">Welcome, {user.name}!</h3>
-            <p class="text-success-content/70 text-sm">{user.email}</p>
-            <div class="flex gap-2 mt-1">
-              <span class="badge badge-sm {user.userType === 'admin' ? 'badge-error' : user.userType === 'premium' ? 'badge-warning' : 'badge-info'}">
-                {user.userType}
-              </span>
-              {#if user.isPaid}
-                <span class="badge badge-sm badge-success">Paid</span>
-              {/if}
-            </div>
+      <div class="flex flex-col items-center gap-4 text-center">
+        <div class="avatar">
+          <div class="w-16 rounded-full ring ring-primary ring-offset-2">
+            {#if user.picture}
+              <img src={user.picture} alt={user.name} />
+            {:else}
+              <div class="bg-primary text-primary-content flex items-center justify-center text-2xl font-bold">
+                {user.name?.charAt(0) || user.email?.charAt(0) || '?'}
+              </div>
+            {/if}
           </div>
         </div>
-        <button class="btn btn-error btn-sm" on:click={logout}>
+        <div>
+          <h3 class="text-xl font-bold">Welcome, {user.name}!</h3>
+          <p class="text-base-content/70">{user.email}</p>
+          <span class="badge badge-primary mt-2">{user.userType}</span>
+        </div>
+        <button class="btn btn-error btn-wide mt-4" on:click={logout}>
           🚪 Logout
         </button>
       </div>
     </div>
   </div>
 {:else}
-  <div class="card bg-base-100 shadow-xl">
-    <div class="card-body text-center">
-      <h2 class="text-2xl font-bold mb-4">Sign in to continue</h2>
+  <div class="card bg-base-100 shadow-2xl border border-base-300">
+    <div class="card-body items-center text-center py-12">
+      <h2 class="text-2xl font-bold mb-8">Administrator Sign In</h2>
       <div id="google-signin-button" class="flex justify-center"></div>
     </div>
   </div>

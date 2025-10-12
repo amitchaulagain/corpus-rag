@@ -107,7 +107,7 @@ export async function authenticateRequest(event: RequestEvent): Promise<Authenti
   }
 
   // Validate API key
-  const keyInfo = ApiAuth.validateApiKey(apiKey);
+  const keyInfo = await ApiAuth.validateApiKey(apiKey);
   if (!keyInfo) {
     return new Response(JSON.stringify(await authError('Invalid API key', requestId)), {
       status: 401,
@@ -132,8 +132,8 @@ export async function authenticateRequest(event: RequestEvent): Promise<Authenti
   // Return authenticated request context
   return {
     user: {
-      id: keyInfo.userId,
-      email: keyInfo.userId, // Using userId as email for now
+      id: keyInfo.userId.toString(),
+      email: keyInfo.userId.toString(), // Using userId as email for now
       scopes: keyInfo.scopes
     },
     apiKey: keyInfo,

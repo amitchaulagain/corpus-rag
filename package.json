@@ -9,7 +9,6 @@
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-    "test:api": "node test-api.js",
     "setup": "node -e \"const fs=require('fs'); if(!fs.existsSync('.env')){fs.writeFileSync('.env','# Your Google Cloud Project\\nGOOGLE_CLOUD_PROJECT_ID=your-project-id\\nGOOGLE_CLOUD_BUCKET_NAME=your-bucket-name\\n\\n# OAuth (Get from Google Cloud Console)\\nVITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com\\nVITE_GOOGLE_CLIENT_SECRET=your-client-secret\\n\\n# Authentication (Optional - auto-detects)\\nGOOGLE_APPLICATION_CREDENTIALS=/path/to/your/credentials.json\\n'); console.log('✅ .env created! Update with your credentials then run: bun run dev');} else {console.log('✅ .env already exists! Run: bun run dev');}\""
   },
   "devDependencies": {
@@ -17,9 +16,6 @@
     "@sveltejs/adapter-node": "^5.3.2",
     "@sveltejs/kit": "^2.0.0",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
-    "@testing-library/jest-dom": "^6.8.0",
-    "@testing-library/svelte": "^5.2.8",
-    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20.0.0",
     "@vitest/ui": "^3.2.4",
     "concurrently": "^9.2.1",
@@ -43,6 +39,7 @@
     "jspdf": "^3.0.3",
     "mammoth": "^1.11.0",
     "mongodb": "^6.20.0",
-    "pdf-parse": "^2.1.7"
+    "pdf-parse": "^2.1.7",
+    "swagger-ui-dist": "^5.29.4"
   }
 }

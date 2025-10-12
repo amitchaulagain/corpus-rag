@@ -24,7 +24,7 @@ export const GET: RequestHandler = async (event) => {
   }
 
   const response = await handleApiRequest(async () => {
-    const apiKeys = ApiAuth.getUserApiKeys(auth.user.id);
+    const apiKeys = await ApiAuth.getUserApiKeys(auth.user.id);
     return { apiKeys };
   });
 
@@ -54,12 +54,21 @@ export const POST: RequestHandler = async (event) => {
   }
 
   const response = await handleApiRequest(async () => {
-    const apiKey = ApiAuth.generateApiKey(
+    const result = await ApiAuth.generateApiKey(
       auth.user.id,
       requestBody.name,
       requestBody.scopes
     );
-    return { apiKey };
+    return {
+      apiKey: result.key,
+      keyInfo: {
+        id: result.keyInfo._id?.toString(),
+        name: result.keyInfo.name,
+        scopes: result.keyInfo.scopes,
+        keyPrefix: result.keyInfo.keyPrefix,
+        createdAt: result.keyInfo.createdAt
+      }
+    };
   });
 
   return addCorsHeaders(response);
@@ -88,15 +97,13 @@ export const DELETE: RequestHandler = async (event) => {
   }
 
   const response = await handleApiRequest(async () => {
-    // For simplicity, we'll find the key by ID and revoke it
-    const userKeys = ApiAuth.getUserApiKeys(auth.user.id);
-    const targetKey = userKeys.find(k => k.id === keyId);
+    // Revoke by key ID (MongoDB _id)
+    const revoked = await ApiAuth.revokeApiKey(keyId);
 
-    if (!targetKey) {
+    if (!revoked) {
       throw new Error('API key not found');
     }
 
-    const revoked = ApiAuth.revokeApiKey(targetKey.key);
     return { revoked };
   });
 

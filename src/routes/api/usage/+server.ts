@@ -3,7 +3,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { authenticate } from '$lib/auth-middleware';
 import { UserModel } from '$lib/models/user';
-import { getDB } from '$lib/db';
+import { getDB } from '$lib/db/mongodb';
 
 export const GET: RequestHandler = async (event) => {
   try {

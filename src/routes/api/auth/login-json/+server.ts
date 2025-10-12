@@ -2,7 +2,9 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { OAuth2Client } from 'google-auth-library';
-import { userService } from '$lib/db/user-service';
+import { getDB } from '$lib/db/mongodb';
+import { UserModel } from '$lib/models/user';
+import { SessionModel } from '$lib/models/session';
 
 const CLIENT_ID = process.env.VITE_GOOGLE_CLIENT_ID || process.env.PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -38,8 +40,12 @@ export const POST: RequestHandler = async ({ request }) => {
       );
     }
 
+    const db = await getDB();
+    const userModel = new UserModel(db);
+    const sessionModel = new SessionModel(db);
+
     // Check if user exists
-    let user = await userService.findUserByEmail(payload.email);
+    let user = await userModel.findByEmail(payload.email);
 
     if (!user) {
       // Check if email is in pre-authorized admin list
@@ -47,14 +53,14 @@ export const POST: RequestHandler = async ({ request }) => {
 
       if (isAdminEmail) {
         // Create admin user
-        user = await userService.createUser({
+        user = await userModel.create({
           email: payload.email,
           googleId: payload.sub,
           name: payload.name || payload.email,
           picture: payload.picture,
           userType: 'admin',
           isPaid: true,
-          apiPermissions: userService.constructor.getDefaultPermissions('admin')
+          apiPermissions: UserModel.getDefaultPermissions('admin')
         });
       } else {
         // New users not allowed unless added by admin
@@ -74,18 +80,16 @@ export const POST: RequestHandler = async ({ request }) => {
     }
 
     // Update last login
-    await userService.updateUser(user.id!, {
-      lastLogin: new Date()
-    });
+    await userModel.updateLastLogin(user._id!);
 
     // Create session token
-    const session = await userService.createSession(user.id!);
+    const session = await sessionModel.create(user._id!);
 
     return json({
       success: true,
       token: session.token,
       user: {
-        id: user.id,
+        id: user._id,
         email: user.email,
         name: user.name,
         picture: user.picture,

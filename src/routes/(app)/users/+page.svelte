@@ -223,18 +223,18 @@
         <div class="form-control gap-4">
           <!-- Name -->
           <div>
-            <label class="label">
+            <label class="label" for="edit-user-name">
               <span class="label-text">Name</span>
             </label>
-            <input type="text" class="input input-bordered w-full" bind:value={selectedUser.name} />
+            <input id="edit-user-name" type="text" class="input input-bordered w-full" bind:value={selectedUser.name} />
           </div>
 
           <!-- User Type -->
           <div>
-            <label class="label">
+            <label class="label" for="edit-user-type">
               <span class="label-text">User Type</span>
             </label>
-            <select class="select select-bordered w-full" bind:value={selectedUser.userType}>
+            <select id="edit-user-type" class="select select-bordered w-full" bind:value={selectedUser.userType}>
               <option value="freetier">Free Tier</option>
               <option value="premium">Premium</option>
               <option value="admin">Admin</option>
@@ -251,9 +251,9 @@
 
           <!-- API Permissions -->
           <div>
-            <label class="label">
+            <div class="label">
               <span class="label-text font-semibold">API Permissions</span>
-            </label>
+            </div>
             <div class="grid grid-cols-2 gap-3">
               {#each Object.keys(selectedUser.apiPermissions) as key}
                 <div class="form-control">
@@ -283,24 +283,24 @@
 
         <div class="form-control gap-4">
           <div>
-            <label class="label">
+            <label class="label" for="new-user-email">
               <span class="label-text">Email *</span>
             </label>
-            <input type="email" class="input input-bordered w-full" bind:value={newUser.email} placeholder="user@example.com" />
+            <input id="new-user-email" type="email" class="input input-bordered w-full" bind:value={newUser.email} placeholder="user@example.com" />
           </div>
 
           <div>
-            <label class="label">
+            <label class="label" for="new-user-name">
               <span class="label-text">Name *</span>
             </label>
-            <input type="text" class="input input-bordered w-full" bind:value={newUser.name} placeholder="John Doe" />
+            <input id="new-user-name" type="text" class="input input-bordered w-full" bind:value={newUser.name} placeholder="John Doe" />
           </div>
 
           <div>
-            <label class="label">
+            <label class="label" for="new-user-type">
               <span class="label-text">User Type</span>
             </label>
-            <select class="select select-bordered w-full" bind:value={newUser.userType}>
+            <select id="new-user-type" class="select select-bordered w-full" bind:value={newUser.userType}>
               <option value="freetier">Free Tier</option>
               <option value="premium">Premium</option>
               <option value="admin">Admin</option>

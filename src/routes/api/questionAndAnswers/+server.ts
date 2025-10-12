@@ -2,7 +2,9 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { MultiProviderService } from '$lib/multi-provider-service';
 import { requirePermission } from '$lib/auth-middleware';
-import { jobService } from '$lib/db/job-service';
+import { getDB } from '$lib/db/mongodb';
+import { JobModel } from '$lib/models/job';
+import { ObjectId } from 'mongodb';
 
 const multiProvider = new MultiProviderService();
 
@@ -94,13 +96,17 @@ ${job_details ? `\nJob Context: ${typeof job_details === 'string' ? job_details 
 
     // Track this job and API call in database
     try {
+      const db = await getDB();
+      const jobModel = new JobModel(db);
+      const userId = new ObjectId(auth.user._id);
+
       let jobRecord = platform_job_id
-        ? await jobService.findJobByPlatformId(auth.user.id!, platform, platform_job_id)
+        ? await jobModel.findByPlatformId(userId, platform, platform_job_id)
         : null;
 
       if (!jobRecord && platform_job_id) {
-        jobRecord = await jobService.createJob({
-          userId: auth.user.id!,
+        jobRecord = await jobModel.create({
+          userId,
           platform,
           platformJobId: platform_job_id,
           title: job_title || 'Unknown Position',
@@ -111,8 +117,6 @@ ${job_details ? `\nJob Context: ${typeof job_details === 'string' ? job_details 
       }
 
       if (jobRecord) {
-        let application = await jobService.getJobApplication(jobRecord.id!);
-
         const apiCallRecord = {
           timestamp: new Date(),
           endpoint: '/api/questionAndAnswers',
@@ -138,18 +142,16 @@ ${job_details ? `\nJob Context: ${typeof job_details === 'string' ? job_details 
           answer: result.answer // The AI will provide structured answers
         }));
 
-        if (!application) {
-          await jobService.createApplication({
-            userId: auth.user.id!,
-            jobId: jobRecord.id!,
-            platform,
+        if (!jobRecord.application) {
+          await jobModel.createApplication(jobRecord._id!, {
             status: 'pending',
             questionAnswers,
-            apiCalls: [apiCallRecord]
+            apiCalls: [apiCallRecord],
+            automationLogs: []
           });
         } else {
-          await jobService.addApiCall(jobRecord.id!, apiCallRecord);
-          await jobService.updateApplication(jobRecord.id!, {
+          await jobModel.addApiCall(jobRecord._id!, apiCallRecord);
+          await jobModel.updateApplication(jobRecord._id!, {
             questionAnswers
           });
         }

@@ -1,7 +1,9 @@
 // Admin dashboard recent activity
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { userService } from '$lib/db/user-service';
+import { getDB } from '$lib/db/mongodb';
+import { UserModel } from '$lib/models/user';
+import { SessionModel } from '$lib/models/session';
 
 // Helper to verify admin auth
 async function requireAdmin(request: Request) {
@@ -10,13 +12,17 @@ async function requireAdmin(request: Request) {
     throw new Error('Missing authorization');
   }
 
+  const db = await getDB();
+  const sessionModel = new SessionModel(db);
+  const userModel = new UserModel(db);
+
   const token = authHeader.substring(7);
-  const session = await userService.findSessionByToken(token);
+  const session = await sessionModel.findByToken(token);
   if (!session) {
     throw new Error('Invalid or expired session');
   }
 
-  const user = await userService.findUserById(session.userId);
+  const user = await userModel.findById(session.userId);
   if (!user || user.userType !== 'admin') {
     throw new Error('Admin access required');
   }
@@ -28,19 +34,25 @@ export const GET: RequestHandler = async ({ request }) => {
   try {
     await requireAdmin(request);
 
-    const usage = await userService.getAllUsage(20);
-    const users = await userService.getAllUsers();
+    const db = await getDB();
+    const userModel = new UserModel(db);
+
+    // Get recent usage records
+    const usageRecords = await db.collection('usage')
+      .find({})
+      .sort({ timestamp: -1 })
+      .limit(20)
+      .toArray();
+
+    const users = await userModel.listAll();
 
     // Create a user ID to name map
-    const userMap = new Map(users.map(u => [u.id, u.name]));
-
-    // Usage is already sorted and limited
-    const recentUsage = usage;
+    const userMap = new Map(users.map(u => [u._id?.toString(), u.name]));
 
     // Format activity
-    const activity = recentUsage.map(record => ({
+    const activity = usageRecords.map(record => ({
       timestamp: record.timestamp,
-      userName: userMap.get(record.userId) || 'Unknown User',
+      userName: userMap.get(record.userId?.toString()) || 'Unknown User',
       action: `${record.endpoint} (${record.aiProvider})`,
       success: record.success
     }));
