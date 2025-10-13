@@ -1,6 +1,5 @@
 // API Key Model
 import { ObjectId, type Db } from 'mongodb';
-import { createHash, randomBytes } from 'crypto';
 
 export type ApiScope = 'admin' | 'cover_letter' | 'resume' | 'questionAndAnswers' | 'upload' | 'jobs';
 
@@ -27,6 +26,9 @@ export class ApiKeyModel {
   // Generate a new API key
   async create(userId: string | ObjectId, name: string, scopes: ApiScope[], expiresInDays?: number): Promise<{ key: string; keyInfo: ApiKey }> {
     const userObjectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+
+    // Dynamic import for crypto (server-side only)
+    const { randomBytes, createHash } = await import('crypto');
 
     // Generate random key: rag_<16-char-id>_<32-char-secret>
     const keyId = randomBytes(8).toString('hex');
@@ -58,6 +60,9 @@ export class ApiKeyModel {
 
   // Validate API key and return key info
   async validate(apiKey: string): Promise<ApiKey | null> {
+    // Dynamic import for crypto (server-side only)
+    const { createHash } = await import('crypto');
+
     // Hash the provided key
     const keyHash = createHash('sha256').update(apiKey).digest('hex');
 

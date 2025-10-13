@@ -1,11 +1,11 @@
 <!-- API Key Generator Component for Testing -->
 <script lang="ts">
-  import { ApiAuth } from '$lib/api-auth.js';
-
   let keyName = $state('');
   let selectedScopes: string[] = $state([]);
   let generatedKey = $state('');
   let showGenerator = $state(false);
+  let errorMessage = $state('');
+  let isGenerating = $state(false);
 
   const availableScopes = [
     { id: 'files:read', label: 'Read Files', description: 'List and view user files' },
@@ -36,11 +36,45 @@
   async function generateApiKey() {
     if (!keyName || selectedScopes.length === 0 || !userId) return;
 
+    isGenerating = true;
+    errorMessage = '';
+
     try {
-      const apiKey = await ApiAuth.generateApiKey(userId, keyName, selectedScopes as any);
-      generatedKey = apiKey.key;
+      // Get session token for authentication
+      const token = localStorage.getItem('session_token');
+      if (!token) {
+        throw new Error('No session token found. Please log in again.');
+      }
+
+      // Call the API endpoint to generate key
+      const response = await fetch('/api/auth/keys', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: keyName,
+          scopes: selectedScopes
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to generate API key' }));
+        throw new Error(error.error || 'Failed to generate API key');
+      }
+
+      const data = await response.json();
+      if (data.success && data.data.apiKey) {
+        generatedKey = data.data.apiKey;
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (error) {
       console.error('Failed to generate API key:', error);
+      errorMessage = error instanceof Error ? error.message : 'Failed to generate API key';
+    } finally {
+      isGenerating = false;
     }
   }
 
@@ -52,6 +86,7 @@
     keyName = '';
     selectedScopes = [];
     generatedKey = '';
+    errorMessage = '';
   }
 </script>
 
@@ -62,6 +97,13 @@
 
   {#if showGenerator}
     <div class="generator-content">
+      {#if errorMessage}
+        <div class="alert alert-error mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span>{errorMessage}</span>
+        </div>
+      {/if}
+
       <div class="form-group">
         <label for="key-name">API Key Name:</label>
         <input
@@ -70,6 +112,7 @@
           bind:value={keyName}
           placeholder="e.g., My Test Key"
           class="key-name-input"
+          disabled={isGenerating}
         />
       </div>
 
@@ -85,6 +128,7 @@
                   value={scope.id}
                   checked={selectedScopes.includes(scope.id)}
                   onchange={() => toggleScope(scope.id)}
+                  disabled={isGenerating}
                 />
                 <span class="scope-name">{scope.label}</span>
                 <span class="scope-description">{scope.description}</span>
@@ -99,11 +143,15 @@
         <button
           class="generate-btn"
           onclick={generateApiKey}
-          disabled={!keyName || selectedScopes.length === 0}
+          disabled={!keyName || selectedScopes.length === 0 || isGenerating}
         >
-          🔑 Generate API Key
+          {#if isGenerating}
+            <span class="loading loading-spinner loading-sm"></span> Generating...
+          {:else}
+            🔑 Generate API Key
+          {/if}
         </button>
-        <button class="reset-btn" onclick={reset}>
+        <button class="reset-btn" onclick={reset} disabled={isGenerating}>
           🔄 Reset
         </button>
       </div>
@@ -130,8 +178,8 @@
 
 <style>
   .api-key-generator {
-    background: #f8f9fa;
-    border: 1px solid #e1e5e9;
+    background: oklch(var(--b2));
+    border: 1px solid oklch(var(--bc) / 0.2);
     border-radius: 8px;
     padding: 20px;
     margin: 20px 0;
@@ -140,7 +188,7 @@
   .toggle-btn {
     background: none;
     border: none;
-    color: #667eea;
+    color: oklch(var(--p));
     font-weight: 600;
     cursor: pointer;
     font-size: 16px;
@@ -152,7 +200,7 @@
   .generator-content {
     margin-top: 20px;
     padding-top: 20px;
-    border-top: 1px solid #e1e5e9;
+    border-top: 1px solid oklch(var(--bc) / 0.2);
   }
 
   .form-group {
@@ -163,7 +211,7 @@
     display: block;
     margin-bottom: 8px;
     font-weight: 600;
-    color: #2c3e50;
+    color: oklch(var(--bc));
   }
 
   .form-group fieldset {
@@ -174,7 +222,7 @@
 
   .form-group legend {
     font-weight: 600;
-    color: #2c3e50;
+    color: oklch(var(--bc));
     margin-bottom: 8px;
     padding: 0;
   }
@@ -182,14 +230,16 @@
   .key-name-input {
     width: 100%;
     padding: 10px;
-    border: 2px solid #ddd;
+    border: 2px solid oklch(var(--bc) / 0.2);
     border-radius: 4px;
     font-size: 14px;
+    background: oklch(var(--b1));
+    color: oklch(var(--bc));
   }
 
   .key-name-input:focus {
     outline: none;
-    border-color: #667eea;
+    border-color: oklch(var(--p));
   }
 
   .scopes-grid {
@@ -200,16 +250,16 @@
   }
 
   .scope-item {
-    background: white;
-    border: 1px solid #e1e5e9;
+    background: oklch(var(--b1));
+    border: 1px solid oklch(var(--bc) / 0.2);
     border-radius: 6px;
     padding: 12px;
     transition: all 0.2s;
   }
 
   .scope-item:hover {
-    border-color: #667eea;
-    background: #f8f9ff;
+    border-color: oklch(var(--p));
+    background: oklch(var(--b3));
   }
 
   .scope-label {
@@ -227,14 +277,13 @@
 
   .scope-name {
     font-weight: 600;
-    color: #2c3e50;
+    color: oklch(var(--bc));
     font-size: 14px;
   }
 
   .scope-description {
     font-size: 12px;
-    color: #666;
-    opacity: 0.8;
+    color: oklch(var(--bc) / 0.7);
   }
 
   .form-actions {
@@ -275,8 +324,8 @@
   }
 
   .generated-key {
-    background: #d4edda;
-    border: 1px solid #c3e6cb;
+    background: oklch(var(--su) / 0.1);
+    border: 1px solid oklch(var(--su) / 0.3);
     border-radius: 8px;
     padding: 20px;
     margin-top: 20px;
@@ -284,7 +333,7 @@
 
   .generated-key h4 {
     margin: 0 0 15px 0;
-    color: #155724;
+    color: oklch(var(--suc));
   }
 
   .key-display {
@@ -296,18 +345,19 @@
 
   .api-key {
     flex: 1;
-    background: #f8f9fa;
+    background: oklch(var(--b1));
     padding: 10px;
     border-radius: 4px;
     font-family: monospace;
     font-size: 12px;
     word-break: break-all;
-    border: 1px solid #c3e6cb;
+    border: 1px solid oklch(var(--su) / 0.3);
+    color: oklch(var(--bc));
   }
 
   .copy-btn {
-    background: #155724;
-    color: white;
+    background: oklch(var(--su));
+    color: oklch(var(--suc));
     border: none;
     padding: 8px 12px;
     border-radius: 4px;
@@ -318,7 +368,7 @@
 
   .key-info {
     font-size: 14px;
-    color: #155724;
+    color: oklch(var(--bc));
   }
 
   .key-info p {
@@ -326,10 +376,11 @@
   }
 
   .key-info code {
-    background: rgba(21, 87, 36, 0.1);
+    background: oklch(var(--bc) / 0.1);
     padding: 2px 4px;
     border-radius: 3px;
     font-size: 12px;
+    color: oklch(var(--bc));
   }
 
   @media (max-width: 768px) {

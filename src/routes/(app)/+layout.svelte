@@ -2,6 +2,7 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
+  import { sessionToken } from '$lib/store';
 
   let isAuthenticated = false;
   let user: any = null;
@@ -11,6 +12,11 @@
   onMount(async () => {
     const storedToken = localStorage.getItem('session_token');
     const storedUser = localStorage.getItem('user');
+
+    // Update the sessionToken store
+    if (storedToken) {
+      sessionToken.set(storedToken);
+    }
 
     if (!storedToken || !storedUser) {
       // No stored credentials, redirect to login
@@ -97,6 +103,7 @@
   });
 
   function logout() {
+    sessionToken.set(null);
     localStorage.removeItem('session_token');
     localStorage.removeItem('user');
     window.location.href = '/';
@@ -286,12 +293,6 @@
             <a href="/api-docs" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/api-docs'} title={isSidebarCollapsed ? 'API Docs' : ''}>
               <span class="text-xl">📖</span>
               {#if !isSidebarCollapsed}<span>API Docs</span>{/if}
-            </a>
-          </li>
-          <li class="w-full">
-            <a href="/help" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/help'} title={isSidebarCollapsed ? 'Help' : ''}>
-              <span class="text-xl">📚</span>
-              {#if !isSidebarCollapsed}<span>Help</span>{/if}
             </a>
           </li>
           <li class="w-full">
