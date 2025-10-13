@@ -2,7 +2,8 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-import { VITE_GOOGLE_CLIENT_ID, VITE_GOOGLE_CLIENT_SECRET } from '$env/static/private';
+import { PUBLIC_GOOGLE_CLIENT_ID } from '$env/static/public';
+import { GOOGLE_CLIENT_SECRET } from '$env/static/private';
 
 export const POST: RequestHandler = async ({ request }) => {
   try {
@@ -27,8 +28,8 @@ export const POST: RequestHandler = async ({ request }) => {
       },
       body: new URLSearchParams({
         code: code,
-        client_id: VITE_GOOGLE_CLIENT_ID,
-        client_secret: VITE_GOOGLE_CLIENT_SECRET,
+        client_id: PUBLIC_GOOGLE_CLIENT_ID,
+        client_secret: GOOGLE_CLIENT_SECRET,
         grant_type: 'authorization_code',
         redirect_uri: redirect_uri,
       }),

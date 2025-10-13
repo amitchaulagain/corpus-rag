@@ -5,6 +5,7 @@
 
   let token = '';
   let userId = '';
+  let copyButtonText = 'Copy';
 
   sessionToken.subscribe(value => {
     token = value || '';
@@ -22,6 +23,14 @@
       }
     }
   });
+
+  function copySessionToken() {
+    navigator.clipboard.writeText(token);
+    copyButtonText = 'Copied!';
+    setTimeout(() => {
+      copyButtonText = 'Copy';
+    }, 2000);
+  }
 
   onMount(() => {
     const script1 = document.createElement('script');
@@ -410,10 +419,70 @@
     .swagger-ui .information-container {
       display: none !important;
     }
+
+    /* Modal backgrounds - dark mode */
+    [data-theme="dark"] .swagger-ui .modal-ux {
+      background: rgba(0, 0, 0, 0.8) !important;
+    }
+
+    [data-theme="dark"] .swagger-ui .modal-ux-content {
+      background: #1a1a1a !important;
+      border: 1px solid #333 !important;
+      color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .swagger-ui .modal-ux-header {
+      background: #0a0a0a !important;
+      border-bottom: 1px solid #333 !important;
+      color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .swagger-ui .modal-ux-header h3 {
+      color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .swagger-ui .modal-ux-inner {
+      background: #1a1a1a !important;
+      color: #ffffff !important;
+    }
+
+    /* Better space utilization on smaller screens */
+    .api-docs-container {
+      padding: 1rem;
+    }
+
+    /* Medium screens - reduce padding slightly */
+    @media (max-width: 1440px) {
+      .api-docs-container {
+        padding: 0.75rem !important;
+      }
+    }
+
+    /* Laptop split view - more aggressive reduction */
+    @media (max-width: 1024px) {
+      .api-docs-container {
+        max-width: 100% !important;
+        padding: 0.5rem !important;
+      }
+    }
+
+    /* Tablet */
+    @media (max-width: 768px) {
+      .api-docs-container {
+        padding: 0.5rem !important;
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 640px) {
+      .api-docs-container {
+        padding: 0.25rem !important;
+      }
+    }
   </style>
 </svelte:head>
 
-<div class="container mx-auto p-4">
+<div class="container mx-auto api-docs-container">
   <h1 class="text-3xl font-bold mb-4">API Documentation</h1>
 
   <div class="alert alert-info mb-6">
@@ -439,10 +508,25 @@
 
   <div class="card bg-base-200 shadow-xl mb-6">
     <div class="card-body">
-      <h2 class="card-title">Session Token (Web App Only)</h2>
-      <p class="text-sm">This is your current session token for the web application. <strong>Do not use this for API testing.</strong></p>
-      <div class="form-control">
+      <h2 class="card-title">Session Token (Browser Sessions Only)</h2>
+      <div class="alert alert-warning mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        <div>
+          <h3 class="font-bold">What is this?</h3>
+          <div class="text-sm">
+            This is your <strong>browser session token</strong> - it authenticates YOU as a logged-in user in the web app.
+            <br /><br />
+            <strong>❌ Do NOT use for API testing:</strong> Session tokens expire when you log out and are tied to your browser.
+            <br />
+            <strong>✅ Use API Keys instead:</strong> Generate an API key above for programmatic access from external apps.
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-2">
         <input type="text" readonly bind:value={token} class="input input-bordered w-full font-mono text-sm" />
+        <button class="btn btn-primary" onclick={copySessionToken}>
+          {copyButtonText}
+        </button>
       </div>
     </div>
   </div>

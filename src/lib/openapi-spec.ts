@@ -1,13 +1,13 @@
-// OpenAPI 3.0 specification for the RAG System API
+// OpenAPI 3.0 specification for the Job Application Assistant API
 
 export const openApiSpec = {
   openapi: "3.0.3",
   info: {
-    title: "RAG System API",
-    description: "API for managing files, corpus, and querying the RAG system",
+    title: "Job Application Assistant API",
+    description: "API for AI-powered job application tools including cover letter generation, resume enhancement, and Q&A",
     version: "1.0.0",
     contact: {
-      name: "RAG System Support",
+      name: "Support",
       email: "support@example.com"
     },
     license: {
@@ -60,45 +60,6 @@ export const openApiSpec = {
           created: { type: "string", format: "date-time" },
           updated: { type: "string", format: "date-time", nullable: true }
         }
-      },
-      CorpusInfo: {
-        type: "object",
-        properties: {
-          corpusId: { type: "string" },
-          userId: { type: "string" },
-          displayName: { type: "string" },
-          exists: { type: "boolean" },
-          createTime: { type: "string", format: "date-time" },
-          fileCount: { type: "integer" }
-        }
-      },
-      QueryRequest: {
-        type: "object",
-        properties: {
-          userId: { type: "string" },
-          question: { type: "string" },
-          context: { type: "string", nullable: true },
-          maxResults: { type: "integer", default: 5 }
-        },
-        required: ["userId", "question"]
-      },
-      QueryResponse: {
-        type: "object",
-        properties: {
-          answer: { type: "string" },
-          sources: { type: "array", items: { type: "string" } },
-          processingTime: { type: "integer" },
-          corpusId: { type: "string" }
-        }
-      },
-      ImportRequest: {
-        type: "object",
-        properties: {
-          userId: { type: "string" },
-          cloudStorageUris: { type: "array", items: { type: "string" } },
-          waitForCompletion: { type: "boolean", default: false }
-        },
-        required: ["userId", "cloudStorageUris"]
       },
       SystemStatus: {
         type: "object",
@@ -185,381 +146,6 @@ export const openApiSpec = {
         }
       }
     },
-    "/files": {
-      get: {
-        summary: "List user files",
-        description: "Get a list of all files for a user",
-        tags: ["Files"],
-        parameters: [
-          {
-            name: "userId",
-            in: "query",
-            description: "User ID to list files for",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Files retrieved successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  allOf: [
-                    { $ref: "#/components/schemas/ApiResponse" },
-                    {
-                      type: "object",
-                      properties: {
-                        data: {
-                          type: "object",
-                          properties: {
-                            files: { type: "array", items: { $ref: "#/components/schemas/FileInfo" } },
-                            count: { type: "integer" }
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      post: {
-        summary: "Upload a file",
-        description: "Upload a file for a user and automatically import to RAG",
-        tags: ["Files"],
-        requestBody: {
-          content: {
-            "multipart/form-data": {
-              schema: {
-                type: "object",
-                properties: {
-                  file: { type: "string", format: "binary" },
-                  userId: { type: "string" },
-                  replaceExisting: { type: "boolean", default: false }
-                },
-                required: ["file"]
-              }
-            }
-          }
-        },
-        responses: {
-          "200": {
-            description: "File uploaded successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  allOf: [
-                    { $ref: "#/components/schemas/ApiResponse" },
-                    {
-                      type: "object",
-                      properties: {
-                        data: {
-                          type: "object",
-                          properties: {
-                            file: { $ref: "#/components/schemas/FileInfo" },
-                            ragImport: {
-                              type: "object",
-                              properties: {
-                                success: { type: "boolean" },
-                                operationId: { type: "string" },
-                                error: { type: "string", nullable: true }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/files/{filename}": {
-      get: {
-        summary: "Get file information",
-        description: "Get detailed information about a specific file",
-        tags: ["Files"],
-        parameters: [
-          {
-            name: "filename",
-            in: "path",
-            required: true,
-            description: "Name of the file",
-            schema: { type: "string" }
-          },
-          {
-            name: "userId",
-            in: "query",
-            description: "User ID who owns the file",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "File information retrieved",
-            content: {
-              "application/json": {
-                schema: {
-                  allOf: [
-                    { $ref: "#/components/schemas/ApiResponse" },
-                    {
-                      type: "object",
-                      properties: {
-                        data: { $ref: "#/components/schemas/FileInfo" }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "404": {
-            description: "File not found",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          }
-        }
-      },
-      delete: {
-        summary: "Delete a file",
-        description: "Delete a specific file",
-        tags: ["Files"],
-        parameters: [
-          {
-            name: "filename",
-            in: "path",
-            required: true,
-            description: "Name of the file to delete",
-            schema: { type: "string" }
-          },
-          {
-            name: "userId",
-            in: "query",
-            description: "User ID who owns the file",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "File deleted successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  allOf: [
-                    { $ref: "#/components/schemas/ApiResponse" },
-                    {
-                      type: "object",
-                      properties: {
-                        data: {
-                          type: "object",
-                          properties: {
-                            deleted: { type: "boolean" },
-                            filename: { type: "string" }
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/corpus": {
-      get: {
-        summary: "Get user corpus",
-        description: "Get information about a user's corpus including files",
-        tags: ["Corpus"],
-        parameters: [
-          {
-            name: "userId",
-            in: "query",
-            description: "User ID to get corpus for",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Corpus information retrieved",
-            content: {
-              "application/json": {
-                schema: {
-                  allOf: [
-                    { $ref: "#/components/schemas/ApiResponse" },
-                    {
-                      type: "object",
-                      properties: {
-                        data: { $ref: "#/components/schemas/CorpusInfo" }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      post: {
-        summary: "Manage corpus",
-        description: "Create or manage a user's corpus",
-        tags: ["Corpus"],
-        requestBody: {
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  userId: { type: "string" },
-                  action: { type: "string", enum: ["get_or_create", "cleanup"], default: "get_or_create" }
-                },
-                required: ["userId"]
-              }
-            }
-          }
-        },
-        responses: {
-          "200": {
-            description: "Corpus operation completed",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ApiResponse" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/rag/query": {
-      post: {
-        summary: "Query the RAG system",
-        description: "Ask a question about the user's documents",
-        tags: ["RAG"],
-        requestBody: {
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/QueryRequest" }
-            }
-          }
-        },
-        responses: {
-          "200": {
-            description: "Query completed successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  allOf: [
-                    { $ref: "#/components/schemas/ApiResponse" },
-                    {
-                      type: "object",
-                      properties: {
-                        data: { $ref: "#/components/schemas/QueryResponse" }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/rag/import": {
-      post: {
-        summary: "Import files to RAG",
-        description: "Import files from cloud storage into the RAG system",
-        tags: ["RAG"],
-        requestBody: {
-          content: {
-            "application/json": {
-              schema: { $ref: "#/components/schemas/ImportRequest" }
-            }
-          }
-        },
-        responses: {
-          "200": {
-            description: "Import started successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  allOf: [
-                    { $ref: "#/components/schemas/ApiResponse" },
-                    {
-                      type: "object",
-                      properties: {
-                        data: {
-                          type: "object",
-                          properties: {
-                            message: { type: "string" },
-                            operationId: { type: "string" },
-                            filesCount: { type: "integer" },
-                            corpusId: { type: "string" }
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/rag/operations/{operationId}": {
-      get: {
-        summary: "Check operation status",
-        description: "Check the status of a RAG import operation",
-        tags: ["RAG"],
-        parameters: [
-          {
-            name: "operationId",
-            in: "path",
-            required: true,
-            description: "Operation ID to check",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Operation status retrieved",
-            content: {
-              "application/json": {
-                schema: {
-                  allOf: [
-                    { $ref: "#/components/schemas/ApiResponse" },
-                    {
-                      type: "object",
-                      properties: {
-                        data: {
-                          type: "object",
-                          properties: {
-                            operationId: { type: "string" },
-                            done: { type: "boolean" },
-                            progress: { type: "integer" },
-                            error: { type: "string", nullable: true },
-                            result: { type: "object" }
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/system/status": {
       get: {
         summary: "System health check",
@@ -612,6 +198,516 @@ export const openApiSpec = {
           }
         }
       }
+    },
+    "/cover_letter": {
+      post: {
+        summary: "Generate cover letter",
+        description: "Generate a cover letter based on job description and resume",
+        tags: ["AI Generation"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  jobDescription: { type: "string", description: "Job description text" },
+                  resume: { type: "string", description: "Resume text" },
+                  companyName: { type: "string" },
+                  jobTitle: { type: "string" },
+                  temperature: { type: "number", default: 0.7 }
+                },
+                required: ["jobDescription", "resume"]
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Cover letter generated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    coverLetter: { type: "string" },
+                    metadata: {
+                      type: "object",
+                      properties: {
+                        model: { type: "string" },
+                        tokensUsed: { type: "integer" },
+                        processingTime: { type: "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/resume": {
+      post: {
+        summary: "Enhance resume",
+        description: "Enhance and optimize resume content",
+        tags: ["AI Generation"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  resume: { type: "string", description: "Resume text to enhance" },
+                  jobDescription: { type: "string", description: "Optional job description for tailoring" },
+                  temperature: { type: "number", default: 0.7 }
+                },
+                required: ["resume"]
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Resume enhanced successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    enhancedResume: { type: "string" },
+                    suggestions: { type: "array", items: { type: "string" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/questionAndAnswers": {
+      post: {
+        summary: "Generate Q&A responses",
+        description: "Generate answers to employer questions based on resume",
+        tags: ["AI Generation"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  questions: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Array of employer questions"
+                  },
+                  resume: { type: "string", description: "Resume text for context" },
+                  jobDescription: { type: "string", description: "Job description for context" }
+                },
+                required: ["questions", "resume"]
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Answers generated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    answers: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          question: { type: "string" },
+                          answer: { type: "string" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/generate": {
+      post: {
+        summary: "Generic AI generation",
+        description: "Generate content using AI with custom prompts",
+        tags: ["AI Generation"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  prompt: { type: "string", description: "AI prompt" },
+                  context: { type: "string", description: "Additional context" },
+                  model: { type: "string", description: "AI model to use" },
+                  temperature: { type: "number", default: 0.7 },
+                  maxTokens: { type: "integer" }
+                },
+                required: ["prompt"]
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Content generated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    result: { type: "string" },
+                    metadata: { type: "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload": {
+      get: {
+        summary: "List or get user files",
+        description: "List all files for a user, or get content of a specific file. Files are stored in ./data/uploads/{userId}/ on the server.",
+        tags: ["Files"],
+        parameters: [
+          {
+            name: "userId",
+            in: "query",
+            required: true,
+            description: "User ID to list files for",
+            schema: { type: "string" }
+          },
+          {
+            name: "filename",
+            in: "query",
+            required: false,
+            description: "Optional: specific filename to get content (supports .txt and .pdf)",
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Files listed or file content retrieved",
+            content: {
+              "application/json": {
+                schema: {
+                  oneOf: [
+                    {
+                      type: "object",
+                      description: "List of files",
+                      properties: {
+                        success: { type: "boolean" },
+                        files: {
+                          type: "array",
+                          items: {
+                            type: "object",
+                            properties: {
+                              name: { type: "string" },
+                              type: { type: "string", enum: ["txt", "pdf"] }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    {
+                      type: "object",
+                      description: "File content",
+                      properties: {
+                        success: { type: "boolean" },
+                        filename: { type: "string" },
+                        content: { type: "string", description: "Text content (extracted from PDF if applicable)" }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      post: {
+        summary: "Upload file",
+        description: "Upload a .txt or .pdf file. Files are stored in ./data/uploads/{userId}/ folder on the server for later retrieval.",
+        tags: ["Files"],
+        requestBody: {
+          required: true,
+          content: {
+            "multipart/form-data": {
+              schema: {
+                type: "object",
+                properties: {
+                  file: {
+                    type: "string",
+                    format: "binary",
+                    description: "File to upload (.txt or .pdf only)"
+                  },
+                  userId: {
+                    type: "string",
+                    description: "User ID - files will be stored in ./data/uploads/{userId}/"
+                  }
+                },
+                required: ["file", "userId"]
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "File uploaded successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    filename: { type: "string" },
+                    path: { type: "string", description: "Server path where file is stored" },
+                    content: { type: "string", description: "Text content (only for .txt files)" }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Bad request (missing file/userId or unsupported file type)",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean", enum: [false] },
+                    error: { type: "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      delete: {
+        summary: "Delete a file",
+        description: "Delete a specific file from the user's folder",
+        tags: ["Files"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  userId: { type: "string" },
+                  filename: { type: "string" }
+                },
+                required: ["userId", "filename"]
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "File deleted successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs": {
+      get: {
+        summary: "List jobs",
+        description: "Get list of uploaded job descriptions",
+        tags: ["Jobs"],
+        responses: {
+          "200": {
+            description: "Jobs retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    jobs: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          filename: { type: "string" },
+                          company: { type: "string" },
+                          title: { type: "string" },
+                          uploadedAt: { type: "string", format: "date-time" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{filename}": {
+      get: {
+        summary: "Get job details",
+        description: "Get details of a specific job description",
+        tags: ["Jobs"],
+        parameters: [
+          {
+            name: "filename",
+            in: "path",
+            required: true,
+            schema: { type: "string" }
+          }
+        ],
+        responses: {
+          "200": {
+            description: "Job retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    job: {
+                      type: "object",
+                      properties: {
+                        filename: { type: "string" },
+                        content: { type: "string" },
+                        company: { type: "string" },
+                        title: { type: "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/keys": {
+      get: {
+        summary: "List API keys",
+        description: "List all API keys for the authenticated user (requires session token)",
+        tags: ["Authentication"],
+        security: [{ SessionAuth: [] }],
+        responses: {
+          "200": {
+            description: "API keys retrieved successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    data: {
+                      type: "object",
+                      properties: {
+                        apiKeys: {
+                          type: "array",
+                          items: {
+                            type: "object",
+                            properties: {
+                              id: { type: "string" },
+                              name: { type: "string" },
+                              keyPrefix: { type: "string" },
+                              scopes: { type: "array", items: { type: "string" } },
+                              createdAt: { type: "string", format: "date-time" },
+                              lastUsed: { type: "string", format: "date-time" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      post: {
+        summary: "Generate API key",
+        description: "Generate a new API key for programmatic access (requires session token)",
+        tags: ["Authentication"],
+        security: [{ SessionAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  name: { type: "string", description: "Name for the API key" },
+                  scopes: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Permissions for the API key"
+                  }
+                },
+                required: ["name", "scopes"]
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "API key generated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    data: {
+                      type: "object",
+                      properties: {
+                        apiKey: { type: "string", description: "Full API key (save this - won't be shown again!)" },
+                        keyInfo: {
+                          type: "object",
+                          properties: {
+                            id: { type: "string" },
+                            name: { type: "string" },
+                            keyPrefix: { type: "string" },
+                            scopes: { type: "array", items: { type: "string" } },
+                            createdAt: { type: "string", format: "date-time" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   tags: [
@@ -620,16 +716,16 @@ export const openApiSpec = {
       description: "API key management and user authentication"
     },
     {
+      name: "AI Generation",
+      description: "AI-powered content generation (cover letters, resume enhancement, Q&A)"
+    },
+    {
       name: "Files",
       description: "File upload, download, and management"
     },
     {
-      name: "Corpus",
-      description: "Corpus creation and management"
-    },
-    {
-      name: "RAG",
-      description: "RAG system queries and document import"
+      name: "Jobs",
+      description: "Job description management"
     },
     {
       name: "System",
