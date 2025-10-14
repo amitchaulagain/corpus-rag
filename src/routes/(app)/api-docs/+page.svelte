@@ -1,34 +1,59 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte';
   import { sessionToken } from '$lib/store';
-  import ApiKeyGenerator from '$lib/components/ApiKeyGenerator.svelte';
 
   let token = '';
-  let userId = '';
-  let copyButtonText = 'Copy';
+  let user: any = null;
+  let jwtToken = '';
+  let copyButtonText = 'Copy JWT';
 
   sessionToken.subscribe(value => {
     token = value || '';
   });
 
   onMount(() => {
-    // Get user ID from localStorage
+    // Get user info from localStorage
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
-        const user = JSON.parse(storedUser);
-        userId = user.id || user.sub || user.email;
+        user = JSON.parse(storedUser);
       } catch (e) {
         console.error('Failed to parse user data:', e);
       }
     }
+
+    // Get JWT token for API testing
+    getJwtToken();
   });
 
-  function copySessionToken() {
-    navigator.clipboard.writeText(token);
+  async function getJwtToken() {
+    if (!user || !user.email) return;
+
+    try {
+      // Create JWT for current user
+      const response = await fetch('/api/auth/session-to-jwt', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.accessToken) {
+          jwtToken = data.accessToken;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to get JWT token:', error);
+    }
+  }
+
+  function copyJwtToken() {
+    navigator.clipboard.writeText(jwtToken);
     copyButtonText = 'Copied!';
     setTimeout(() => {
-      copyButtonText = 'Copy';
+      copyButtonText = 'Copy JWT';
     }, 2000);
   }
 
@@ -483,53 +508,81 @@
 </svelte:head>
 
 <div class="container mx-auto api-docs-container">
-  <h1 class="text-3xl font-bold mb-4">API Documentation</h1>
+  <h1 class="text-3xl font-bold mb-4">🚀 API Documentation</h1>
 
   <div class="alert alert-info mb-6">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
     <div>
-      <h3 class="font-bold">API Authentication</h3>
+      <h3 class="font-bold">How to Test the API</h3>
       <div class="text-sm">
-        To test the API, generate an API key below and use it in the "Authorize" button in Swagger UI.
-        <br />
-        API keys are different from session tokens and are designed for programmatic access.
+        <ol class="list-decimal list-inside space-y-1 mt-2">
+          <li>Copy your JWT token below</li>
+          <li>Click the green <strong>"Authorize"</strong> button in Swagger UI</li>
+          <li>Paste the token (without "Bearer")</li>
+          <li>Click <strong>"Authorize"</strong> then <strong>"Close"</strong></li>
+          <li>Test any endpoint by clicking <strong>"Try it out"</strong></li>
+        </ol>
       </div>
     </div>
   </div>
 
-  {#if userId}
-    <ApiKeyGenerator userId={userId} />
+  {#if user}
+    <div class="card bg-base-200 shadow-xl mb-6">
+      <div class="card-body">
+        <h2 class="card-title">🔑 Your JWT Access Token</h2>
+        <div class="alert alert-success mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <div>
+            <h3 class="font-bold">✅ Use this for API Testing</h3>
+            <div class="text-sm">
+              This JWT token authenticates you in the API. Valid for 15 minutes.
+              <br />
+              <strong>User:</strong> {user.email} ({user.userType})
+            </div>
+          </div>
+        </div>
+        {#if jwtToken}
+          <div class="flex gap-2">
+            <input type="text" readonly bind:value={jwtToken} class="input input-bordered w-full font-mono text-xs" />
+            <button class="btn btn-primary" onclick={copyJwtToken}>
+              {copyButtonText}
+            </button>
+          </div>
+        {:else}
+          <div class="flex gap-2 items-center">
+            <span class="loading loading-spinner loading-sm"></span>
+            <span class="text-sm">Getting JWT token...</span>
+          </div>
+        {/if}
+      </div>
+    </div>
+
+    <div class="card bg-base-300 shadow-xl mb-6">
+      <div class="card-body">
+        <h2 class="card-title">🤖 Testing Third-Party App Access</h2>
+        <div class="text-sm space-y-2">
+          <p><strong>Yes!</strong> You can test third-party app access (service accounts) from Swagger UI:</p>
+          <ol class="list-decimal list-inside space-y-2 ml-4">
+            <li><strong>Create Service Account:</strong> Use <code class="bg-base-100 px-2 py-1 rounded">POST /api/service-accounts</code> to create a bot account</li>
+            <li><strong>Get Token:</strong> Use <code class="bg-base-100 px-2 py-1 rounded">POST /api/auth/token</code> with <code>client_id</code> and <code>client_secret</code></li>
+            <li><strong>Authorize:</strong> Use the service account token in the "Authorize" button</li>
+            <li><strong>Test:</strong> The service account can only access endpoints matching its scopes</li>
+          </ol>
+          <div class="alert alert-warning mt-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <div class="text-sm">
+              <strong>Save the client_secret!</strong> It's only shown once when you create the service account.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   {:else}
     <div class="alert alert-warning mb-6">
       <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
       <span>Loading user information...</span>
     </div>
   {/if}
-
-  <div class="card bg-base-200 shadow-xl mb-6">
-    <div class="card-body">
-      <h2 class="card-title">Session Token (Browser Sessions Only)</h2>
-      <div class="alert alert-warning mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-        <div>
-          <h3 class="font-bold">What is this?</h3>
-          <div class="text-sm">
-            This is your <strong>browser session token</strong> - it authenticates YOU as a logged-in user in the web app.
-            <br /><br />
-            <strong>❌ Do NOT use for API testing:</strong> Session tokens expire when you log out and are tied to your browser.
-            <br />
-            <strong>✅ Use API Keys instead:</strong> Generate an API key above for programmatic access from external apps.
-          </div>
-        </div>
-      </div>
-      <div class="flex gap-2">
-        <input type="text" readonly bind:value={token} class="input input-bordered w-full font-mono text-sm" />
-        <button class="btn btn-primary" onclick={copySessionToken}>
-          {copyButtonText}
-        </button>
-      </div>
-    </div>
-  </div>
 
   <div id="swagger-ui"></div>
 </div>

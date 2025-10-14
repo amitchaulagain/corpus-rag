@@ -1,15 +1,9 @@
-// SvelteKit Server Hooks - Initialize API Authentication
+// SvelteKit Server Hooks
 
-import { ApiAuth } from '$lib/api-auth.js';
 import { getDB } from '$lib/db/mongodb.js';
 import { SessionModel } from '$lib/models/session.js';
 import { UserModel } from '$lib/models/user.js';
 import { redirect } from '@sveltejs/kit';
-
-// Initialize API authentication system on server startup
-(async () => {
-  await ApiAuth.initialize();
-})();
 
 // Protected routes that require admin authentication
 const PROTECTED_ROUTES = [
@@ -46,7 +40,7 @@ export async function handle({ event, resolve }) {
     }
   }
 
-  // Check if route requires admin authentication
+  // Check if route requires admin authentication (web UI routes)
   const isProtectedRoute = PROTECTED_ROUTES.some(route =>
     event.url.pathname === route || event.url.pathname.startsWith(route + '/')
   );

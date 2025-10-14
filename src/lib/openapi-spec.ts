@@ -1,11 +1,11 @@
-// OpenAPI 3.0 specification for the Job Application Assistant API
+// OpenAPI 3.0 specification for the Job Application Assistant API (JWT Auth)
 
 export const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "Job Application Assistant API",
-    description: "API for AI-powered job application tools including cover letter generation, resume enhancement, and Q&A",
-    version: "1.0.0",
+    description: "API for AI-powered job application tools with JWT authentication. Use `/auth/login-jwt` to get access tokens.",
+    version: "2.0.0",
     contact: {
       name: "Support",
       email: "support@example.com"
@@ -23,16 +23,16 @@ export const openApiSpec = {
   ],
   security: [
     {
-      ApiKeyAuth: []
+      BearerAuth: []
     }
   ],
   components: {
     securitySchemes: {
-      ApiKeyAuth: {
+      BearerAuth: {
         type: "http",
         scheme: "bearer",
-        bearerFormat: "API Key",
-        description: "API Key authentication. Format: `Bearer rag_[keyId]_[secret]`"
+        bearerFormat: "JWT",
+        description: "JWT access token. Get it from `/auth/login-jwt` or `/auth/token` (service accounts). Format: `Bearer eyJhbGc...`"
       }
     },
     schemas: {
@@ -41,59 +41,164 @@ export const openApiSpec = {
         properties: {
           success: { type: "boolean" },
           data: { type: "object" },
-          error: { type: "string", nullable: true },
-          timestamp: { type: "string", format: "date-time" },
-          requestId: { type: "string" }
+          error: { type: "string", nullable: true }
         },
-        required: ["success", "timestamp"]
-      },
-      FileInfo: {
-        type: "object",
-        properties: {
-          id: { type: "string" },
-          name: { type: "string" },
-          size: { type: "integer" },
-          mimeType: { type: "string" },
-          userId: { type: "string" },
-          fileId: { type: "string" },
-          fullPath: { type: "string" },
-          created: { type: "string", format: "date-time" },
-          updated: { type: "string", format: "date-time", nullable: true }
-        }
-      },
-      SystemStatus: {
-        type: "object",
-        properties: {
-          status: { type: "string", enum: ["healthy", "degraded", "down"] },
-          version: { type: "string" },
-          uptime: { type: "integer" },
-          responseTime: { type: "integer" },
-          services: {
-            type: "object",
-            properties: {
-              storage: { type: "string", enum: ["healthy", "degraded", "down"] },
-              vertexAI: { type: "string", enum: ["healthy", "degraded", "down"] },
-              database: { type: "string", enum: ["healthy", "degraded", "down"] }
-            }
-          }
-        }
+        required: ["success"]
       },
       Error: {
         type: "object",
         properties: {
           success: { type: "boolean", enum: [false] },
-          error: { type: "string" },
-          timestamp: { type: "string", format: "date-time" },
-          requestId: { type: "string" }
+          error: { type: "string" }
         }
       }
     }
   },
   paths: {
+    "/auth/login-jwt": {
+      post: {
+        summary: "Login with Google OAuth (JWT)",
+        description: "Authenticate with Google OAuth and receive JWT access + refresh tokens",
+        tags: ["Authentication"],
+        security: [],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  credential: { type: "string", description: "Google OAuth credential token" }
+                },
+                required: ["credential"]
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Login successful",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    accessToken: { type: "string", description: "JWT access token (15 min expiry)" },
+                    refreshToken: { type: "string", description: "JWT refresh token (30 day expiry)" },
+                    expiresIn: { type: "integer", description: "Access token expiry in seconds" },
+                    user: {
+                      type: "object",
+                      properties: {
+                        id: { type: "string" },
+                        email: { type: "string" },
+                        name: { type: "string" },
+                        userType: { type: "string", enum: ["admin", "premium", "freetier"] }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { $ref: "#/components/schemas/Error" },
+          "403": { $ref: "#/components/schemas/Error" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      post: {
+        summary: "Refresh access token",
+        description: "Get a new access token using a refresh token (automatic rotation)",
+        tags: ["Authentication"],
+        security: [],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  refreshToken: { type: "string", description: "JWT refresh token" }
+                },
+                required: ["refreshToken"]
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Token refreshed successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    success: { type: "boolean" },
+                    accessToken: { type: "string" },
+                    refreshToken: { type: "string", description: "New refresh token (rotation)" },
+                    expiresIn: { type: "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { $ref: "#/components/schemas/Error" }
+        }
+      }
+    },
+    "/auth/token": {
+      post: {
+        summary: "Get service account token",
+        description: "OAuth 2.0 Client Credentials flow for service accounts",
+        tags: ["Authentication"],
+        security: [],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  grant_type: { type: "string", enum: ["client_credentials"] },
+                  client_id: { type: "string", description: "Service account client ID" },
+                  client_secret: { type: "string", description: "Service account secret" }
+                },
+                required: ["grant_type", "client_id", "client_secret"]
+              },
+              example: {
+                grant_type: "client_credentials",
+                client_id: "sa_1a2b3c4d5e6f7g8h",
+                client_secret: "sas_9i8h7g6f5e4d3c2b1a0z9y8x7w6v5u4t"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": {
+            description: "Token generated successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    access_token: { type: "string" },
+                    token_type: { type: "string", enum: ["Bearer"] },
+                    expires_in: { type: "integer" },
+                    scope: { type: "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": { $ref: "#/components/schemas/Error" }
+        }
+      }
+    },
     "/auth/me": {
       get: {
         summary: "Get current user information",
-        description: "Returns information about the authenticated user and their API key",
+        description: "Returns information about the authenticated user from JWT token",
         tags: ["Authentication"],
         responses: {
           "200": {
@@ -114,16 +219,23 @@ export const openApiSpec = {
                               properties: {
                                 id: { type: "string" },
                                 email: { type: "string" },
+                                type: { type: "string", enum: ["user", "service"] },
+                                userType: { type: "string" },
                                 scopes: { type: "array", items: { type: "string" } }
                               }
                             },
-                            apiKey: {
+                            token: {
                               type: "object",
                               properties: {
-                                id: { type: "string" },
-                                name: { type: "string" },
-                                scopes: { type: "array", items: { type: "string" } },
-                                lastUsed: { type: "string", format: "date-time" }
+                                type: { type: "string", enum: ["access", "service"] },
+                                expiresAt: { type: "string", format: "date-time" }
+                              }
+                            },
+                            rateLimit: {
+                              type: "object",
+                              properties: {
+                                remaining: { type: "integer" },
+                                resetTime: { type: "string", format: "date-time" }
                               }
                             }
                           }
@@ -135,26 +247,18 @@ export const openApiSpec = {
               }
             }
           },
-          "401": {
-            description: "Authentication required",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/Error" }
-              }
-            }
-          }
+          "401": { $ref: "#/components/schemas/Error" }
         }
       }
     },
-    "/system/status": {
+    "/service-accounts": {
       get: {
-        summary: "System health check",
-        description: "Get system health and status information",
-        tags: ["System"],
-        security: [],
+        summary: "List service accounts",
+        description: "List all service accounts (admin sees all, users see their own)",
+        tags: ["Service Accounts"],
         responses: {
           "200": {
-            description: "System status retrieved",
+            description: "Service accounts retrieved",
             content: {
               "application/json": {
                 schema: {
@@ -163,7 +267,33 @@ export const openApiSpec = {
                     {
                       type: "object",
                       properties: {
-                        data: { $ref: "#/components/schemas/SystemStatus" }
+                        data: {
+                          type: "object",
+                          properties: {
+                            serviceAccounts: {
+                              type: "array",
+                              items: {
+                                type: "object",
+                                properties: {
+                                  id: { type: "string" },
+                                  name: { type: "string" },
+                                  clientId: { type: "string" },
+                                  scopes: { type: "array", items: { type: "string" } },
+                                  isActive: { type: "boolean" },
+                                  createdAt: { type: "string", format: "date-time" },
+                                  lastUsedAt: { type: "string", format: "date-time" },
+                                  rateLimit: {
+                                    type: "object",
+                                    properties: {
+                                      requestsPerHour: { type: "integer" },
+                                      requestsPerDay: { type: "integer" }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
                       }
                     }
                   ]
@@ -172,30 +302,106 @@ export const openApiSpec = {
             }
           }
         }
-      }
-    },
-    "/system/stats": {
-      get: {
-        summary: "Usage statistics",
-        description: "Get usage statistics for a user",
-        tags: ["System"],
-        parameters: [
-          {
-            name: "userId",
-            in: "query",
-            description: "User ID to get stats for",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Usage statistics retrieved",
-            content: {
-              "application/json": {
-                schema: { $ref: "#/components/schemas/ApiResponse" }
+      },
+      post: {
+        summary: "Create service account",
+        description: "Create a new service account for machine-to-machine authentication",
+        tags: ["Service Accounts"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  name: { type: "string", description: "Service account name" },
+                  scopes: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Permissions: cover_letter, resume, questionAndAnswers, upload, jobs, admin"
+                  },
+                  rateLimit: {
+                    type: "object",
+                    properties: {
+                      requestsPerHour: { type: "integer", default: 5000 },
+                      requestsPerDay: { type: "integer", default: 50000 }
+                    }
+                  }
+                },
+                required: ["name", "scopes"]
+              },
+              example: {
+                name: "Job Application Bot",
+                scopes: ["cover_letter", "resume", "questionAndAnswers"],
+                rateLimit: {
+                  requestsPerHour: 5000,
+                  requestsPerDay: 50000
+                }
               }
             }
           }
+        },
+        responses: {
+          "200": {
+            description: "Service account created (SAVE THE SECRET!)",
+            content: {
+              "application/json": {
+                schema: {
+                  allOf: [
+                    { $ref: "#/components/schemas/ApiResponse" },
+                    {
+                      type: "object",
+                      properties: {
+                        data: {
+                          type: "object",
+                          properties: {
+                            serviceAccount: {
+                              type: "object",
+                              properties: {
+                                id: { type: "string" },
+                                name: { type: "string" },
+                                clientId: { type: "string" },
+                                clientSecret: { type: "string", description: "⚠️ SAVE THIS - shown only once!" },
+                                scopes: { type: "array", items: { type: "string" } },
+                                rateLimit: { type: "object" }
+                              }
+                            },
+                            warning: { type: "string" }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      delete: {
+        summary: "Revoke service account",
+        description: "Revoke a service account (disables all tokens)",
+        tags: ["Service Accounts"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  accountId: { type: "string" }
+                },
+                required: ["accountId"]
+              },
+              example: {
+                accountId: "674f8a1b2c3d4e5f6a7b8c9d"
+              }
+            }
+          }
+        },
+        responses: {
+          "200": { $ref: "#/components/schemas/ApiResponse" },
+          "404": { $ref: "#/components/schemas/Error" }
         }
       }
     },
@@ -211,13 +417,28 @@ export const openApiSpec = {
               schema: {
                 type: "object",
                 properties: {
-                  jobDescription: { type: "string", description: "Job description text" },
-                  resume: { type: "string", description: "Resume text" },
-                  companyName: { type: "string" },
-                  jobTitle: { type: "string" },
-                  temperature: { type: "number", default: 0.7 }
+                  job_id: { type: "string", description: "Unique identifier for the job" },
+                  job_details: { type: "object", description: "Full job description object or text" },
+                  resume_text: { type: "string", description: "The user's full resume text" },
+                  useAi: { type: "string", description: "The AI provider to use (e.g., 'gemini-pro')" },
+                  prompt: { type: "string", description: "Optional custom prompt to override the default" },
+                  job_title: { type: "string", description: "Job title" },
+                  company: { type: "string", description: "Company name" }
                 },
-                required: ["jobDescription", "resume"]
+                required: ["job_id", "job_details", "resume_text", "useAi"]
+              },
+              example: {
+                job_id: "cl_12345",
+                useAi: "deepseek-chat",
+                job_title: "Senior Full Stack Developer",
+                company: "TechStart Inc",
+                job_details: {
+                  "title": "Senior Full Stack Developer",
+                  "company": "TechStart Inc",
+                  "location": "Remote",
+                  "description": "We are seeking a Senior Full Stack Developer to join our growing team. The ideal candidate will have 5+ years of experience with React, Node.js, and cloud technologies. You'll work on building scalable web applications and collaborate with cross-functional teams. Requirements: Strong proficiency in JavaScript/TypeScript, experience with AWS or GCP, knowledge of CI/CD pipelines, excellent problem-solving skills."
+                },
+                resume_text: "John Doe\nSenior Software Engineer\n\nEXPERIENCE\nSoftware Engineer at Tech Corp (2019-2024)\n- Built and maintained React applications serving 1M+ users\n- Implemented microservices architecture using Node.js and Docker\n- Deployed applications on AWS using Terraform and GitHub Actions\n- Mentored 5 junior developers and led code reviews\n\nSKILLS\nJavaScript, TypeScript, React, Node.js, AWS, Docker, PostgreSQL, MongoDB, Git, CI/CD"
               }
             }
           }
@@ -230,28 +451,21 @@ export const openApiSpec = {
                 schema: {
                   type: "object",
                   properties: {
-                    success: { type: "boolean" },
-                    coverLetter: { type: "string" },
-                    metadata: {
-                      type: "object",
-                      properties: {
-                        model: { type: "string" },
-                        tokensUsed: { type: "integer" },
-                        processingTime: { type: "integer" }
-                      }
-                    }
+                    cover_letter: { type: "string" },
+                    job_id: { type: "string" }
                   }
                 }
               }
             }
-          }
+          },
+          "400": { $ref: "#/components/schemas/Error" }
         }
       }
     },
     "/resume": {
       post: {
         summary: "Enhance resume",
-        description: "Enhance and optimize resume content",
+        description: "Enhance and optimize resume content for a specific job",
         tags: ["AI Generation"],
         requestBody: {
           required: true,
@@ -260,11 +474,22 @@ export const openApiSpec = {
               schema: {
                 type: "object",
                 properties: {
-                  resume: { type: "string", description: "Resume text to enhance" },
-                  jobDescription: { type: "string", description: "Optional job description for tailoring" },
-                  temperature: { type: "number", default: 0.7 }
+                  job_id: { type: "string", description: "Unique identifier for the job" },
+                  job_details: { type: "object", description: "Full job description object or text" },
+                  resume_text: { type: "string", description: "The user's full resume text to be enhanced" },
+                  useAi: { type: "string", description: "The AI provider to use" },
+                  prompt: { type: "string", description: "Optional custom prompt" }
                 },
-                required: ["resume"]
+                required: ["job_id", "job_details", "resume_text", "useAi"]
+              },
+              example: {
+                job_id: "res_54321",
+                useAi: "deepseek-chat",
+                job_details: {
+                  "title": "Frontend Engineer",
+                  "description": "Looking for a Frontend Engineer with React expertise to build modern web applications. Must have experience with TypeScript, state management, and testing."
+                },
+                resume_text: "Jane Smith\nSoftware Developer\n\nWork History:\n- Worked at Acme Corp for 3 years doing web development\n- Made websites with React\n- Fixed bugs and added features\n\nSkills: JavaScript, HTML, CSS, React, Git"
               }
             }
           }
@@ -277,21 +502,21 @@ export const openApiSpec = {
                 schema: {
                   type: "object",
                   properties: {
-                    success: { type: "boolean" },
-                    enhancedResume: { type: "string" },
-                    suggestions: { type: "array", items: { type: "string" } }
+                    resume: { type: "string" },
+                    job_id: { type: "string" }
                   }
                 }
               }
             }
-          }
+          },
+          "400": { $ref: "#/components/schemas/Error" }
         }
       }
     },
     "/questionAndAnswers": {
       post: {
         summary: "Generate Q&A responses",
-        description: "Generate answers to employer questions based on resume",
+        description: "Generate answers to employer questions based on resume and job context",
         tags: ["AI Generation"],
         requestBody: {
           required: true,
@@ -300,15 +525,44 @@ export const openApiSpec = {
               schema: {
                 type: "object",
                 properties: {
+                  job_id: { type: "string", description: "Unique identifier for the job" },
                   questions: {
                     type: "array",
-                    items: { type: "string" },
-                    description: "Array of employer questions"
+                    items: {
+                      type: "object",
+                      properties: {
+                        question: { type: "string" },
+                        options: { type: "array", items: { type: "string" } }
+                      },
+                      required: ["question"]
+                    },
+                    description: "Array of employer questions with options"
                   },
-                  resume: { type: "string", description: "Resume text for context" },
-                  jobDescription: { type: "string", description: "Job description for context" }
+                  resume_text: { type: "string", description: "The user's full resume text" },
+                  useAi: { type: "string", description: "The AI provider to use" },
+                  job_details: { type: "object", description: "Optional job description for context" },
+                  prompt: { type: "string", description: "Optional custom prompt" }
                 },
-                required: ["questions", "resume"]
+                required: ["job_id", "questions", "resume_text", "useAi"]
+              },
+              example: {
+                job_id: "qa_98765",
+                useAi: "deepseek-chat",
+                questions: [
+                  {
+                    question: "Why do you want to work for our company?",
+                    options: ["I'm passionate about your mission", "The salary is competitive", "It's close to my house"]
+                  },
+                  {
+                    question: "What is your greatest professional achievement?",
+                    options: []
+                  }
+                ],
+                resume_text: "Sarah Johnson\nProduct Manager\n\nEXPERIENCE\nSenior Product Manager at CloudTech (2020-2024)\n- Led development of SaaS platform that grew to $5M ARR\n- Managed cross-functional team of 12 engineers and designers\n- Launched 3 major features resulting in 40% user growth\n\nSKILLS\nProduct Strategy, Agile/Scrum, Data Analysis, Stakeholder Management, Roadmapping",
+                job_details: {
+                  "title": "Product Manager",
+                  "description": "Seeking a Product Manager to lead our mobile app initiative. You'll define product vision, prioritize features, and work closely with engineering and design teams."
+                }
               }
             }
           }
@@ -321,22 +575,15 @@ export const openApiSpec = {
                 schema: {
                   type: "object",
                   properties: {
-                    success: { type: "boolean" },
-                    answers: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          question: { type: "string" },
-                          answer: { type: "string" }
-                        }
-                      }
-                    }
+                    answers: { type: "string" },
+                    job_id: { type: "string" },
+                    questions_count: { type: "integer" }
                   }
                 }
               }
             }
-          }
+          },
+          "400": { $ref: "#/components/schemas/Error" }
         }
       }
     },
@@ -359,6 +606,13 @@ export const openApiSpec = {
                   maxTokens: { type: "integer" }
                 },
                 required: ["prompt"]
+              },
+              example: {
+                prompt: "Write a professional summary for a software engineer with 5 years of experience specializing in cloud infrastructure and DevOps.",
+                context: "The candidate has worked at both startups and large companies, led migration to Kubernetes, and has AWS certifications.",
+                model: "claude-3",
+                temperature: 0.7,
+                maxTokens: 500
               }
             }
           }
@@ -382,162 +636,6 @@ export const openApiSpec = {
         }
       }
     },
-    "/upload": {
-      get: {
-        summary: "List or get user files",
-        description: "List all files for a user, or get content of a specific file. Files are stored in ./data/uploads/{userId}/ on the server.",
-        tags: ["Files"],
-        parameters: [
-          {
-            name: "userId",
-            in: "query",
-            required: true,
-            description: "User ID to list files for",
-            schema: { type: "string" }
-          },
-          {
-            name: "filename",
-            in: "query",
-            required: false,
-            description: "Optional: specific filename to get content (supports .txt and .pdf)",
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Files listed or file content retrieved",
-            content: {
-              "application/json": {
-                schema: {
-                  oneOf: [
-                    {
-                      type: "object",
-                      description: "List of files",
-                      properties: {
-                        success: { type: "boolean" },
-                        files: {
-                          type: "array",
-                          items: {
-                            type: "object",
-                            properties: {
-                              name: { type: "string" },
-                              type: { type: "string", enum: ["txt", "pdf"] }
-                            }
-                          }
-                        }
-                      }
-                    },
-                    {
-                      type: "object",
-                      description: "File content",
-                      properties: {
-                        success: { type: "boolean" },
-                        filename: { type: "string" },
-                        content: { type: "string", description: "Text content (extracted from PDF if applicable)" }
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      post: {
-        summary: "Upload file",
-        description: "Upload a .txt or .pdf file. Files are stored in ./data/uploads/{userId}/ folder on the server for later retrieval.",
-        tags: ["Files"],
-        requestBody: {
-          required: true,
-          content: {
-            "multipart/form-data": {
-              schema: {
-                type: "object",
-                properties: {
-                  file: {
-                    type: "string",
-                    format: "binary",
-                    description: "File to upload (.txt or .pdf only)"
-                  },
-                  userId: {
-                    type: "string",
-                    description: "User ID - files will be stored in ./data/uploads/{userId}/"
-                  }
-                },
-                required: ["file", "userId"]
-              }
-            }
-          }
-        },
-        responses: {
-          "200": {
-            description: "File uploaded successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    success: { type: "boolean" },
-                    filename: { type: "string" },
-                    path: { type: "string", description: "Server path where file is stored" },
-                    content: { type: "string", description: "Text content (only for .txt files)" }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            description: "Bad request (missing file/userId or unsupported file type)",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    success: { type: "boolean", enum: [false] },
-                    error: { type: "string" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      delete: {
-        summary: "Delete a file",
-        description: "Delete a specific file from the user's folder",
-        tags: ["Files"],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  userId: { type: "string" },
-                  filename: { type: "string" }
-                },
-                required: ["userId", "filename"]
-              }
-            }
-          }
-        },
-        responses: {
-          "200": {
-            description: "File deleted successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    success: { type: "boolean" }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/jobs": {
       get: {
         summary: "List jobs",
@@ -545,166 +643,7 @@ export const openApiSpec = {
         tags: ["Jobs"],
         responses: {
           "200": {
-            description: "Jobs retrieved successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    success: { type: "boolean" },
-                    jobs: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          filename: { type: "string" },
-                          company: { type: "string" },
-                          title: { type: "string" },
-                          uploadedAt: { type: "string", format: "date-time" }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/jobs/{filename}": {
-      get: {
-        summary: "Get job details",
-        description: "Get details of a specific job description",
-        tags: ["Jobs"],
-        parameters: [
-          {
-            name: "filename",
-            in: "path",
-            required: true,
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          "200": {
-            description: "Job retrieved successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    success: { type: "boolean" },
-                    job: {
-                      type: "object",
-                      properties: {
-                        filename: { type: "string" },
-                        content: { type: "string" },
-                        company: { type: "string" },
-                        title: { type: "string" }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/auth/keys": {
-      get: {
-        summary: "List API keys",
-        description: "List all API keys for the authenticated user (requires session token)",
-        tags: ["Authentication"],
-        security: [{ SessionAuth: [] }],
-        responses: {
-          "200": {
-            description: "API keys retrieved successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    success: { type: "boolean" },
-                    data: {
-                      type: "object",
-                      properties: {
-                        apiKeys: {
-                          type: "array",
-                          items: {
-                            type: "object",
-                            properties: {
-                              id: { type: "string" },
-                              name: { type: "string" },
-                              keyPrefix: { type: "string" },
-                              scopes: { type: "array", items: { type: "string" } },
-                              createdAt: { type: "string", format: "date-time" },
-                              lastUsed: { type: "string", format: "date-time" }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      post: {
-        summary: "Generate API key",
-        description: "Generate a new API key for programmatic access (requires session token)",
-        tags: ["Authentication"],
-        security: [{ SessionAuth: [] }],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  name: { type: "string", description: "Name for the API key" },
-                  scopes: {
-                    type: "array",
-                    items: { type: "string" },
-                    description: "Permissions for the API key"
-                  }
-                },
-                required: ["name", "scopes"]
-              }
-            }
-          }
-        },
-        responses: {
-          "200": {
-            description: "API key generated successfully",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    success: { type: "boolean" },
-                    data: {
-                      type: "object",
-                      properties: {
-                        apiKey: { type: "string", description: "Full API key (save this - won't be shown again!)" },
-                        keyInfo: {
-                          type: "object",
-                          properties: {
-                            id: { type: "string" },
-                            name: { type: "string" },
-                            keyPrefix: { type: "string" },
-                            scopes: { type: "array", items: { type: "string" } },
-                            createdAt: { type: "string", format: "date-time" }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            description: "Jobs retrieved successfully"
           }
         }
       }
@@ -713,23 +652,19 @@ export const openApiSpec = {
   tags: [
     {
       name: "Authentication",
-      description: "API key management and user authentication"
+      description: "JWT authentication - login, refresh, service accounts"
+    },
+    {
+      name: "Service Accounts",
+      description: "Manage service accounts for machine-to-machine auth"
     },
     {
       name: "AI Generation",
-      description: "AI-powered content generation (cover letters, resume enhancement, Q&A)"
-    },
-    {
-      name: "Files",
-      description: "File upload, download, and management"
+      description: "AI-powered content generation (cover letters, resume, Q&A)"
     },
     {
       name: "Jobs",
       description: "Job description management"
-    },
-    {
-      name: "System",
-      description: "System monitoring and statistics"
     }
   ]
 };

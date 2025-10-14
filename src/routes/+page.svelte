@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import GoogleAuth from '$lib/components/GoogleAuth.svelte';
+  import SimpleLogin from '$lib/components/SimpleLogin.svelte';
 
   let isAuthenticated = false;
   let user: any = null;
@@ -61,7 +61,7 @@
         <p class="text-xl text-base-content/70">AI-Powered Document Intelligence</p>
       </div>
 
-      <GoogleAuth on:authenticated={handleAuthenticated} />
+      <SimpleLogin on:authenticated={handleAuthenticated} />
     </div>
   {/if}
 </main>

@@ -1,40 +1,26 @@
-// Logout endpoint
+// Web UI session logout (separate from JWT API auth)
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getDB } from '$lib/db/mongodb';
-import { SessionModel } from '$lib/models/session';
+import { getDB } from '$lib/db/mongodb.js';
+import { SessionModel } from '$lib/models/session.js';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, cookies }) => {
   try {
     const authHeader = request.headers.get('Authorization');
     const token = authHeader?.replace('Bearer ', '');
 
-    if (!token) {
-      return json(
-        { success: false, error: 'No token provided' },
-        { status: 401 }
-      );
+    if (token) {
+      const db = await getDB();
+      const sessionModel = new SessionModel(db);
+      await sessionModel.deleteByToken(token);
     }
 
-    const db = await getDB();
-    const sessionModel = new SessionModel(db);
+    // Clear cookie
+    cookies.delete('session_token', { path: '/' });
 
-    // Delete the session
-    await sessionModel.deleteByToken(token);
-
-    return json({
-      success: true,
-      message: 'Logged out successfully'
-    });
-
-  } catch (error) {
+    return json({ success: true });
+  } catch (error: any) {
     console.error('Logout error:', error);
-    return json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Logout failed'
-      },
-      { status: 500 }
-    );
+    return json({ success: false, error: 'Logout failed' }, { status: 500 });
   }
 };

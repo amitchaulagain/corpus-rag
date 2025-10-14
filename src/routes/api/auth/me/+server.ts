@@ -1,39 +1,33 @@
-// User Info Endpoint
-
+// User Info Endpoint (JWT)
+import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { authenticateRequest, handleApiRequest, handleOptions, addCorsHeaders } from '$lib/api-utils.js';
-
-// Handle preflight OPTIONS requests
-export const OPTIONS: RequestHandler = () => {
-  return handleOptions();
-};
+import { authenticateJwt } from '$lib/jwt-middleware';
 
 // GET /api/auth/me - Get current user info
 export const GET: RequestHandler = async (event) => {
-  const auth = await authenticateRequest(event);
+  const auth = await authenticateJwt(event);
   if (auth instanceof Response) {
-    return addCorsHeaders(auth);
+    return auth;
   }
 
-  const response = await handleApiRequest(async () => {
-    return {
+  return json({
+    success: true,
+    data: {
       user: {
         id: auth.user.id,
         email: auth.user.email,
+        type: auth.user.type,
+        userType: auth.user.userType,
         scopes: auth.user.scopes
       },
-      apiKey: {
-        id: auth.apiKey!.id,
-        name: auth.apiKey!.name,
-        scopes: auth.apiKey!.scopes,
-        lastUsed: auth.apiKey!.lastUsed
+      token: {
+        type: auth.token.type,
+        expiresAt: auth.token.exp ? new Date(auth.token.exp * 1000).toISOString() : null
       },
       rateLimit: {
         remaining: auth.rateLimit.remaining,
-        resetTime: auth.rateLimit.resetTime
+        resetTime: auth.rateLimit.resetTime.toISOString()
       }
-    };
+    }
   });
-
-  return addCorsHeaders(response);
 };
