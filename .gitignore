@@ -81,6 +81,7 @@ temp/
 service-account.json
 *-key.json
 application_default_credentials.json
+google_credentials.json
 
 # Application credentials
 oauth_credentials.json
