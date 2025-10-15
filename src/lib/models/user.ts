@@ -17,6 +17,9 @@ export interface User {
   googleId?: string;
   name: string;
   picture?: string;
+  password?: string; // Hashed password for email/password auth
+  passwordResetToken?: string;
+  passwordResetExpiry?: Date;
   userType: UserType;
   isPaid: boolean;
   apiPermissions: ApiPermissions;
@@ -87,6 +90,36 @@ export class UserModel {
     const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
     const result = await this.db.collection<User>('users').deleteOne({ _id: objectId });
     return result.deletedCount > 0;
+  }
+
+  async updatePassword(userId: string | ObjectId, hashedPassword: string): Promise<void> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    await this.db.collection<User>('users').updateOne(
+      { _id: objectId },
+      { $set: { password: hashedPassword } }
+    );
+  }
+
+  async setPasswordResetToken(email: string, token: string, expiry: Date): Promise<void> {
+    await this.db.collection<User>('users').updateOne(
+      { email },
+      { $set: { passwordResetToken: token, passwordResetExpiry: expiry } }
+    );
+  }
+
+  async findByResetToken(token: string): Promise<User | null> {
+    return await this.db.collection<User>('users').findOne({
+      passwordResetToken: token,
+      passwordResetExpiry: { $gt: new Date() }
+    });
+  }
+
+  async clearPasswordResetToken(userId: string | ObjectId): Promise<void> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    await this.db.collection<User>('users').updateOne(
+      { _id: objectId },
+      { $unset: { passwordResetToken: '', passwordResetExpiry: '' } }
+    );
   }
 
   // Default permissions based on user type

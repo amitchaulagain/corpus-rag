@@ -6,25 +6,202 @@ AI-powered API for automating job application tasks: cover letters, resume tailo
 
 ---
 
+## 📋 Overview
+
+This application has two main components:
+
+### 1. **Admin Dashboard** (This Application)
+- Web interface for managing users, permissions, and system settings
+- Monitor API usage and user activity
+- Upgrade users from free tier to premium
+- Access at `http://localhost:3000`
+
+### 2. **User Applications** (Your Client Apps)
+- Third-party applications that integrate with this API
+- Users sign up through your client apps via the `/api/auth/signup` endpoint
+- New users are automatically created as **freetier** with limited permissions
+- Admins manually upgrade users to **premium** through the admin dashboard
+
+---
+
 ## 🚀 Quick Start
 
-### Web UI Access
+### For Administrators (Web UI Access)
 1. Start the server: `npm run dev`
 2. Navigate to `http://localhost:3000`
-3. Enter your email to login (no password required)
-4. Access the admin dashboard and API documentation
+3. Login with your admin credentials
+4. Manage users, permissions, and view API documentation
 
-### API Access
+### For User Applications (API Integration)
+
+**Typical Integration Flow:**
+
+1. **User Registration**
+   - Your app calls `POST /api/auth/signup` with user's email/password
+   - User is created with **freetier** tier (limited permissions)
+   - Returns session token for immediate use
+
+2. **User Authentication**
+   - Your app calls `POST /api/auth/login` for returning users
+   - Returns session token
+
+3. **API Access**
+   - Include session token in `Authorization: Bearer <token>` header
+   - Freetier users can access: cover letters, uploads, job management
+   - Premium features (resume tailoring, Q&A) require admin upgrade
+
+4. **Admin Approval** (Your workflow)
+   - Review new signups in admin dashboard
+   - Manually upgrade approved/paid users to **premium**
+   - Premium users gain full API access
+
+**Resources:**
 - **Interactive Testing**: Visit `http://localhost:3000/api-docs` (Swagger UI)
-- **Programmatic Access**: Use JWT authentication (see below)
+- **Documentation**: See Authentication section below
 
 ---
 
 ## 🔐 Authentication
 
-### For Web UI (Simple Email Login)
+### Authentication Quick Reference
 
-The web interface uses session-based authentication with a simple email login.
+| Endpoint | Method | Purpose | Auth Required |
+|----------|--------|---------|---------------|
+| `/api/auth/signup` | POST | Create account with email/password | No |
+| `/api/auth/login` | POST | Login with email/password | No |
+| `/api/auth/forgot-password` | POST | Request password reset | No |
+| `/api/auth/reset-password` | POST | Reset password with token | No |
+| `/api/auth/email-login` | POST | Passwordless login (testing) | No |
+| `/api/auth/login-jwt` | POST | JWT login with Google OAuth | No |
+| `/api/auth/me` | GET | Get current user info | Yes |
+| `/api/auth/logout` | POST | Logout current session | Yes |
+
+---
+
+### For User Applications - Email/Password Authentication
+
+User applications can create accounts via the API. New users are automatically assigned the **freetier** role with limited permissions.
+
+#### Signup (Create Account)
+
+**Endpoint**: `POST /api/auth/signup`
+
+**Use Case**: Your client applications call this endpoint to register new users.
+
+**Request**:
+```json
+{
+  "email": "user@example.com",
+  "password": "yourPassword123",
+  "name": "John Doe"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "token": "session_token_here",
+  "user": {
+    "id": "user_id",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "userType": "freetier"
+  }
+}
+```
+
+**New User Defaults**:
+- **User Type**: `freetier` (automatically assigned)
+- **Permissions**: Limited access (cover_letter, upload, jobs only)
+- **Status**: `isPaid: false`
+- **Upgrade**: Admins manually upgrade users to `premium` via admin dashboard
+
+**Password Requirements**:
+- Minimum 8 characters
+- Can include letters, numbers, and special characters
+
+#### Login
+
+**Endpoint**: `POST /api/auth/login`
+
+**Request**:
+```json
+{
+  "email": "user@example.com",
+  "password": "yourPassword123"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "token": "session_token_here",
+  "user": {
+    "id": "user_id",
+    "email": "user@example.com",
+    "name": "John Doe",
+    "userType": "freetier"
+  }
+}
+```
+
+#### Forgot Password
+
+**Endpoint**: `POST /api/auth/forgot-password`
+
+**Request**:
+```json
+{
+  "email": "user@example.com"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "If an account with that email exists, a password reset link has been sent."
+}
+```
+
+**Note**:
+- Email will contain a reset token valid for 1 hour
+- Configure email settings in `.env` (see Setup section)
+- If email is not configured, the reset link will be logged to console
+- Always returns success to prevent email enumeration attacks
+
+#### Reset Password
+
+**Endpoint**: `POST /api/auth/reset-password`
+
+**Request**:
+```json
+{
+  "token": "reset_token_from_email",
+  "newPassword": "newPassword123"
+}
+```
+
+**Response**:
+```json
+{
+  "success": true,
+  "message": "Password has been reset successfully. You can now login with your new password."
+}
+```
+
+**Note**:
+- Reset token is single-use and automatically cleared after successful reset
+- Token expires after 1 hour
+- Requires minimum 8 character password
+
+---
+
+### Alternative: Simple Email Login (No Password)
+
+For quick testing, you can use passwordless email login.
 
 **Endpoint**: `POST /api/auth/email-login`
 
@@ -350,16 +527,46 @@ All endpoints require `Authorization: Bearer <access_token>` header.
 
 ---
 
-## 🎯 Available Scopes
+## 👥 User Management Workflow
 
-When creating service accounts, you can grant these permissions:
+### User Tier System
 
-- `cover_letter` - Generate cover letters
-- `resume` - Tailor resumes
-- `questionAndAnswers` - Answer employer questions
-- `upload` - Upload documents
-- `jobs` - Manage job listings
-- `admin` - Full administrative access
+This API uses a three-tier user system:
+
+| User Type | Description | Default Permissions | Managed By |
+|-----------|-------------|---------------------|------------|
+| **freetier** | Default for new signups | `cover_letter`, `upload`, `jobs` | Auto-assigned on signup |
+| **premium** | Paid/approved users | All permissions enabled | Admin dashboard |
+| **admin** | System administrators | Full access + user management | Manual database setup |
+
+### How It Works
+
+1. **User Signs Up** (via your client app)
+   - Calls `POST /api/auth/signup`
+   - Automatically assigned **freetier** role
+   - Limited permissions: can generate cover letters, upload files, manage jobs
+   - Cannot access resume tailoring or Q&A features
+
+2. **Admin Reviews New Users**
+   - Login to admin dashboard at `http://localhost:3000`
+   - View all registered users
+   - Review user activity and usage
+
+3. **Admin Upgrades Users**
+   - Manually upgrade users from **freetier** to **premium**
+   - Grant additional permissions (resume, questionAndAnswers)
+   - Set `isPaid: true` for premium users
+
+### Permission Scopes
+
+Available API permissions:
+
+- `cover_letter` - Generate cover letters ✅ (freetier + premium)
+- `resume` - Tailor resumes ⚠️ (premium only)
+- `questionAndAnswers` - Answer employer questions ⚠️ (premium only)
+- `upload` - Upload documents ✅ (freetier + premium)
+- `jobs` - Manage job listings ✅ (freetier + premium)
+- `admin` - Full administrative access 🔒 (admin only)
 
 ---
 
@@ -386,11 +593,19 @@ All error responses follow this format:
 ```
 
 **Common Status Codes**:
-- `400` - Bad Request (missing required fields)
-- `401` - Unauthorized (missing or invalid token)
+- `400` - Bad Request (missing required fields, password too short, invalid token)
+- `401` - Unauthorized (missing or invalid token, wrong password)
 - `403` - Forbidden (insufficient permissions/scopes)
 - `404` - Not Found
+- `409` - Conflict (email already exists during signup)
 - `500` - Internal Server Error
+
+**Common Auth Errors**:
+- `"Password must be at least 8 characters"` - Password too short
+- `"User with this email already exists"` - Email already registered (signup)
+- `"Invalid email or password"` - Wrong credentials (login)
+- `"This account uses Google Sign-In"` - Account has no password set
+- `"Invalid or expired reset token"` - Reset token expired or already used
 
 ---
 
@@ -426,7 +641,18 @@ Visit `http://localhost:3000/api-docs` for Swagger UI with:
 
    # MongoDB
    MONGODB_URI=mongodb://localhost:27017/job-assistant
+
+   # Email Configuration (Optional - for password reset emails)
+   EMAIL_HOST=smtp.gmail.com
+   EMAIL_PORT=587
+   EMAIL_SECURE=false
+   EMAIL_USER=your-email@gmail.com
+   EMAIL_PASS=your-app-password
+   EMAIL_FROM=noreply@yourdomain.com
+   APP_URL=http://localhost:3000
    ```
+
+   **Note**: Email configuration is optional. If not configured, password reset tokens will be logged to console instead of emailed.
 
 3. **Initialize JWT database**:
    ```bash
@@ -446,11 +672,49 @@ Visit `http://localhost:3000/api-docs` for Swagger UI with:
 
 ## 📝 Notes
 
+### User Management
+- New signups via API are automatically assigned **freetier** role
+- Admins manually upgrade users to **premium** via the admin dashboard
+- Freetier users have limited API access (cover letters, uploads, jobs only)
+- Premium users have full API access (all features enabled)
+
+### Authentication & Sessions
 - Access tokens expire after 15 minutes
 - Refresh tokens expire after 30 days
+- Session tokens expire after 30 days
 - Service account tokens expire after 15 minutes (no refresh)
-- Rate limits are enforced per user/service account
 - All API requests must include `Authorization: Bearer <token>` header
+
+### Rate Limits & Permissions
+- Rate limits are enforced per user/service account
+- Permission checks enforce user tier restrictions
+- Premium features return 403 error for freetier users
+
+---
+
+## 🔒 Security Features
+
+### Password Security
+- Passwords hashed with bcrypt (10 salt rounds)
+- Minimum 8 character password requirement
+- Passwords stored securely, never logged or exposed in responses
+
+### Password Reset Security
+- Cryptographically secure reset tokens (32 bytes)
+- Tokens expire after 1 hour
+- Single-use tokens (automatically cleared after use)
+- Email enumeration prevention (always returns success)
+
+### Session Security
+- HTTP-only cookies for session tokens
+- 30-day session expiration
+- Secure session storage in MongoDB
+
+### Account Security
+- Users can have both password auth and Google OAuth
+- Google-only accounts cannot login via password endpoint
+- Each user account has a unique email address
+- Account creation checks prevent duplicate emails
 
 ---
 
