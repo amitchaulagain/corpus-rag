@@ -1,4 +1,4 @@
-// Simple email-based login (no Google OAuth)
+// Simple email-based login (no password required - for testing)
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getDB } from '$lib/db/mongodb.js';

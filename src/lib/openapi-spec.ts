@@ -4,7 +4,7 @@ export const openApiSpec = {
   openapi: "3.0.3",
   info: {
     title: "Job Application Assistant API",
-    description: "API for AI-powered job application tools with JWT authentication. Use `/auth/login-jwt` to get access tokens.",
+    description: "API for AI-powered job application tools with JWT authentication.",
     version: "2.0.0",
     contact: {
       name: "Support",
@@ -32,7 +32,7 @@ export const openApiSpec = {
         type: "http",
         scheme: "bearer",
         bearerFormat: "JWT",
-        description: "JWT access token. Get it from `/auth/login-jwt` or `/auth/token` (service accounts). Format: `Bearer eyJhbGc...`"
+        description: "JWT access token. Get it from `/auth/signup`, `/auth/login`, or `/auth/token` (service accounts). Format: `Bearer eyJhbGc...`"
       }
     },
     schemas: {
@@ -55,57 +55,6 @@ export const openApiSpec = {
     }
   },
   paths: {
-    "/auth/login-jwt": {
-      post: {
-        summary: "Login with Google OAuth (JWT)",
-        description: "Authenticate with Google OAuth and receive JWT access + refresh tokens",
-        tags: ["Authentication"],
-        security: [],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  credential: { type: "string", description: "Google OAuth credential token" }
-                },
-                required: ["credential"]
-              }
-            }
-          }
-        },
-        responses: {
-          "200": {
-            description: "Login successful",
-            content: {
-              "application/json": {
-                schema: {
-                  type: "object",
-                  properties: {
-                    success: { type: "boolean" },
-                    accessToken: { type: "string", description: "JWT access token (15 min expiry)" },
-                    refreshToken: { type: "string", description: "JWT refresh token (30 day expiry)" },
-                    expiresIn: { type: "integer", description: "Access token expiry in seconds" },
-                    user: {
-                      type: "object",
-                      properties: {
-                        id: { type: "string" },
-                        email: { type: "string" },
-                        name: { type: "string" },
-                        userType: { type: "string", enum: ["admin", "premium", "freetier"] }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": { $ref: "#/components/schemas/Error" },
-          "403": { $ref: "#/components/schemas/Error" }
-        }
-      }
-    },
     "/auth/refresh": {
       post: {
         summary: "Refresh access token",

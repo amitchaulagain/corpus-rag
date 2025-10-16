@@ -39,7 +39,7 @@ async function createIndexes(db: Db) {
     // ========================================
     // Purpose: User management, authentication, and platform settings
     // Structure: {
-    //   _id, email, googleId, name, picture,
+    //   _id, email, name, password,
     //   userType: "admin" | "premium" | "freetier",
     //   isPaid: boolean,
     //   apiPermissions: { cover_letter, resume, questionAndAnswers, upload, jobs },
@@ -52,14 +52,13 @@ async function createIndexes(db: Db) {
     //   }],
     //   preferences: {                          // EMBEDDED: User preferences
     //     notifications: boolean,
-    //     autoApply: boolean,xon
+    //     autoApply: boolean,
     //     preferredAIProvider: string
     //   },
     //   createdAt, lastLogin, updatedAt
     // }
-    
+
     await db.collection('users').createIndex({ email: 1 }, { unique: true });
-    await db.collection('users').createIndex({ googleId: 1 }, { sparse: true, unique: true });
     await db.collection('users').createIndex({ userType: 1 });
     await db.collection('users').createIndex({ 'platforms.platform': 1 });
     await db.collection('users').createIndex({ 'platforms.isActive': 1 });

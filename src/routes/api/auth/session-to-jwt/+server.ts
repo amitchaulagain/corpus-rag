@@ -1,12 +1,13 @@
-// Convert session token to JWT access token (for API docs page)
+// Convert session token to JWT access + refresh tokens
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getDB } from '$lib/db/mongodb.js';
 import { SessionModel } from '$lib/models/session.js';
 import { UserModel } from '$lib/models/user.js';
+import { RefreshTokenModel } from '$lib/models/refresh-token.js';
 import { JwtAuth, type ApiScope } from '$lib/jwt-auth.js';
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   try {
     const authHeader = request.headers.get('Authorization');
     const sessionToken = authHeader?.replace('Bearer ', '');
@@ -18,6 +19,7 @@ export const POST: RequestHandler = async ({ request }) => {
     const db = await getDB();
     const sessionModel = new SessionModel(db);
     const userModel = new UserModel(db);
+    const refreshTokenModel = new RefreshTokenModel(db);
 
     // Validate session
     const session = await sessionModel.findByToken(sessionToken);
@@ -31,23 +33,40 @@ export const POST: RequestHandler = async ({ request }) => {
       return json({ success: false, error: 'User not found' }, { status: 404 });
     }
 
-    // Get scopes based on user type
-    const scopes: ApiScope[] = user.userType === 'admin'
-      ? ['admin']
-      : ['cover_letter', 'resume', 'questionAndAnswers', 'jobs', 'upload'];
+    // Get scopes based on user permissions
+    const scopes: ApiScope[] = Object.entries(user.apiPermissions)
+      .filter(([_, allowed]) => allowed)
+      .map(([scope]) => scope as ApiScope);
 
     // Generate JWT access token
-    const { token: accessToken, expiresIn } = JwtAuth.generateAccessToken(
-      user._id.toString(),
+    const accessTokenData = JwtAuth.generateAccessToken(
+      user._id!.toString(),
       user.email,
       user.userType,
       scopes
     );
 
+    // Generate JWT refresh token
+    const refreshTokenData = JwtAuth.generateRefreshToken(user._id!.toString());
+
+    // Store refresh token in database
+    await refreshTokenModel.create({
+      userId: user._id!,
+      tokenFamily: refreshTokenData.tokenFamily,
+      jti: refreshTokenData.jti,
+      isRevoked: false,
+      expiresAt: refreshTokenData.expiresAt,
+      createdAt: new Date(),
+      lastUsedAt: new Date(),
+      userAgent: request.headers.get('user-agent') || undefined,
+      ipAddress: getClientAddress()
+    });
+
     return json({
       success: true,
-      accessToken,
-      expiresIn,
+      accessToken: accessTokenData.token,
+      refreshToken: refreshTokenData.token,
+      expiresIn: accessTokenData.expiresIn,
       user: {
         id: user._id,
         email: user.email,

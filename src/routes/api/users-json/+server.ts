@@ -44,7 +44,6 @@ export const GET: RequestHandler = async ({ request }) => {
         id: u._id,
         email: u.email,
         name: u.name,
-        picture: u.picture,
         userType: u.userType,
         isPaid: u.isPaid,
         apiPermissions: u.apiPermissions,

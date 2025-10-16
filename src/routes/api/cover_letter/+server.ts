@@ -4,16 +4,20 @@ import { MultiProviderService } from '$lib/multi-provider-service';
 import { requirePermission } from '$lib/auth-middleware';
 import { getDB } from '$lib/db/mongodb';
 import { JobModel } from '$lib/models/job';
+import { UsageModel } from '$lib/models/usage';
 import { ObjectId } from 'mongodb';
 
 const multiProvider = new MultiProviderService();
 
 export const POST: RequestHandler = async (event) => {
+  let requestBody: any = {};
+  let auth: any = null;
+
   try {
     // Check authentication and permission
-    const auth = await requirePermission(event, 'cover_letter');
+    auth = await requirePermission(event, 'cover_letter');
 
-    const requestBody = await event.request.json();
+    requestBody = await event.request.json();
     const {
       job_id,
       job_details,
@@ -82,6 +86,28 @@ Please format as a professional cover letter with proper greeting and closing.`;
     }
 
     const processingTime = Date.now() - startTime;
+
+    // Track usage in the usage collection for dashboard
+    try {
+      const db = await getDB();
+      const usageModel = new UsageModel(db);
+      await usageModel.track({
+        userId: new ObjectId(auth.user._id),
+        endpoint: 'cover_letter',
+        jobId: job_id,
+        aiProvider: useAi,
+        tokensUsed: result.tokensUsed || 0,
+        costUsd: result.cost || 0,
+        success: true,
+        metadata: {
+          processingTime,
+          model: useAi
+        }
+      });
+    } catch (usageError) {
+      console.error('Usage tracking error:', usageError);
+      // Don't fail the request if usage tracking fails
+    }
 
     // Track this job and API call in database
     try {
@@ -154,6 +180,28 @@ Please format as a professional cover letter with proper greeting and closing.`;
     });
 
   } catch (error) {
+    // Track failed usage if we have auth
+    if (auth?.user?._id) {
+      try {
+        const db = await getDB();
+        const usageModel = new UsageModel(db);
+
+        await usageModel.track({
+          userId: new ObjectId(auth.user._id),
+          endpoint: 'cover_letter',
+          jobId: requestBody.job_id || 'unknown',
+          aiProvider: requestBody.useAi || 'unknown',
+          tokensUsed: 0,
+          costUsd: 0,
+          success: false,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error'
+        });
+      } catch (trackingError) {
+        // Ignore tracking errors
+        console.error('Failed to track error usage:', trackingError);
+      }
+    }
+
     return json(
       {
         success: false,

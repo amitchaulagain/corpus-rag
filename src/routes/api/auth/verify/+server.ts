@@ -36,7 +36,6 @@ export const GET: RequestHandler = async ({ request }) => {
         id: user._id,
         email: user.email,
         name: user.name,
-        picture: user.picture,
         userType: user.userType,
         isPaid: user.isPaid
       }

@@ -14,9 +14,7 @@ export interface ApiPermissions {
 export interface User {
   _id?: ObjectId;
   email: string;
-  googleId?: string;
   name: string;
-  picture?: string;
   password?: string; // Hashed password for email/password auth
   passwordResetToken?: string;
   passwordResetExpiry?: Date;
@@ -47,10 +45,6 @@ export class UserModel {
 
   async findByEmail(email: string): Promise<User | null> {
     return await this.db.collection<User>('users').findOne({ email });
-  }
-
-  async findByGoogleId(googleId: string): Promise<User | null> {
-    return await this.db.collection<User>('users').findOne({ googleId });
   }
 
   async findById(id: string | ObjectId): Promise<User | null> {
