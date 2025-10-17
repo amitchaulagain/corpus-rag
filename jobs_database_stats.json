@@ -1,0 +1,31 @@
+{
+  "totalJobs": 32,
+  "byPlatform": {
+    "seek": 16,
+    "linkedin": 8,
+    "indeed": 8
+  },
+  "byStatus": {
+    "pending": 20,
+    "rejected": 4,
+    "interview": 4,
+    "offer": 2,
+    "applied": 2
+  },
+  "byCompany": {
+    "Google": 4,
+    "Microsoft": 4,
+    "Amazon": 4,
+    "Meta": 4,
+    "Apple": 4,
+    "Netflix": 2,
+    "Tesla": 2,
+    "SpaceX": 2,
+    "Stripe": 2,
+    "Airbnb": 2,
+    "Windcave Limited": 1,
+    "SustainRecruit": 1
+  },
+  "withApplications": 17,
+  "totalApiCalls": 12
+}
