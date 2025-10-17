@@ -1,0 +1,732 @@
+[
+  {
+    "_id": "68ec0d990cde8880d251f2d0",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/cover_letter",
+    "aiProvider": "openai",
+    "tokensUsed": 2476,
+    "cost": 0.0426196633524289,
+    "success": true,
+    "timestamp": "2025-10-12T20:20:41.632Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b2",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2d1",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/resume",
+    "aiProvider": "anthropic",
+    "tokensUsed": 947,
+    "cost": 0.09131505257252713,
+    "success": true,
+    "timestamp": "2025-10-12T18:20:41.632Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b3",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2d2",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/questionAndAnswers",
+    "aiProvider": "openai",
+    "tokensUsed": 2050,
+    "cost": 0.04798052606782172,
+    "success": true,
+    "timestamp": "2025-10-12T16:20:41.632Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b4",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2d3",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/jobs/hierarchy",
+    "aiProvider": "anthropic",
+    "tokensUsed": 1541,
+    "cost": 0.10983242465048756,
+    "success": true,
+    "timestamp": "2025-10-12T14:20:41.632Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b5",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2d4",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/cover_letter",
+    "aiProvider": "openai",
+    "tokensUsed": 1239,
+    "cost": 0.10445971295623788,
+    "success": true,
+    "timestamp": "2025-10-12T12:20:41.632Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b6",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2d5",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/resume",
+    "aiProvider": "anthropic",
+    "tokensUsed": 1844,
+    "cost": 0.01605782737451568,
+    "success": false,
+    "timestamp": "2025-10-12T10:20:41.632Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b7",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2d6",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/questionAndAnswers",
+    "aiProvider": "openai",
+    "tokensUsed": 1826,
+    "cost": 0.027225140591784706,
+    "success": true,
+    "timestamp": "2025-10-12T08:20:41.632Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b8",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2d7",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/jobs/hierarchy",
+    "aiProvider": "anthropic",
+    "tokensUsed": 2101,
+    "cost": 0.031480131799806216,
+    "success": true,
+    "timestamp": "2025-10-12T06:20:41.632Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b9",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2d8",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/cover_letter",
+    "aiProvider": "openai",
+    "tokensUsed": 967,
+    "cost": 0.020091991171954496,
+    "success": true,
+    "timestamp": "2025-10-12T04:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2ba",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2d9",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/resume",
+    "aiProvider": "anthropic",
+    "tokensUsed": 1743,
+    "cost": 0.010026374207790059,
+    "success": true,
+    "timestamp": "2025-10-12T02:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2bb",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2da",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/questionAndAnswers",
+    "aiProvider": "openai",
+    "tokensUsed": 1298,
+    "cost": 0.09121284512101063,
+    "success": true,
+    "timestamp": "2025-10-12T00:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2bc",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2db",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/jobs/hierarchy",
+    "aiProvider": "anthropic",
+    "tokensUsed": 1637,
+    "cost": 0.013373567857539907,
+    "success": true,
+    "timestamp": "2025-10-11T22:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2bd",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2dc",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/cover_letter",
+    "aiProvider": "openai",
+    "tokensUsed": 2080,
+    "cost": 0.020799944569608403,
+    "success": true,
+    "timestamp": "2025-10-11T20:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2be",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2dd",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/resume",
+    "aiProvider": "anthropic",
+    "tokensUsed": 714,
+    "cost": 0.06198541293746113,
+    "success": true,
+    "timestamp": "2025-10-11T18:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2bf",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2de",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/questionAndAnswers",
+    "aiProvider": "openai",
+    "tokensUsed": 1603,
+    "cost": 0.01639891880201029,
+    "success": true,
+    "timestamp": "2025-10-11T16:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c0",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2df",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/jobs/hierarchy",
+    "aiProvider": "anthropic",
+    "tokensUsed": 1491,
+    "cost": 0.018102563315361545,
+    "success": true,
+    "timestamp": "2025-10-11T14:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c1",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2e0",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/cover_letter",
+    "aiProvider": "openai",
+    "tokensUsed": 1719,
+    "cost": 0.05017292539622097,
+    "success": true,
+    "timestamp": "2025-10-11T12:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c2",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2e1",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/resume",
+    "aiProvider": "anthropic",
+    "tokensUsed": 687,
+    "cost": 0.07858753292741202,
+    "success": true,
+    "timestamp": "2025-10-11T10:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c3",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2e2",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/questionAndAnswers",
+    "aiProvider": "openai",
+    "tokensUsed": 688,
+    "cost": 0.08820601746634428,
+    "success": true,
+    "timestamp": "2025-10-11T08:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c4",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2e3",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/jobs/hierarchy",
+    "aiProvider": "anthropic",
+    "tokensUsed": 2326,
+    "cost": 0.040462375087838245,
+    "success": true,
+    "timestamp": "2025-10-11T06:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c5",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2e4",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/cover_letter",
+    "aiProvider": "openai",
+    "tokensUsed": 1023,
+    "cost": 0.024356458885044,
+    "success": true,
+    "timestamp": "2025-10-11T04:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c6",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2e5",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/resume",
+    "aiProvider": "anthropic",
+    "tokensUsed": 1000,
+    "cost": 0.03398427926810125,
+    "success": false,
+    "timestamp": "2025-10-11T02:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c7",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2e6",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/questionAndAnswers",
+    "aiProvider": "openai",
+    "tokensUsed": 1582,
+    "cost": 0.04170351700668546,
+    "success": true,
+    "timestamp": "2025-10-11T00:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c8",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2e7",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/jobs/hierarchy",
+    "aiProvider": "anthropic",
+    "tokensUsed": 860,
+    "cost": 0.05731601180941028,
+    "success": true,
+    "timestamp": "2025-10-10T22:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c9",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2e8",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/cover_letter",
+    "aiProvider": "openai",
+    "tokensUsed": 1313,
+    "cost": 0.10194818082267214,
+    "success": true,
+    "timestamp": "2025-10-10T20:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2ca",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2e9",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/resume",
+    "aiProvider": "anthropic",
+    "tokensUsed": 1685,
+    "cost": 0.04586308991183667,
+    "success": true,
+    "timestamp": "2025-10-10T18:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2cb",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2ea",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/questionAndAnswers",
+    "aiProvider": "openai",
+    "tokensUsed": 751,
+    "cost": 0.036241131065215905,
+    "success": true,
+    "timestamp": "2025-10-10T16:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2cc",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2eb",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/jobs/hierarchy",
+    "aiProvider": "anthropic",
+    "tokensUsed": 2115,
+    "cost": 0.04533974248825278,
+    "success": true,
+    "timestamp": "2025-10-10T14:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2cd",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2ec",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/cover_letter",
+    "aiProvider": "openai",
+    "tokensUsed": 1789,
+    "cost": 0.1011214643734163,
+    "success": true,
+    "timestamp": "2025-10-10T12:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2ce",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2ed",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/resume",
+    "aiProvider": "anthropic",
+    "tokensUsed": 2389,
+    "cost": 0.037863603894352144,
+    "success": true,
+    "timestamp": "2025-10-10T10:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2cf",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2ee",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/questionAndAnswers",
+    "aiProvider": "openai",
+    "tokensUsed": 749,
+    "cost": 0.06328642434303657,
+    "success": true,
+    "timestamp": "2025-10-10T08:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b2",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2ef",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/jobs/hierarchy",
+    "aiProvider": "anthropic",
+    "tokensUsed": 1397,
+    "cost": 0.03122833569966263,
+    "success": true,
+    "timestamp": "2025-10-10T06:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b3",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2f0",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/cover_letter",
+    "aiProvider": "openai",
+    "tokensUsed": 596,
+    "cost": 0.05000181289692376,
+    "success": true,
+    "timestamp": "2025-10-10T04:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b4",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2f1",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/resume",
+    "aiProvider": "anthropic",
+    "tokensUsed": 2199,
+    "cost": 0.059764314358059,
+    "success": true,
+    "timestamp": "2025-10-10T02:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b5",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2f2",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/questionAndAnswers",
+    "aiProvider": "openai",
+    "tokensUsed": 942,
+    "cost": 0.0804953443242754,
+    "success": true,
+    "timestamp": "2025-10-10T00:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b6",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2f3",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/jobs/hierarchy",
+    "aiProvider": "anthropic",
+    "tokensUsed": 1254,
+    "cost": 0.041757565575302164,
+    "success": true,
+    "timestamp": "2025-10-09T22:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b7",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2f4",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/cover_letter",
+    "aiProvider": "openai",
+    "tokensUsed": 1540,
+    "cost": 0.0892484984303171,
+    "success": true,
+    "timestamp": "2025-10-09T20:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b8",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2f5",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/resume",
+    "aiProvider": "anthropic",
+    "tokensUsed": 1492,
+    "cost": 0.01113610284234622,
+    "success": true,
+    "timestamp": "2025-10-09T18:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2b9",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2f6",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/questionAndAnswers",
+    "aiProvider": "openai",
+    "tokensUsed": 1555,
+    "cost": 0.10899787809793332,
+    "success": true,
+    "timestamp": "2025-10-09T16:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2ba",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2f7",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/jobs/hierarchy",
+    "aiProvider": "anthropic",
+    "tokensUsed": 2301,
+    "cost": 0.10828498689604198,
+    "success": true,
+    "timestamp": "2025-10-09T14:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2bb",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2f8",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/cover_letter",
+    "aiProvider": "openai",
+    "tokensUsed": 1682,
+    "cost": 0.04809043578184462,
+    "success": true,
+    "timestamp": "2025-10-09T12:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2bc",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2f9",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/resume",
+    "aiProvider": "anthropic",
+    "tokensUsed": 1799,
+    "cost": 0.014087296378744498,
+    "success": true,
+    "timestamp": "2025-10-09T10:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2bd",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2fa",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/questionAndAnswers",
+    "aiProvider": "openai",
+    "tokensUsed": 909,
+    "cost": 0.029090726167469723,
+    "success": true,
+    "timestamp": "2025-10-09T08:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2be",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2fb",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/jobs/hierarchy",
+    "aiProvider": "anthropic",
+    "tokensUsed": 1867,
+    "cost": 0.10703923914755528,
+    "success": true,
+    "timestamp": "2025-10-09T06:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2bf",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2fc",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/cover_letter",
+    "aiProvider": "openai",
+    "tokensUsed": 1244,
+    "cost": 0.10128064431398626,
+    "success": true,
+    "timestamp": "2025-10-09T04:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c0",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2fd",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/resume",
+    "aiProvider": "anthropic",
+    "tokensUsed": 2128,
+    "cost": 0.06135399904844451,
+    "success": false,
+    "timestamp": "2025-10-09T02:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c1",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2fe",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/questionAndAnswers",
+    "aiProvider": "openai",
+    "tokensUsed": 1921,
+    "cost": 0.09081933786049051,
+    "success": true,
+    "timestamp": "2025-10-09T00:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c2",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2ff",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/jobs/hierarchy",
+    "aiProvider": "anthropic",
+    "tokensUsed": 2065,
+    "cost": 0.015147243545675041,
+    "success": true,
+    "timestamp": "2025-10-08T22:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c3",
+      "platform": "indeed"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f300",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "endpoint": "/api/cover_letter",
+    "aiProvider": "openai",
+    "tokensUsed": 807,
+    "cost": 0.06340895001107198,
+    "success": true,
+    "timestamp": "2025-10-08T20:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c4",
+      "platform": "seek"
+    }
+  },
+  {
+    "_id": "68ec0d990cde8880d251f301",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "endpoint": "/api/resume",
+    "aiProvider": "anthropic",
+    "tokensUsed": 630,
+    "cost": 0.06274769656943784,
+    "success": true,
+    "timestamp": "2025-10-08T18:20:41.633Z",
+    "metadata": {
+      "jobId": "68ec0d990cde8880d251f2c5",
+      "platform": "linkedin"
+    }
+  },
+  {
+    "_id": "68f1744ae9843d08d22a26fc",
+    "userId": "68ec0f98ed6e56a3da76d973",
+    "endpoint": "cover_letter",
+    "jobId": "seek_87924796",
+    "aiProvider": "deepseek-chat",
+    "tokensUsed": 0,
+    "costUsd": 0,
+    "success": true,
+    "metadata": {
+      "processingTime": 8438,
+      "model": "deepseek-chat"
+    },
+    "timestamp": "2025-10-16T22:40:10.923Z"
+  },
+  {
+    "_id": "68f17498e9843d08d22a26fe",
+    "userId": "68ec0f98ed6e56a3da76d973",
+    "endpoint": "cover_letter",
+    "jobId": "seek_87852915",
+    "aiProvider": "deepseek-chat",
+    "tokensUsed": 0,
+    "costUsd": 0,
+    "success": true,
+    "metadata": {
+      "processingTime": 16013,
+      "model": "deepseek-chat"
+    },
+    "timestamp": "2025-10-16T22:41:28.655Z"
+  }
+]

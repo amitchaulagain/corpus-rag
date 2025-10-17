@@ -1,0 +1,22 @@
+[
+  {
+    "_id": "68eeaf6907fe91b5dacefc9e",
+    "identifierType": "user",
+    "identifier": "68ec0f98ed6e56a3da76d973",
+    "lastReset": "2025-10-14T20:15:37.201Z",
+    "limit": 1000,
+    "requestCount": 5,
+    "windowEnd": "2025-10-14T21:15:37.201Z",
+    "windowStart": "2025-10-14T20:15:37.201Z"
+  },
+  {
+    "_id": "68f1744224a6f855466536e3",
+    "identifierType": "user",
+    "identifier": "68ec0f98ed6e56a3da76d973",
+    "lastReset": "2025-10-16T22:40:02.472Z",
+    "limit": 1000,
+    "requestCount": 4,
+    "windowEnd": "2025-10-16T23:40:02.472Z",
+    "windowStart": "2025-10-16T22:40:02.472Z"
+  }
+]

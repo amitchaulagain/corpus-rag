@@ -1,0 +1,86 @@
+[
+  {
+    "_id": "68eecb60ea65555d0f65d5ee",
+    "userId": "68ec0f98ed6e56a3da76d973",
+    "tokenFamily": "1760480096160-esamwjxak",
+    "jti": "1760480096160-g0imdqvmf",
+    "isRevoked": false,
+    "expiresAt": "2025-11-13T22:14:56.000Z",
+    "createdAt": "2025-10-14T22:14:56.160Z",
+    "lastUsedAt": "2025-10-14T22:14:56.160Z",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0",
+    "ipAddress": "127.0.0.1"
+  },
+  {
+    "_id": "68eecb87ea65555d0f65d5ef",
+    "userId": "68ec0f98ed6e56a3da76d973",
+    "tokenFamily": "1760480135454-b6sm9jzje",
+    "jti": "1760480135454-eui0yoqe2",
+    "isRevoked": false,
+    "expiresAt": "2025-11-13T22:15:35.000Z",
+    "createdAt": "2025-10-14T22:15:35.454Z",
+    "lastUsedAt": "2025-10-14T22:15:35.454Z",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0",
+    "ipAddress": "127.0.0.1"
+  },
+  {
+    "_id": "68eecc85ea65555d0f65d5f1",
+    "userId": "68eecc84ea65555d0f65d5f0",
+    "tokenFamily": "1760480389046-c01leadhv",
+    "jti": "1760480389046-k0qte1xfg",
+    "isRevoked": true,
+    "expiresAt": "2025-11-13T22:19:49.000Z",
+    "createdAt": "2025-10-14T22:19:49.046Z",
+    "lastUsedAt": "2025-10-14T22:19:49.046Z",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0",
+    "ipAddress": "127.0.0.1"
+  },
+  {
+    "_id": "68eedb927d1744a4714ca0fe",
+    "userId": "68eecc84ea65555d0f65d5f0",
+    "tokenFamily": "1760480389046-c01leadhv",
+    "jti": "1760484242953-fktsm25ez",
+    "isRevoked": false,
+    "expiresAt": "2025-11-13T23:24:02.000Z",
+    "createdAt": "2025-10-14T23:24:02.953Z",
+    "lastUsedAt": "2025-10-14T23:24:02.953Z",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0",
+    "ipAddress": "127.0.0.1"
+  },
+  {
+    "_id": "68eedba97d1744a4714ca0ff",
+    "userId": "68ec0f98ed6e56a3da76d973",
+    "tokenFamily": "1760484265492-u7kt0ftyg",
+    "jti": "1760484265492-8u5invhgk",
+    "isRevoked": true,
+    "expiresAt": "2025-11-13T23:24:25.000Z",
+    "createdAt": "2025-10-14T23:24:25.492Z",
+    "lastUsedAt": "2025-10-14T23:24:25.492Z",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0",
+    "ipAddress": "127.0.0.1"
+  },
+  {
+    "_id": "68eee126097c884bf4182efc",
+    "userId": "68ec0f98ed6e56a3da76d973",
+    "tokenFamily": "1760484265492-u7kt0ftyg",
+    "jti": "1760485670723-e3ee8x5g7",
+    "isRevoked": false,
+    "expiresAt": "2025-11-13T23:47:50.000Z",
+    "createdAt": "2025-10-14T23:47:50.723Z",
+    "lastUsedAt": "2025-10-14T23:47:50.723Z",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0",
+    "ipAddress": "127.0.0.1"
+  },
+  {
+    "_id": "68f17441e9843d08d22a26fb",
+    "userId": "68ec0f98ed6e56a3da76d973",
+    "tokenFamily": "1760654401284-v4qudro0w",
+    "jti": "1760654401284-gny7m447h",
+    "isRevoked": false,
+    "expiresAt": "2025-11-15T22:40:01.000Z",
+    "createdAt": "2025-10-16T22:40:01.284Z",
+    "lastUsedAt": "2025-10-16T22:40:01.284Z",
+    "userAgent": "Bun/1.2.21",
+    "ipAddress": "127.0.0.1"
+  }
+]

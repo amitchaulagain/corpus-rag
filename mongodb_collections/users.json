@@ -1,0 +1,135 @@
+[
+  {
+    "_id": "68ec0d990cde8880d251f2ab",
+    "email": "premium@example.com",
+    "googleId": "google_36394495b8f14ca7b68317f397ad1e4b",
+    "name": "Premium User",
+    "picture": "https://ui-avatars.com/api/?name=Premium+User",
+    "userType": "premium",
+    "isPaid": true,
+    "apiPermissions": {
+      "cover_letter": true,
+      "resume": true,
+      "questionAndAnswers": true,
+      "upload": true,
+      "jobs": true
+    },
+    "platforms": [
+      {
+        "platform": "seek",
+        "credentials": {
+          "encrypted_data": "encrypted_seek_creds"
+        },
+        "isActive": true,
+        "lastSync": "2025-10-12T19:20:41.038Z",
+        "metadata": {
+          "totalJobs": 28
+        }
+      }
+    ],
+    "preferences": {
+      "notifications": true,
+      "autoApply": true,
+      "preferredAIProvider": "anthropic"
+    },
+    "createdAt": "2024-02-20T00:00:00.000Z",
+    "lastLogin": "2025-10-11T20:20:41.038Z",
+    "updatedAt": "2025-10-12T20:20:41.038Z"
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2ac",
+    "email": "free@example.com",
+    "googleId": "google_b918eeefc29bed895ef0a425793d58e9",
+    "name": "Free User",
+    "picture": "https://ui-avatars.com/api/?name=Free+User",
+    "userType": "freetier",
+    "isPaid": false,
+    "apiPermissions": {
+      "cover_letter": true,
+      "resume": false,
+      "questionAndAnswers": true,
+      "upload": false,
+      "jobs": true
+    },
+    "platforms": [],
+    "preferences": {
+      "notifications": false,
+      "autoApply": false,
+      "preferredAIProvider": "openai"
+    },
+    "createdAt": "2024-03-10T00:00:00.000Z",
+    "lastLogin": "2025-10-10T20:20:41.038Z",
+    "updatedAt": "2025-10-12T20:20:41.038Z"
+  },
+  {
+    "_id": "68ec0f98ed6e56a3da76d973",
+    "email": "puskarwagle17@gmail.com",
+    "googleId": "107411674893141862021",
+    "name": "Puskar wagle",
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocLTulfTI9YgWeQfnpQANsMhOEwycZG42pLBDUytx4DxQd9V3X7TZg=s96-c",
+    "userType": "admin",
+    "isPaid": true,
+    "apiPermissions": {
+      "cover_letter": true,
+      "resume": true,
+      "questionAndAnswers": true,
+      "upload": true,
+      "jobs": true
+    },
+    "createdAt": "2025-10-12T20:29:12.635Z",
+    "lastLogin": "2025-10-17T08:43:56.858Z",
+    "password": "$2b$10$8tlQWjg5KGXqL35Ef4SCE.rRI4SXO47YIgt/P0LEwg0QgMUy7vg1u"
+  },
+  {
+    "_id": "68eecc84ea65555d0f65d5f0",
+    "email": "achaulagain123@gmail.com",
+    "googleId": "114208302882059729285",
+    "name": "Amit Chaulagain",
+    "picture": "https://lh3.googleusercontent.com/a/ACg8ocKQA7aD5BoZZ-b5U_33YmBUwu9PWwcFOM5BeWuO3oMJW0UY6w=s96-c",
+    "userType": "admin",
+    "isPaid": true,
+    "apiPermissions": {
+      "cover_letter": true,
+      "resume": true,
+      "questionAndAnswers": true,
+      "upload": true,
+      "jobs": true
+    },
+    "createdAt": "2025-10-14T22:19:48.436Z",
+    "lastLogin": "2025-10-14T22:19:48.436Z"
+  },
+  {
+    "_id": "68ef5dd3c77f1c95b2a91b7a",
+    "email": "test@example.com",
+    "password": "$2b$10$.FcUrqrTS1fGkN1fr8uZxuOxxq1YK17ylXkiENpd6aiNA9hY5qIaa",
+    "name": "Test User",
+    "userType": "freetier",
+    "isPaid": false,
+    "apiPermissions": {
+      "cover_letter": true,
+      "resume": false,
+      "questionAndAnswers": false,
+      "upload": true,
+      "jobs": true
+    },
+    "createdAt": "2025-10-15T08:39:47.158Z",
+    "lastLogin": "2025-10-15T09:08:22.734Z"
+  },
+  {
+    "_id": "68ef7b5f48bbec9c2ad3d892",
+    "email": "sakina@lagyo.kaam",
+    "password": "$2b$10$vbNxui.dbXj6efzW5aoMMuzgjoGgHihO5FA1pTW3XGiKKDNwLQQfa",
+    "name": "sakina@lagyo.kaam",
+    "userType": "freetier",
+    "isPaid": false,
+    "apiPermissions": {
+      "cover_letter": true,
+      "resume": false,
+      "questionAndAnswers": false,
+      "upload": true,
+      "jobs": true
+    },
+    "createdAt": "2025-10-15T10:45:51.273Z",
+    "lastLogin": "2025-10-15T10:45:51.273Z"
+  }
+]

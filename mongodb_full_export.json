@@ -1,0 +1,2282 @@
+{
+  "database": "inquisitive_mind",
+  "exportedAt": "2025-10-17T09:16:46.815Z",
+  "collections": {
+    "service_accounts": [],
+    "jobs": [
+      {
+        "_id": "68ec0d990cde8880d251f2b2",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "seek",
+        "platformJobId": "job_c590bb7a3b39ac25",
+        "title": "Software Engineer",
+        "company": "Google",
+        "location": "San Francisco, CA",
+        "salary": "$80k - $120k",
+        "description": "Exciting opportunity for a Software Engineer at Google. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/0",
+        "postedDate": "2025-10-12T20:20:41.624Z",
+        "closingDate": "2025-11-11T20:20:41.624Z",
+        "jobType": "full-time",
+        "workMode": "remote",
+        "status": "pending",
+        "firstSeenAt": "2025-10-12T20:20:41.624Z",
+        "lastUpdatedAt": "2025-10-12T20:20:41.624Z",
+        "application": {
+          "status": "pending",
+          "appliedAt": "2025-10-12T20:20:41.624Z",
+          "coverLetter": "Dear Hiring Manager,\n\nI am excited to apply for the Software Engineer position at Google...",
+          "tailoredResume": "Resume tailored for this position...",
+          "questionAnswers": [
+            {
+              "question": "Why do you want to work here?",
+              "answer": "I am passionate about..."
+            },
+            {
+              "question": "What are your salary expectations?",
+              "answer": "Based on my experience..."
+            }
+          ],
+          "apiCalls": [
+            {
+              "timestamp": "2025-10-12T20:20:41.624Z",
+              "endpoint": "/api/cover_letter",
+              "aiProvider": "openai",
+              "request": {
+                "model": "gpt-4",
+                "prompt": "..."
+              },
+              "response": {
+                "text": "...",
+                "model": "gpt-4"
+              },
+              "tokensUsed": 1500,
+              "cost": 0.045,
+              "processingTime": 2.3
+            }
+          ],
+          "automationLogs": [
+            {
+              "timestamp": "2025-10-12T20:20:41.624Z",
+              "action": "Application submitted",
+              "success": true,
+              "message": "Successfully submitted application"
+            }
+          ],
+          "createdAt": "2025-10-12T20:20:41.624Z",
+          "updatedAt": "2025-10-12T20:20:41.624Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2b3",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "linkedin",
+        "platformJobId": "job_a815a88c88b2b8e4",
+        "title": "Senior Developer",
+        "company": "Microsoft",
+        "location": "New York, NY",
+        "salary": "$90k - $130k",
+        "description": "Exciting opportunity for a Senior Developer at Microsoft. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/1",
+        "postedDate": "2025-10-11T20:20:41.624Z",
+        "closingDate": "2025-11-10T20:20:41.624Z",
+        "jobType": "contract",
+        "workMode": "hybrid",
+        "status": "pending",
+        "firstSeenAt": "2025-10-11T20:20:41.624Z",
+        "lastUpdatedAt": "2025-10-12T19:20:41.624Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2b4",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "indeed",
+        "platformJobId": "job_c7a56960dc4f9629",
+        "title": "Full Stack Developer",
+        "company": "Amazon",
+        "location": "Seattle, WA",
+        "salary": "$100k - $140k",
+        "description": "Exciting opportunity for a Full Stack Developer at Amazon. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/2",
+        "postedDate": "2025-10-10T20:20:41.624Z",
+        "closingDate": "2025-11-09T20:20:41.624Z",
+        "jobType": "full-time",
+        "workMode": "hybrid",
+        "status": "rejected",
+        "firstSeenAt": "2025-10-10T20:20:41.624Z",
+        "lastUpdatedAt": "2025-10-12T18:20:41.624Z",
+        "application": {
+          "status": "rejected",
+          "appliedAt": "2025-10-12T18:20:41.624Z",
+          "coverLetter": "Dear Hiring Manager,\n\nI am excited to apply for the Full Stack Developer position at Amazon...",
+          "tailoredResume": "Resume tailored for this position...",
+          "questionAnswers": [
+            {
+              "question": "Why do you want to work here?",
+              "answer": "I am passionate about..."
+            },
+            {
+              "question": "What are your salary expectations?",
+              "answer": "Based on my experience..."
+            }
+          ],
+          "apiCalls": [
+            {
+              "timestamp": "2025-10-12T18:20:41.624Z",
+              "endpoint": "/api/cover_letter",
+              "aiProvider": "openai",
+              "request": {
+                "model": "gpt-4",
+                "prompt": "..."
+              },
+              "response": {
+                "text": "...",
+                "model": "gpt-4"
+              },
+              "tokensUsed": 1500,
+              "cost": 0.045,
+              "processingTime": 2.3
+            }
+          ],
+          "automationLogs": [
+            {
+              "timestamp": "2025-10-12T18:20:41.624Z",
+              "action": "Application submitted",
+              "success": true,
+              "message": "Successfully submitted application"
+            }
+          ],
+          "createdAt": "2025-10-12T18:20:41.624Z",
+          "updatedAt": "2025-10-12T19:20:41.624Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2b5",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "seek",
+        "platformJobId": "job_3943a4524b608d0e",
+        "title": "Backend Engineer",
+        "company": "Meta",
+        "location": "Austin, TX",
+        "salary": "$110k - $150k",
+        "description": "Exciting opportunity for a Backend Engineer at Meta. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/3",
+        "postedDate": "2025-10-09T20:20:41.624Z",
+        "closingDate": "2025-11-08T20:20:41.624Z",
+        "jobType": "contract",
+        "workMode": "remote",
+        "status": "interview",
+        "firstSeenAt": "2025-10-09T20:20:41.624Z",
+        "lastUpdatedAt": "2025-10-12T17:20:41.624Z",
+        "application": {
+          "status": "interview",
+          "appliedAt": "2025-10-12T17:20:41.624Z",
+          "coverLetter": "Dear Hiring Manager,\n\nI am excited to apply for the Backend Engineer position at Meta...",
+          "tailoredResume": "Resume tailored for this position...",
+          "questionAnswers": [
+            {
+              "question": "Why do you want to work here?",
+              "answer": "I am passionate about..."
+            },
+            {
+              "question": "What are your salary expectations?",
+              "answer": "Based on my experience..."
+            }
+          ],
+          "apiCalls": [
+            {
+              "timestamp": "2025-10-12T17:20:41.624Z",
+              "endpoint": "/api/cover_letter",
+              "aiProvider": "openai",
+              "request": {
+                "model": "gpt-4",
+                "prompt": "..."
+              },
+              "response": {
+                "text": "...",
+                "model": "gpt-4"
+              },
+              "tokensUsed": 1500,
+              "cost": 0.045,
+              "processingTime": 2.3
+            }
+          ],
+          "automationLogs": [
+            {
+              "timestamp": "2025-10-12T17:20:41.624Z",
+              "action": "Application submitted",
+              "success": true,
+              "message": "Successfully submitted application"
+            }
+          ],
+          "createdAt": "2025-10-12T17:20:41.624Z",
+          "updatedAt": "2025-10-12T18:50:41.624Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2b6",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "linkedin",
+        "platformJobId": "job_c8717b3147492dc3",
+        "title": "Frontend Developer",
+        "company": "Apple",
+        "location": "Remote",
+        "salary": "$120k - $160k",
+        "description": "Exciting opportunity for a Frontend Developer at Apple. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/4",
+        "postedDate": "2025-10-08T20:20:41.624Z",
+        "closingDate": "2025-11-07T20:20:41.624Z",
+        "jobType": "full-time",
+        "workMode": "hybrid",
+        "status": "offer",
+        "firstSeenAt": "2025-10-08T20:20:41.624Z",
+        "lastUpdatedAt": "2025-10-12T16:20:41.624Z",
+        "application": {
+          "status": "offer",
+          "appliedAt": "2025-10-12T16:20:41.624Z",
+          "coverLetter": "Dear Hiring Manager,\n\nI am excited to apply for the Frontend Developer position at Apple...",
+          "tailoredResume": "Resume tailored for this position...",
+          "questionAnswers": [
+            {
+              "question": "Why do you want to work here?",
+              "answer": "I am passionate about..."
+            },
+            {
+              "question": "What are your salary expectations?",
+              "answer": "Based on my experience..."
+            }
+          ],
+          "apiCalls": [
+            {
+              "timestamp": "2025-10-12T16:20:41.624Z",
+              "endpoint": "/api/cover_letter",
+              "aiProvider": "openai",
+              "request": {
+                "model": "gpt-4",
+                "prompt": "..."
+              },
+              "response": {
+                "text": "...",
+                "model": "gpt-4"
+              },
+              "tokensUsed": 1500,
+              "cost": 0.045,
+              "processingTime": 2.3
+            }
+          ],
+          "automationLogs": [
+            {
+              "timestamp": "2025-10-12T16:20:41.624Z",
+              "action": "Application submitted",
+              "success": true,
+              "message": "Successfully submitted application"
+            }
+          ],
+          "createdAt": "2025-10-12T16:20:41.624Z",
+          "updatedAt": "2025-10-12T18:20:41.624Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2b7",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "indeed",
+        "platformJobId": "job_36deb230871911c6",
+        "title": "DevOps Engineer",
+        "company": "Netflix",
+        "location": "Boston, MA",
+        "salary": "$130k - $170k",
+        "description": "Exciting opportunity for a DevOps Engineer at Netflix. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/5",
+        "postedDate": "2025-10-07T20:20:41.624Z",
+        "closingDate": "2025-11-06T20:20:41.624Z",
+        "jobType": "contract",
+        "workMode": "hybrid",
+        "status": "pending",
+        "firstSeenAt": "2025-10-07T20:20:41.624Z",
+        "lastUpdatedAt": "2025-10-12T15:20:41.624Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2b8",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "seek",
+        "platformJobId": "job_6d2c3b1b45ddfb58",
+        "title": "Data Scientist",
+        "company": "Tesla",
+        "location": "Los Angeles, CA",
+        "salary": "$140k - $180k",
+        "description": "Exciting opportunity for a Data Scientist at Tesla. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/6",
+        "postedDate": "2025-10-06T20:20:41.624Z",
+        "closingDate": "2025-11-05T20:20:41.624Z",
+        "jobType": "full-time",
+        "workMode": "remote",
+        "status": "applied",
+        "firstSeenAt": "2025-10-06T20:20:41.624Z",
+        "lastUpdatedAt": "2025-10-12T14:20:41.624Z",
+        "application": {
+          "status": "applied",
+          "appliedAt": "2025-10-12T14:20:41.624Z",
+          "coverLetter": "Dear Hiring Manager,\n\nI am excited to apply for the Data Scientist position at Tesla...",
+          "tailoredResume": "Resume tailored for this position...",
+          "questionAnswers": [
+            {
+              "question": "Why do you want to work here?",
+              "answer": "I am passionate about..."
+            },
+            {
+              "question": "What are your salary expectations?",
+              "answer": "Based on my experience..."
+            }
+          ],
+          "apiCalls": [
+            {
+              "timestamp": "2025-10-12T14:20:41.624Z",
+              "endpoint": "/api/cover_letter",
+              "aiProvider": "openai",
+              "request": {
+                "model": "gpt-4",
+                "prompt": "..."
+              },
+              "response": {
+                "text": "...",
+                "model": "gpt-4"
+              },
+              "tokensUsed": 1500,
+              "cost": 0.045,
+              "processingTime": 2.3
+            }
+          ],
+          "automationLogs": [
+            {
+              "timestamp": "2025-10-12T14:20:41.624Z",
+              "action": "Application submitted",
+              "success": true,
+              "message": "Successfully submitted application"
+            }
+          ],
+          "createdAt": "2025-10-12T14:20:41.624Z",
+          "updatedAt": "2025-10-12T17:20:41.624Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2b9",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "linkedin",
+        "platformJobId": "job_9d22567908bcba50",
+        "title": "ML Engineer",
+        "company": "SpaceX",
+        "location": "San Francisco, CA",
+        "salary": "$150k - $190k",
+        "description": "Exciting opportunity for a ML Engineer at SpaceX. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/7",
+        "postedDate": "2025-10-05T20:20:41.624Z",
+        "closingDate": "2025-11-04T20:20:41.624Z",
+        "jobType": "contract",
+        "workMode": "hybrid",
+        "status": "rejected",
+        "firstSeenAt": "2025-10-05T20:20:41.624Z",
+        "lastUpdatedAt": "2025-10-12T13:20:41.624Z",
+        "application": {
+          "status": "rejected",
+          "appliedAt": "2025-10-12T13:20:41.624Z",
+          "coverLetter": "Dear Hiring Manager,\n\nI am excited to apply for the ML Engineer position at SpaceX...",
+          "tailoredResume": "Resume tailored for this position...",
+          "questionAnswers": [
+            {
+              "question": "Why do you want to work here?",
+              "answer": "I am passionate about..."
+            },
+            {
+              "question": "What are your salary expectations?",
+              "answer": "Based on my experience..."
+            }
+          ],
+          "apiCalls": [
+            {
+              "timestamp": "2025-10-12T13:20:41.624Z",
+              "endpoint": "/api/cover_letter",
+              "aiProvider": "openai",
+              "request": {
+                "model": "gpt-4",
+                "prompt": "..."
+              },
+              "response": {
+                "text": "...",
+                "model": "gpt-4"
+              },
+              "tokensUsed": 1500,
+              "cost": 0.045,
+              "processingTime": 2.3
+            }
+          ],
+          "automationLogs": [
+            {
+              "timestamp": "2025-10-12T13:20:41.624Z",
+              "action": "Application submitted",
+              "success": true,
+              "message": "Successfully submitted application"
+            }
+          ],
+          "createdAt": "2025-10-12T13:20:41.624Z",
+          "updatedAt": "2025-10-12T16:50:41.624Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2ba",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "indeed",
+        "platformJobId": "job_239b2b7fd8e9476a",
+        "title": "Software Engineer",
+        "company": "Stripe",
+        "location": "New York, NY",
+        "salary": "$160k - $200k",
+        "description": "Exciting opportunity for a Software Engineer at Stripe. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/8",
+        "postedDate": "2025-10-04T20:20:41.624Z",
+        "closingDate": "2025-11-03T20:20:41.624Z",
+        "jobType": "full-time",
+        "workMode": "hybrid",
+        "status": "pending",
+        "firstSeenAt": "2025-10-04T20:20:41.624Z",
+        "lastUpdatedAt": "2025-10-12T12:20:41.624Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2bb",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "seek",
+        "platformJobId": "job_a629a8a25d8d5d55",
+        "title": "Senior Developer",
+        "company": "Airbnb",
+        "location": "Seattle, WA",
+        "salary": "$170k - $210k",
+        "description": "Exciting opportunity for a Senior Developer at Airbnb. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/9",
+        "postedDate": "2025-10-03T20:20:41.624Z",
+        "closingDate": "2025-11-02T20:20:41.624Z",
+        "jobType": "contract",
+        "workMode": "remote",
+        "status": "pending",
+        "firstSeenAt": "2025-10-03T20:20:41.624Z",
+        "lastUpdatedAt": "2025-10-12T11:20:41.624Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2bc",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "linkedin",
+        "platformJobId": "job_e492fea6a3fda6c1",
+        "title": "Full Stack Developer",
+        "company": "Google",
+        "location": "Austin, TX",
+        "salary": "$180k - $220k",
+        "description": "Exciting opportunity for a Full Stack Developer at Google. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/10",
+        "postedDate": "2025-10-02T20:20:41.624Z",
+        "closingDate": "2025-11-01T20:20:41.624Z",
+        "jobType": "full-time",
+        "workMode": "hybrid",
+        "status": "pending",
+        "firstSeenAt": "2025-10-02T20:20:41.624Z",
+        "lastUpdatedAt": "2025-10-12T10:20:41.624Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2bd",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "indeed",
+        "platformJobId": "job_398a8b4bbe8f9f6f",
+        "title": "Backend Engineer",
+        "company": "Microsoft",
+        "location": "Remote",
+        "salary": "$190k - $230k",
+        "description": "Exciting opportunity for a Backend Engineer at Microsoft. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/11",
+        "postedDate": "2025-10-01T20:20:41.624Z",
+        "closingDate": "2025-10-31T20:20:41.624Z",
+        "jobType": "contract",
+        "workMode": "hybrid",
+        "status": "pending",
+        "firstSeenAt": "2025-10-01T20:20:41.624Z",
+        "lastUpdatedAt": "2025-10-12T09:20:41.624Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2be",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "seek",
+        "platformJobId": "job_eda2ba1674117037",
+        "title": "Frontend Developer",
+        "company": "Amazon",
+        "location": "Boston, MA",
+        "salary": "$200k - $240k",
+        "description": "Exciting opportunity for a Frontend Developer at Amazon. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/12",
+        "postedDate": "2025-09-30T20:20:41.624Z",
+        "closingDate": "2025-10-30T20:20:41.624Z",
+        "jobType": "full-time",
+        "workMode": "remote",
+        "status": "rejected",
+        "firstSeenAt": "2025-09-30T20:20:41.624Z",
+        "lastUpdatedAt": "2025-10-12T08:20:41.624Z",
+        "application": {
+          "status": "rejected",
+          "appliedAt": "2025-10-12T08:20:41.625Z",
+          "coverLetter": "Dear Hiring Manager,\n\nI am excited to apply for the Frontend Developer position at Amazon...",
+          "tailoredResume": "Resume tailored for this position...",
+          "questionAnswers": [
+            {
+              "question": "Why do you want to work here?",
+              "answer": "I am passionate about..."
+            },
+            {
+              "question": "What are your salary expectations?",
+              "answer": "Based on my experience..."
+            }
+          ],
+          "apiCalls": [
+            {
+              "timestamp": "2025-10-12T08:20:41.625Z",
+              "endpoint": "/api/cover_letter",
+              "aiProvider": "openai",
+              "request": {
+                "model": "gpt-4",
+                "prompt": "..."
+              },
+              "response": {
+                "text": "...",
+                "model": "gpt-4"
+              },
+              "tokensUsed": 1500,
+              "cost": 0.045,
+              "processingTime": 2.3
+            }
+          ],
+          "automationLogs": [
+            {
+              "timestamp": "2025-10-12T08:20:41.625Z",
+              "action": "Application submitted",
+              "success": true,
+              "message": "Successfully submitted application"
+            }
+          ],
+          "createdAt": "2025-10-12T08:20:41.625Z",
+          "updatedAt": "2025-10-12T14:20:41.625Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2bf",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "linkedin",
+        "platformJobId": "job_fc91da8425444b06",
+        "title": "DevOps Engineer",
+        "company": "Meta",
+        "location": "Los Angeles, CA",
+        "salary": "$210k - $250k",
+        "description": "Exciting opportunity for a DevOps Engineer at Meta. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/13",
+        "postedDate": "2025-09-29T20:20:41.625Z",
+        "closingDate": "2025-10-29T20:20:41.625Z",
+        "jobType": "contract",
+        "workMode": "hybrid",
+        "status": "interview",
+        "firstSeenAt": "2025-09-29T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T07:20:41.625Z",
+        "application": {
+          "status": "interview",
+          "appliedAt": "2025-10-12T07:20:41.625Z",
+          "coverLetter": "Dear Hiring Manager,\n\nI am excited to apply for the DevOps Engineer position at Meta...",
+          "tailoredResume": "Resume tailored for this position...",
+          "questionAnswers": [
+            {
+              "question": "Why do you want to work here?",
+              "answer": "I am passionate about..."
+            },
+            {
+              "question": "What are your salary expectations?",
+              "answer": "Based on my experience..."
+            }
+          ],
+          "apiCalls": [
+            {
+              "timestamp": "2025-10-12T07:20:41.625Z",
+              "endpoint": "/api/cover_letter",
+              "aiProvider": "openai",
+              "request": {
+                "model": "gpt-4",
+                "prompt": "..."
+              },
+              "response": {
+                "text": "...",
+                "model": "gpt-4"
+              },
+              "tokensUsed": 1500,
+              "cost": 0.045,
+              "processingTime": 2.3
+            }
+          ],
+          "automationLogs": [
+            {
+              "timestamp": "2025-10-12T07:20:41.625Z",
+              "action": "Application submitted",
+              "success": true,
+              "message": "Successfully submitted application"
+            }
+          ],
+          "createdAt": "2025-10-12T07:20:41.625Z",
+          "updatedAt": "2025-10-12T13:50:41.625Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2c0",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "platform": "indeed",
+        "platformJobId": "job_271d790cd80dbd1b",
+        "title": "Data Scientist",
+        "company": "Apple",
+        "location": "San Francisco, CA",
+        "salary": "$220k - $260k",
+        "description": "Exciting opportunity for a Data Scientist at Apple. We're looking for talented engineers to join our growing team.",
+        "url": "https://jobs.example.com/job/14",
+        "postedDate": "2025-09-28T20:20:41.625Z",
+        "closingDate": "2025-10-28T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "hybrid",
+        "status": "pending",
+        "firstSeenAt": "2025-09-28T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T06:20:41.625Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2c1",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "platform": "seek",
+        "platformJobId": "job_6d342b1e1f27ec3e",
+        "title": "Software Engineer",
+        "company": "Google",
+        "location": "San Francisco, CA",
+        "salary": "$70k - $110k",
+        "description": "Great opportunity at Google.",
+        "url": "https://jobs.example.com/job/100",
+        "postedDate": "2025-10-12T20:20:41.625Z",
+        "closingDate": "2025-11-06T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "remote",
+        "status": "pending",
+        "firstSeenAt": "2025-10-12T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T20:20:41.625Z",
+        "application": {
+          "status": "pending",
+          "appliedAt": "2025-10-12T20:20:41.625Z",
+          "coverLetter": "Cover letter for Software Engineer...",
+          "tailoredResume": "Tailored resume...",
+          "questionAnswers": [],
+          "apiCalls": [],
+          "automationLogs": [],
+          "createdAt": "2025-10-12T20:20:41.625Z",
+          "updatedAt": "2025-10-12T20:20:41.625Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2c2",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "platform": "linkedin",
+        "platformJobId": "job_a765fa6bb5c5ea8b",
+        "title": "Senior Developer",
+        "company": "Microsoft",
+        "location": "New York, NY",
+        "salary": "$78k - $118k",
+        "description": "Great opportunity at Microsoft.",
+        "url": "https://jobs.example.com/job/101",
+        "postedDate": "2025-10-11T20:20:41.625Z",
+        "closingDate": "2025-11-05T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "onsite",
+        "status": "applied",
+        "firstSeenAt": "2025-10-11T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T19:20:41.625Z",
+        "application": {
+          "status": "applied",
+          "appliedAt": "2025-10-12T19:20:41.625Z",
+          "coverLetter": "Cover letter for Senior Developer...",
+          "tailoredResume": "Tailored resume...",
+          "questionAnswers": [],
+          "apiCalls": [],
+          "automationLogs": [],
+          "createdAt": "2025-10-12T19:20:41.625Z",
+          "updatedAt": "2025-10-12T19:50:41.625Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2c3",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "platform": "indeed",
+        "platformJobId": "job_b066f8327a141c81",
+        "title": "Full Stack Developer",
+        "company": "Amazon",
+        "location": "Seattle, WA",
+        "salary": "$86k - $126k",
+        "description": "Great opportunity at Amazon.",
+        "url": "https://jobs.example.com/job/102",
+        "postedDate": "2025-10-10T20:20:41.625Z",
+        "closingDate": "2025-11-04T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "remote",
+        "status": "pending",
+        "firstSeenAt": "2025-10-10T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T18:20:41.625Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2c4",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "platform": "seek",
+        "platformJobId": "job_74e2c8d0f943177c",
+        "title": "Backend Engineer",
+        "company": "Meta",
+        "location": "Austin, TX",
+        "salary": "$94k - $134k",
+        "description": "Great opportunity at Meta.",
+        "url": "https://jobs.example.com/job/103",
+        "postedDate": "2025-10-09T20:20:41.625Z",
+        "closingDate": "2025-11-03T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "onsite",
+        "status": "interview",
+        "firstSeenAt": "2025-10-09T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T17:20:41.625Z",
+        "application": {
+          "status": "interview",
+          "appliedAt": "2025-10-12T17:20:41.625Z",
+          "coverLetter": "Cover letter for Backend Engineer...",
+          "tailoredResume": "Tailored resume...",
+          "questionAnswers": [],
+          "apiCalls": [],
+          "automationLogs": [],
+          "createdAt": "2025-10-12T17:20:41.625Z",
+          "updatedAt": "2025-10-12T18:50:41.625Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2c5",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "platform": "linkedin",
+        "platformJobId": "job_e3ad53fbee43a471",
+        "title": "Frontend Developer",
+        "company": "Apple",
+        "location": "Remote",
+        "salary": "$102k - $142k",
+        "description": "Great opportunity at Apple.",
+        "url": "https://jobs.example.com/job/104",
+        "postedDate": "2025-10-08T20:20:41.625Z",
+        "closingDate": "2025-11-02T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "remote",
+        "status": "offer",
+        "firstSeenAt": "2025-10-08T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T16:20:41.625Z",
+        "application": {
+          "status": "offer",
+          "appliedAt": "2025-10-12T16:20:41.625Z",
+          "coverLetter": "Cover letter for Frontend Developer...",
+          "tailoredResume": "Tailored resume...",
+          "questionAnswers": [],
+          "apiCalls": [],
+          "automationLogs": [],
+          "createdAt": "2025-10-12T16:20:41.625Z",
+          "updatedAt": "2025-10-12T18:20:41.625Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2c6",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "platform": "indeed",
+        "platformJobId": "job_19debff927076c85",
+        "title": "DevOps Engineer",
+        "company": "Netflix",
+        "location": "Boston, MA",
+        "salary": "$110k - $150k",
+        "description": "Great opportunity at Netflix.",
+        "url": "https://jobs.example.com/job/105",
+        "postedDate": "2025-10-07T20:20:41.625Z",
+        "closingDate": "2025-11-01T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "onsite",
+        "status": "pending",
+        "firstSeenAt": "2025-10-07T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T15:20:41.625Z",
+        "application": {
+          "status": "pending",
+          "appliedAt": "2025-10-12T15:20:41.625Z",
+          "coverLetter": "Cover letter for DevOps Engineer...",
+          "tailoredResume": "Tailored resume...",
+          "questionAnswers": [],
+          "apiCalls": [],
+          "automationLogs": [],
+          "createdAt": "2025-10-12T15:20:41.625Z",
+          "updatedAt": "2025-10-12T17:50:41.625Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2c7",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "platform": "seek",
+        "platformJobId": "job_c267ba00cdadb991",
+        "title": "Data Scientist",
+        "company": "Tesla",
+        "location": "Los Angeles, CA",
+        "salary": "$118k - $158k",
+        "description": "Great opportunity at Tesla.",
+        "url": "https://jobs.example.com/job/106",
+        "postedDate": "2025-10-06T20:20:41.625Z",
+        "closingDate": "2025-10-31T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "remote",
+        "status": "pending",
+        "firstSeenAt": "2025-10-06T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T14:20:41.625Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2c8",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "platform": "linkedin",
+        "platformJobId": "job_aa4d6b9cf267c36b",
+        "title": "ML Engineer",
+        "company": "SpaceX",
+        "location": "San Francisco, CA",
+        "salary": "$126k - $166k",
+        "description": "Great opportunity at SpaceX.",
+        "url": "https://jobs.example.com/job/107",
+        "postedDate": "2025-10-05T20:20:41.625Z",
+        "closingDate": "2025-10-30T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "onsite",
+        "status": "rejected",
+        "firstSeenAt": "2025-10-05T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T13:20:41.625Z",
+        "application": {
+          "status": "rejected",
+          "appliedAt": "2025-10-12T13:20:41.625Z",
+          "coverLetter": "Cover letter for ML Engineer...",
+          "tailoredResume": "Tailored resume...",
+          "questionAnswers": [],
+          "apiCalls": [],
+          "automationLogs": [],
+          "createdAt": "2025-10-12T13:20:41.625Z",
+          "updatedAt": "2025-10-12T16:50:41.625Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2c9",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "platform": "indeed",
+        "platformJobId": "job_e2ba680f641021b9",
+        "title": "Software Engineer",
+        "company": "Stripe",
+        "location": "New York, NY",
+        "salary": "$134k - $174k",
+        "description": "Great opportunity at Stripe.",
+        "url": "https://jobs.example.com/job/108",
+        "postedDate": "2025-10-04T20:20:41.625Z",
+        "closingDate": "2025-10-29T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "remote",
+        "status": "interview",
+        "firstSeenAt": "2025-10-04T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T12:20:41.625Z",
+        "application": {
+          "status": "interview",
+          "appliedAt": "2025-10-12T12:20:41.625Z",
+          "coverLetter": "Cover letter for Software Engineer...",
+          "tailoredResume": "Tailored resume...",
+          "questionAnswers": [],
+          "apiCalls": [],
+          "automationLogs": [],
+          "createdAt": "2025-10-12T12:20:41.625Z",
+          "updatedAt": "2025-10-12T16:20:41.625Z"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2ca",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "platform": "seek",
+        "platformJobId": "job_7d35f8b9de7352b7",
+        "title": "Senior Developer",
+        "company": "Airbnb",
+        "location": "Seattle, WA",
+        "salary": "$142k - $182k",
+        "description": "Great opportunity at Airbnb.",
+        "url": "https://jobs.example.com/job/109",
+        "postedDate": "2025-10-03T20:20:41.625Z",
+        "closingDate": "2025-10-28T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "onsite",
+        "status": "pending",
+        "firstSeenAt": "2025-10-03T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T11:20:41.625Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2cb",
+        "userId": "68ec0d990cde8880d251f2ac",
+        "platform": "seek",
+        "platformJobId": "job_3f6ef57b00f141c9",
+        "title": "Software Engineer",
+        "company": "Google",
+        "location": "San Francisco, CA",
+        "salary": "$60k - $90k",
+        "description": "Entry level position at Google.",
+        "url": "https://jobs.example.com/job/200",
+        "postedDate": "2025-10-12T20:20:41.625Z",
+        "closingDate": "2025-11-01T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "onsite",
+        "status": "pending",
+        "firstSeenAt": "2025-10-12T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T20:20:41.625Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2cc",
+        "userId": "68ec0d990cde8880d251f2ac",
+        "platform": "seek",
+        "platformJobId": "job_ab74c8c1bfc929d3",
+        "title": "Senior Developer",
+        "company": "Microsoft",
+        "location": "New York, NY",
+        "salary": "$65k - $95k",
+        "description": "Entry level position at Microsoft.",
+        "url": "https://jobs.example.com/job/201",
+        "postedDate": "2025-10-11T20:20:41.625Z",
+        "closingDate": "2025-10-31T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "onsite",
+        "status": "pending",
+        "firstSeenAt": "2025-10-11T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T19:20:41.625Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2cd",
+        "userId": "68ec0d990cde8880d251f2ac",
+        "platform": "seek",
+        "platformJobId": "job_f378c79f9f5aebaa",
+        "title": "Full Stack Developer",
+        "company": "Amazon",
+        "location": "Seattle, WA",
+        "salary": "$70k - $100k",
+        "description": "Entry level position at Amazon.",
+        "url": "https://jobs.example.com/job/202",
+        "postedDate": "2025-10-10T20:20:41.625Z",
+        "closingDate": "2025-10-30T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "onsite",
+        "status": "pending",
+        "firstSeenAt": "2025-10-10T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T18:20:41.625Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2ce",
+        "userId": "68ec0d990cde8880d251f2ac",
+        "platform": "seek",
+        "platformJobId": "job_171788dea0c67dc5",
+        "title": "Backend Engineer",
+        "company": "Meta",
+        "location": "Austin, TX",
+        "salary": "$75k - $105k",
+        "description": "Entry level position at Meta.",
+        "url": "https://jobs.example.com/job/203",
+        "postedDate": "2025-10-09T20:20:41.625Z",
+        "closingDate": "2025-10-29T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "onsite",
+        "status": "pending",
+        "firstSeenAt": "2025-10-09T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T17:20:41.625Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2cf",
+        "userId": "68ec0d990cde8880d251f2ac",
+        "platform": "seek",
+        "platformJobId": "job_2add06df09c24daf",
+        "title": "Frontend Developer",
+        "company": "Apple",
+        "location": "Remote",
+        "salary": "$80k - $110k",
+        "description": "Entry level position at Apple.",
+        "url": "https://jobs.example.com/job/204",
+        "postedDate": "2025-10-08T20:20:41.625Z",
+        "closingDate": "2025-10-28T20:20:41.625Z",
+        "jobType": "full-time",
+        "workMode": "onsite",
+        "status": "pending",
+        "firstSeenAt": "2025-10-08T20:20:41.625Z",
+        "lastUpdatedAt": "2025-10-12T16:20:41.625Z"
+      },
+      {
+        "_id": "68f1744de9843d08d22a26fd",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "platform": "seek",
+        "platformJobId": "87924796",
+        "title": "Senior Software Developer (C++)",
+        "company": "Windcave Limited",
+        "description": "Senior Software Developer\nAbout Windcave:\nFounded in 1999 in New Zealand, Windcave has consistently led the way in the innovation of payment technology. Today, our global footprint extends across 40+ countries, supported by a dedicated team of over 400+ experts. We process billions of transactions annually, providing businesses with a comprehensive payment solution through a single\nprovider.\nOur approach continuously sets new industry benchmarks and reflects our commitment to leading the market with self-developed, cutting-edge technologies. We support a wide range of industries, including retail, finance, hospitality, and more, with operations all over the globe.\nOur Sydney office is seeking a talented Senior Software Developer to join the team.\nWindcave developers deliver:\n24/7 high performing, fault tolerant, scalable server designs\nHighly usable and fast web front ends and APIs\nWorld class data and web security\nTo join the team you will need to demonstrate:\nProven expertise (5+ years) in programming C++\nIdeally experience with one or more of the following:\nDatabases / SQL\nWeb / Internet Technologies\nDistributed Systems.\nBenefits on offer:\nWe value our employees and offer competitive benefits, including:\n·        Competitive salary\n·        Hybrid work (currently following hybrid work model; mandatory 3 days’ work from office Monday, Tuesday, and Friday)\n·        Flexible working hours\n·        Career development and long-term career opportunity\n·        Discounted health insurance (depending upon eligibility)\n·        Diverse, energetic and friendly team environment\nWhy join us?\nAt Windcave, you will have the opportunity to grow, develop, and be part of a company that values your contributions. We are committed to providing:\n·        A supportive and inclusive environment\n·        Career development and learning opportunities\n·        Exciting and challenging projects\n·        On going training and support\nIf you are passionate about payment industry, eager to make an impact and ready for your next challenge, we’d love to hear from you. Apply today and be part of something great!\nWindcave is an Equal Opportunity Employer and committed to building a diverse workforce.",
+        "status": "pending",
+        "firstSeenAt": "2025-10-16T22:40:13.132Z",
+        "lastUpdatedAt": "2025-10-16T22:40:45.658Z",
+        "application": {
+          "status": "pending",
+          "coverLetter": "Based on the provided documents, it is not possible to write a compelling and personalized cover letter for the Senior Software Developer role at Windcave Limited.\n\nThe primary reason is a critical mismatch between the job's core requirement and the candidate's documented skills. The job description mandates **\"Proven expertise (5+ years) in programming C++,\"** which is a programming language not listed anywhere in the candidate's resume. The candidate's experience is primarily in **Python and JavaScript**.\n\nWhile the candidate has relevant experience in other areas mentioned in the job description, such as distributed systems (microservices), databases (PostgreSQL, MySQL), web technologies (REST APIs, React), and a 5+ year background in software engineering, the absence of C++ expertise is a fundamental disqualification for this specific role. A cover letter cannot credibly highlight a required skill that the candidate does not possess.\n\nTherefore, the documents do not contain the necessary information to craft a suitable application for this position.",
+          "apiCalls": [
+            {
+              "timestamp": "2025-10-16T22:40:14.311Z",
+              "endpoint": "/api/cover_letter",
+              "aiProvider": "deepseek-chat",
+              "request": {
+                "prompt": "Write a compelling, professional cover letter for this Seek job posting.\nHighlight relevant experience and skills that match the job requirements.\nKeep it concise (300-400 words) and personalized to Windcave Limited.\nFocus on demonstrating value and enthusiasm for the role.",
+                "jobDetails": "Senior Software Developer\nAbout Windcave:\nFounded in 1999 in New Zealand, Windcave has consistently led the way in the innovation of payment technology. Today, our global footprint extends across 40+ countries, supported by a dedicated team of over 400+ experts. We process billions of transactions annually, providing businesses with a comprehensive payment solution through a single\nprovider.\nOur approach continuously sets new industry benchmarks and reflects our commitment to leading the market with self-developed, cutting-edge technologies. We support a wide range of industries, including retail, finance, hospitality, and more, with operations all over the globe.\nOur Sydney office is seeking a talented Senior Software Developer to join the team.\nWindcave developers deliver:\n24/7 high performing, fault tolerant, scalable server designs\nHighly usable and fast web front ends and APIs\nWorld class data and web security\nTo join the team you will need to demonstrate:\nProven expertise (5+ years) in programming C++\nIdeally experience with one or more of the following:\nDatabases / SQL\nWeb / Internet Technologies\nDistributed Systems.\nBenefits on offer:\nWe value our employees and offer competitive benefits, including:\n·        Competitive salary\n·        Hybrid work (currently following hybrid work model; mandatory 3 days’ work from office Monday, Tuesday, and Friday)\n·        Flexible working hours\n·        Career development and long-term career opportunity\n·        Discounted health insurance (depending upon eligibility)\n·        Diverse, energetic and friendly team environment\nWhy join us?\nAt Windcave, you will have the opportunity to grow, develop, and be part of a company that values your contributions. We are committed to providing:\n·        A supportive and inclusive environment\n·        Career development and learning opportunities\n·        Exciting and challenging projects\n·        On going training and support\nIf you are passionate about payment industry, eager to make an impact and ready for your next challenge, we’d love to hear from you. Apply today and be part of something great!\nWindcave is an Equal Opportunity Employer and committed to building a diverse workforce.",
+                "resumeText": "JOHN DOE\nSoftware Engineer\nEmail: john.doe@email.com | Phone: (555) 123-4567\nLinkedIn: linkedin.com/in/johndoe | GitHub: github.com/johndoe\n\nSUMMARY\nExperienced Software Engineer with 5+ years of experience developing scalable web applications and distributed systems. Proficient in Python, JavaScript, and cloud technologies. Strong background in REST APIs, Docker, and CI/CD pipelines.\n\nEXPERIENCE\n\nSenior Software Engineer | TechCorp Inc. | San Francisco, CA | 2021 - Present\n• Developed and maintained microservices architecture serving 1M+ daily users\n• Implemented CI/CD pipelines using Jenkins and Docker, reducing deployment time by 60%\n• Led a team of 3 junior developers and mentored new hires\n• Technologies: Python, Flask, PostgreSQL, AWS, Docker, Kubernetes\n\nSoftware Engineer | StartupXYZ | Austin, TX | 2019 - 2021\n• Built REST APIs for mobile and web applications using Python and Django\n• Collaborated with cross-functional teams to deliver features on tight deadlines\n• Optimized database queries improving application performance by 40%\n• Technologies: Python, Django, MySQL, Redis, Git\n\nJunior Developer | DevShop LLC | Austin, TX | 2018 - 2019\n• Developed frontend components using React and JavaScript\n• Participated in code reviews and followed agile development practices\n• Fixed bugs and implemented small features under senior guidance\n• Technologies: JavaScript, React, Node.js, MongoDB\n\nEDUCATION\nBachelor of Science in Computer Science | University of Texas at Austin | 2018\nGPA: 3.8/4.0\nRelevant Coursework: Data Structures, Algorithms, Database Systems, Software Engineering\n\nSKILLS\nProgramming Languages: Python, JavaScript, Java, Go\nFrameworks: Django, Flask, React, Node.js\nDatabases: PostgreSQL, MySQL, MongoDB, Redis\nCloud & DevOps: AWS, Docker, Kubernetes, Jenkins, Git\nOther: REST APIs, Microservices, Agile Development, Testing\n\nCERTIFICATIONS\n• AWS Certified Solutions Architect - Associate (2022)\n• Docker Certified Associate (2021)\n\nPROJECTS\nE-commerce Platform | Personal Project | 2020\n• Built a full-stack e-commerce application using Python/Django and React\n• Implemented payment processing with Stripe API\n• Deployed on AWS using Docker containers\n• GitHub: github.com/johndoe/ecommerce-platform"
+              },
+              "response": {
+                "success": true,
+                "data": "Based on the provided documents, it is not possible to write a compelling and personalized cover letter for the Senior Software Developer role at Windcave Limited.\n\nThe primary reason is a critical mismatch between the job's core requirement and the candidate's documented skills. The job description mandates **\"Proven expertise (5+ years) in programming C++,\"** which is a programming language not listed anywhere in the candidate's resume. The candidate's experience is primarily in **Python and JavaScript**.\n\nWhile the candidate has relevant experience in other areas mentioned in the job description, such as distributed systems (microservices), databases (PostgreSQL, MySQL), web technologies (REST APIs, React), and a 5+ year background in software engineering, the absence of C++ expertise is a fundamental disqualification for this specific role. A cover letter cannot credibly highlight a required skill that the candidate does not possess.\n\nTherefore, the documents do not contain the necessary information to craft a suitable application for this position."
+              },
+              "tokensUsed": null,
+              "cost": 0,
+              "processingTime": 8438
+            },
+            {
+              "timestamp": "2025-10-16T22:40:23.637Z",
+              "endpoint": "/api/resume",
+              "aiProvider": "deepseek-chat",
+              "request": {
+                "prompt": "Tailor this resume for the Seek job posting.\nOptimize for ATS (Applicant Tracking Systems) by including relevant keywords from the job description.\nHighlight experience and skills that directly match the job requirements.\nKeep formatting clean and professional. Focus on quantifiable achievements.",
+                "jobDetails": "Senior Software Developer\nAbout Windcave:\nFounded in 1999 in New Zealand, Windcave has consistently led the way in the innovation of payment technology. Today, our global footprint extends across 40+ countries, supported by a dedicated team of over 400+ experts. We process billions of transactions annually, providing businesses with a comprehensive payment solution through a single\nprovider.\nOur approach continuously sets new industry benchmarks and reflects our commitment to leading the market with self-developed, cutting-edge technologies. We support a wide range of industries, including retail, finance, hospitality, and more, with operations all over the globe.\nOur Sydney office is seeking a talented Senior Software Developer to join the team.\nWindcave developers deliver:\n24/7 high performing, fault tolerant, scalable server designs\nHighly usable and fast web front ends and APIs\nWorld class data and web security\nTo join the team you will need to demonstrate:\nProven expertise (5+ years) in programming C++\nIdeally experience with one or more of the following:\nDatabases / SQL\nWeb / Internet Technologies\nDistributed Systems.\nBenefits on offer:\nWe value our employees and offer competitive benefits, including:\n·        Competitive salary\n·        Hybrid work (currently following hybrid work model; mandatory 3 days’ work from office Monday, Tuesday, and Friday)\n·        Flexible working hours\n·        Career development and long-term career opportunity\n·        Discounted health insurance (depending upon eligibility)\n·        Diverse, energetic and friendly team environment\nWhy join us?\nAt Windcave, you will have the opportunity to grow, develop, and be part of a company that values your contributions. We are committed to providing:\n·        A supportive and inclusive environment\n·        Career development and learning opportunities\n·        Exciting and challenging projects\n·        On going training and support\nIf you are passionate about payment industry, eager to make an impact and ready for your next challenge, we’d love to hear from you. Apply today and be part of something great!\nWindcave is an Equal Opportunity Employer and committed to building a diverse workforce.",
+                "resumeText": "JOHN DOE\nSoftware Engineer\nEmail: john.doe@email.com | Phone: (555) 123-4567\nLinkedIn: linkedin.com/in/johndoe | GitHub: github.com/johndoe\n\nSUMMARY\nExperienced Software Engineer with 5+ years of experience developing scalable web applications and distributed systems. Proficient in Python, JavaScript, and cloud technologies. Strong background in REST APIs, Docker, and CI/CD pipelines.\n\nEXPERIENCE\n\nSenior Software Engineer | TechCorp Inc. | San Francisco, CA | 2021 - Present\n• Developed and maintained microservices architecture serving 1M+ daily users\n• Implemented CI/CD pipelines using Jenkins and Docker, reducing deployment time by 60%\n• Led a team of 3 junior developers and mentored new hires\n• Technologies: Python, Flask, PostgreSQL, AWS, Docker, Kubernetes\n\nSoftware Engineer | StartupXYZ | Austin, TX | 2019 - 2021\n• Built REST APIs for mobile and web applications using Python and Django\n• Collaborated with cross-functional teams to deliver features on tight deadlines\n• Optimized database queries improving application performance by 40%\n• Technologies: Python, Django, MySQL, Redis, Git\n\nJunior Developer | DevShop LLC | Austin, TX | 2018 - 2019\n• Developed frontend components using React and JavaScript\n• Participated in code reviews and followed agile development practices\n• Fixed bugs and implemented small features under senior guidance\n• Technologies: JavaScript, React, Node.js, MongoDB\n\nEDUCATION\nBachelor of Science in Computer Science | University of Texas at Austin | 2018\nGPA: 3.8/4.0\nRelevant Coursework: Data Structures, Algorithms, Database Systems, Software Engineering\n\nSKILLS\nProgramming Languages: Python, JavaScript, Java, Go\nFrameworks: Django, Flask, React, Node.js\nDatabases: PostgreSQL, MySQL, MongoDB, Redis\nCloud & DevOps: AWS, Docker, Kubernetes, Jenkins, Git\nOther: REST APIs, Microservices, Agile Development, Testing\n\nCERTIFICATIONS\n• AWS Certified Solutions Architect - Associate (2022)\n• Docker Certified Associate (2021)\n\nPROJECTS\nE-commerce Platform | Personal Project | 2020\n• Built a full-stack e-commerce application using Python/Django and React\n• Implemented payment processing with Stripe API\n• Deployed on AWS using Docker containers\n• GitHub: github.com/johndoe/ecommerce-platform"
+              },
+              "response": {
+                "success": true,
+                "data": "Based on the provided documents, it is not possible to tailor the resume for the Windcave job posting.\n\nThe job description for the Senior Software Developer role at Windcave has a core, non-negotiable requirement of **\"Proven expertise (5+ years) in programming C++.\"**\n\nThe resume for John Doe does not list C++ as a skill or show any professional experience using it. His experience is primarily with Python, JavaScript, and related technologies. Therefore, the resume lacks the fundamental qualification needed for this specific role and cannot be effectively tailored to match it."
+              },
+              "tokensUsed": null,
+              "cost": 0,
+              "processingTime": 5047
+            },
+            {
+              "timestamp": "2025-10-16T22:40:45.657Z",
+              "endpoint": "/api/questionAndAnswers",
+              "aiProvider": "deepseek-chat",
+              "request": {
+                "prompt": "Answer these employer screening questions professionally and honestly based on the provided resume.\nFor multiple choice questions, select the most appropriate option that matches the candidate's experience.\nFor text questions, provide clear, concise answers (1-2 sentences).\nBe truthful - if the candidate doesn't have a specific qualification, indicate that politely while highlighting related experience.",
+                "jobDetails": "Senior Software Developer\nAbout Windcave:\nFounded in 1999 in New Zealand, Windcave has consistently led the way in the innovation of payment technology. Today, our global footprint extends across 40+ countries, supported by a dedicated team of over 400+ experts. We process billions of transactions annually, providing businesses with a comprehensive payment solution through a single\nprovider.\nOur approach continuously sets new industry benchmarks and reflects our commitment to leading the market with self-developed, cutting-edge technologies. We support a wide range of industries, including retail, finance, hospitality, and more, with operations all over the globe.\nOur Sydney office is seeking a talented Senior Software Developer to join the team.\nWindcave developers deliver:\n24/7 high performing, fault tolerant, scalable server designs\nHighly usable and fast web front ends and APIs\nWorld class data and web security\nTo join the team you will need to demonstrate:\nProven expertise (5+ years) in programming C++\nIdeally experience with one or more of the following:\nDatabases / SQL\nWeb / Internet Technologies\nDistributed Systems.\nBenefits on offer:\nWe value our employees and offer competitive benefits, including:\n·        Competitive salary\n·        Hybrid work (currently following hybrid work model; mandatory 3 days’ work from office Monday, Tuesday, and Friday)\n·        Flexible working hours\n·        Career development and long-term career opportunity\n·        Discounted health insurance (depending upon eligibility)\n·        Diverse, energetic and friendly team environment\nWhy join us?\nAt Windcave, you will have the opportunity to grow, develop, and be part of a company that values your contributions. We are committed to providing:\n·        A supportive and inclusive environment\n·        Career development and learning opportunities\n·        Exciting and challenging projects\n·        On going training and support\nIf you are passionate about payment industry, eager to make an impact and ready for your next challenge, we’d love to hear from you. Apply today and be part of something great!\nWindcave is an Equal Opportunity Employer and committed to building a diverse workforce.",
+                "resumeText": "JOHN DOE\nSoftware Engineer\nEmail: john.doe@email.com | Phone: (555) 123-4567\nLinkedIn: linkedin.com/in/johndoe | GitHub: github.com/johndoe\n\nSUMMARY\nExperienced Software Engineer with 5+ years of experience developing scalable web applications and distributed systems. Proficient in Python, JavaScript, and cloud technologies. Strong background in REST APIs, Docker, and CI/CD pipelines.\n\nEXPERIENCE\n\nSenior Software Engineer | TechCorp Inc. | San Francisco, CA | 2021 - Present\n• Developed and maintained microservices architecture serving 1M+ daily users\n• Implemented CI/CD pipelines using Jenkins and Docker, reducing deployment time by 60%\n• Led a team of 3 junior developers and mentored new hires\n• Technologies: Python, Flask, PostgreSQL, AWS, Docker, Kubernetes\n\nSoftware Engineer | StartupXYZ | Austin, TX | 2019 - 2021\n• Built REST APIs for mobile and web applications using Python and Django\n• Collaborated with cross-functional teams to deliver features on tight deadlines\n• Optimized database queries improving application performance by 40%\n• Technologies: Python, Django, MySQL, Redis, Git\n\nJunior Developer | DevShop LLC | Austin, TX | 2018 - 2019\n• Developed frontend components using React and JavaScript\n• Participated in code reviews and followed agile development practices\n• Fixed bugs and implemented small features under senior guidance\n• Technologies: JavaScript, React, Node.js, MongoDB\n\nEDUCATION\nBachelor of Science in Computer Science | University of Texas at Austin | 2018\nGPA: 3.8/4.0\nRelevant Coursework: Data Structures, Algorithms, Database Systems, Software Engineering\n\nSKILLS\nProgramming Languages: Python, JavaScript, Java, Go\nFrameworks: Django, Flask, React, Node.js\nDatabases: PostgreSQL, MySQL, MongoDB, Redis\nCloud & DevOps: AWS, Docker, Kubernetes, Jenkins, Git\nOther: REST APIs, Microservices, Agile Development, Testing\n\nCERTIFICATIONS\n• AWS Certified Solutions Architect - Associate (2022)\n• Docker Certified Associate (2021)\n\nPROJECTS\nE-commerce Platform | Personal Project | 2020\n• Built a full-stack e-commerce application using Python/Django and React\n• Implemented payment processing with Stripe API\n• Deployed on AWS using Docker containers\n• GitHub: github.com/johndoe/ecommerce-platform",
+                "questions": [
+                  {
+                    "q": "Which of the following statements best describes your right to work in New Zealand?",
+                    "opts": [
+                      "I'm a New Zealand citizen",
+                      "I'm a permanent resident and/or Australian citizen",
+                      "I have a resident visa with no restrictions (eg. 2021)",
+                      "I have a family/partner visa with no restrictions",
+                      "I have a skilled migrant temporary work visa (e.g. AEWV / silver fern visa)",
+                      "I have a graduate temporary work visa (e.g. post study work visa - open)",
+                      "I have a holiday temporary work visa",
+                      "I have a student visa with no restrictions on work hours (e.g. doctoral student)",
+                      "I have a student visa with restrictions on work hours",
+                      "I require sponsorship or a current job offer to work for a new employer (e.g. work-to-residence, skilled migrant resident and essential skills visas)",
+                      "I have a family/partner visa with restrictions"
+                    ]
+                  },
+                  {
+                    "q": "Have you completed a qualification in computer science?",
+                    "opts": [
+                      "Yes, Bachelor Degree",
+                      "Yes, Bachelor Degree (Honours)",
+                      "Yes, Graduate Certificate",
+                      "Yes, Graduate Diploma",
+                      "Yes, Masters Degree",
+                      "Yes, Doctoral Degree",
+                      "I have a qualification in computer science which isn't listed",
+                      "I don't have a qualification in computer science"
+                    ]
+                  },
+                  {
+                    "q": "Do you have a valid work visa with an expiry date of 12mths or more?",
+                    "opts": []
+                  },
+                  {
+                    "q": "As part of our screening process, we will be doing series of checks including Credit/Criminal/Education/Employment/DL checks. Please let us know if you have anything adverse to declare in relation with these checks.",
+                    "opts": []
+                  }
+                ]
+              },
+              "response": {
+                "success": true,
+                "data": "Based on the provided resume, here are the answers to the screening questions:\n\n**Question 1: Which of the following statements best describes your right to work in New Zealand?**\nThe provided documents do not contain any information about the candidate's right to work in New Zealand or visa status.\n\n**Question 2: Have you completed a qualification in computer science?**\n**Yes, Bachelor Degree.** I have a Bachelor of Science in Computer Science from the University of Texas at Austin.\n\n**Question 3: Do you have a valid work visa with an expiry date of 12mths or more?**\nThe provided documents do not contain any information about the candidate's visa status or its expiry date.\n\n**Question 4: As part of our screening process, we will be doing series of checks including Credit/Criminal/Education/Employment/DL checks. Please let us know if you have anything adverse to declare in relation with these checks.**\nBased on the information provided in the resume, I have nothing adverse to declare in relation to these checks."
+              },
+              "tokensUsed": null,
+              "cost": 0,
+              "processingTime": 7633
+            }
+          ],
+          "automationLogs": [],
+          "createdAt": "2025-10-16T22:40:14.311Z",
+          "updatedAt": "2025-10-16T22:40:45.658Z",
+          "tailoredResume": "Based on the provided documents, it is not possible to tailor the resume for the Windcave job posting.\n\nThe job description for the Senior Software Developer role at Windcave has a core, non-negotiable requirement of **\"Proven expertise (5+ years) in programming C++.\"**\n\nThe resume for John Doe does not list C++ as a skill or show any professional experience using it. His experience is primarily with Python, JavaScript, and related technologies. Therefore, the resume lacks the fundamental qualification needed for this specific role and cannot be effectively tailored to match it.",
+          "questionAnswers": [
+            {
+              "question": "Which of the following statements best describes your right to work in New Zealand?",
+              "answer": "Based on the provided resume, here are the answers to the screening questions:\n\n**Question 1: Which of the following statements best describes your right to work in New Zealand?**\nThe provided documents do not contain any information about the candidate's right to work in New Zealand or visa status.\n\n**Question 2: Have you completed a qualification in computer science?**\n**Yes, Bachelor Degree.** I have a Bachelor of Science in Computer Science from the University of Texas at Austin.\n\n**Question 3: Do you have a valid work visa with an expiry date of 12mths or more?**\nThe provided documents do not contain any information about the candidate's visa status or its expiry date.\n\n**Question 4: As part of our screening process, we will be doing series of checks including Credit/Criminal/Education/Employment/DL checks. Please let us know if you have anything adverse to declare in relation with these checks.**\nBased on the information provided in the resume, I have nothing adverse to declare in relation to these checks."
+            },
+            {
+              "question": "Have you completed a qualification in computer science?",
+              "answer": "Based on the provided resume, here are the answers to the screening questions:\n\n**Question 1: Which of the following statements best describes your right to work in New Zealand?**\nThe provided documents do not contain any information about the candidate's right to work in New Zealand or visa status.\n\n**Question 2: Have you completed a qualification in computer science?**\n**Yes, Bachelor Degree.** I have a Bachelor of Science in Computer Science from the University of Texas at Austin.\n\n**Question 3: Do you have a valid work visa with an expiry date of 12mths or more?**\nThe provided documents do not contain any information about the candidate's visa status or its expiry date.\n\n**Question 4: As part of our screening process, we will be doing series of checks including Credit/Criminal/Education/Employment/DL checks. Please let us know if you have anything adverse to declare in relation with these checks.**\nBased on the information provided in the resume, I have nothing adverse to declare in relation to these checks."
+            },
+            {
+              "question": "Do you have a valid work visa with an expiry date of 12mths or more?",
+              "answer": "Based on the provided resume, here are the answers to the screening questions:\n\n**Question 1: Which of the following statements best describes your right to work in New Zealand?**\nThe provided documents do not contain any information about the candidate's right to work in New Zealand or visa status.\n\n**Question 2: Have you completed a qualification in computer science?**\n**Yes, Bachelor Degree.** I have a Bachelor of Science in Computer Science from the University of Texas at Austin.\n\n**Question 3: Do you have a valid work visa with an expiry date of 12mths or more?**\nThe provided documents do not contain any information about the candidate's visa status or its expiry date.\n\n**Question 4: As part of our screening process, we will be doing series of checks including Credit/Criminal/Education/Employment/DL checks. Please let us know if you have anything adverse to declare in relation with these checks.**\nBased on the information provided in the resume, I have nothing adverse to declare in relation to these checks."
+            },
+            {
+              "question": "As part of our screening process, we will be doing series of checks including Credit/Criminal/Education/Employment/DL checks. Please let us know if you have anything adverse to declare in relation with these checks.",
+              "answer": "Based on the provided resume, here are the answers to the screening questions:\n\n**Question 1: Which of the following statements best describes your right to work in New Zealand?**\nThe provided documents do not contain any information about the candidate's right to work in New Zealand or visa status.\n\n**Question 2: Have you completed a qualification in computer science?**\n**Yes, Bachelor Degree.** I have a Bachelor of Science in Computer Science from the University of Texas at Austin.\n\n**Question 3: Do you have a valid work visa with an expiry date of 12mths or more?**\nThe provided documents do not contain any information about the candidate's visa status or its expiry date.\n\n**Question 4: As part of our screening process, we will be doing series of checks including Credit/Criminal/Education/Employment/DL checks. Please let us know if you have anything adverse to declare in relation with these checks.**\nBased on the information provided in the resume, I have nothing adverse to declare in relation to these checks."
+            }
+          ]
+        }
+      },
+      {
+        "_id": "68f17498e9843d08d22a26ff",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "platform": "seek",
+        "platformJobId": "87852915",
+        "title": "Full Stack JavaScript Engineer",
+        "company": "SustainRecruit",
+        "description": "Full Stack Engineer | 6 Month Contract | $900/day\nSydney | Hybrid (2 days in office)\nWe're working with one of Sydney's most forward-thinking digital teams who are building a suite of modern, data-driven web applications used by thousands of customers every day. They're now looking for a\ntrue\nFull Stack Engineer, someone equally confident crafting slick front-end experiences in React as they are building scalable back-end services in Node.js.\nThis is a hands-on role within a high-performing engineering squad that values clean code, autonomy, and solving complex problems the right way.\nWhat you'll be doing\nDesigning and developing full-stack features across React and Node.js.\nBuilding clean, reusable UI components and well-structured APIs.\nWorking closely with DevOps to improve CI/CD pipelines and automate deployments.\nContributing to architectural decisions and helping shape technical direction.\nCollaborating with product and design teams to deliver an exceptional user experience.\nTech environment\nReact, Node.js, TypeScript, Express, GraphQL, PostgreSQL, Docker, AWS (Lambda, ECS), CI/CD (GitHub Actions / Jenkins), Terraform.\nWhat's in it for you\n$900/day contract with likely extensions.\n2 days in a stunning Sydney office (great team culture, genuinely flexible).\nWork with talented engineers solving interesting, large-scale problems.\nMix of Greenfield feature builds and plenty of architectural input.\nJoin a team that values innovation, engineering excellence, and balance.\nIf you love working across the full stack, enjoy ownership, and want to build meaningful software in a modern tech environment, this is worth a look.\nApply now or reach out for a confidential chat.",
+        "status": "pending",
+        "firstSeenAt": "2025-10-16T22:41:28.657Z",
+        "lastUpdatedAt": "2025-10-16T22:41:28.658Z",
+        "application": {
+          "status": "pending",
+          "coverLetter": "Based on the provided documents, here is a compelling and professional cover letter tailored to the job posting.\n\n***\n\n**Subject: Application for Full Stack Engineer Contract Role**\n\nDear SustainRecruit Team,\n\nI am writing with great enthusiasm to express my interest in the Full Stack Engineer contract position you are advertising, which I discovered on Seek. With over five years of experience developing scalable web applications and a proven track record across both front-end and back-end technologies, I am confident I possess the skills and drive to make an immediate impact on your client's high-performing engineering squad.\n\nYour requirement for an engineer proficient in React and Node.js aligns perfectly with my experience. At DevShop LLC, I built frontend components using React and JavaScript, and at StartupXYZ, I developed robust REST APIs for web applications using Python and Django, demonstrating my full-stack capabilities. My recent role as a Senior Software Engineer at TechCorp Inc. involved developing and maintaining a microservices architecture serving over a million users, showcasing my ability to build and scale the kind of data-driven applications your client is creating.\n\nI was particularly drawn to the mention of working with DevOps to improve CI/CD pipelines. At TechCorp, I implemented CI/CD pipelines using Jenkins and Docker, which reduced deployment time by 60%. My proficiency with Docker, AWS, and Jenkins, coupled with my Docker Certified Associate certification, means I can quickly contribute to your client's tech environment, which includes AWS (ECS, Lambda), Docker, and CI/CD tools. Furthermore, my experience with PostgreSQL and my background in optimizing database queries to improve performance by 40% at StartupXYZ will be directly applicable.\n\nThe opportunity to join a team that values clean code, autonomy, and architectural input is highly appealing. I have a strong background in agile development, have led and mentored junior developers, and thrive in collaborative, cross-functional environments. I am eager to bring my skills in modern JavaScript, Node.js, and cloud-native development to help shape the technical direction of your client's projects.\n\nThank you for considering my application. I am very excited about the prospect of contributing to your client's innovative work and am available to discuss how my experience can bring value to your team.\n\nSincerely,\nJohn Doe",
+          "apiCalls": [
+            {
+              "timestamp": "2025-10-16T22:41:28.658Z",
+              "endpoint": "/api/cover_letter",
+              "aiProvider": "deepseek-chat",
+              "request": {
+                "prompt": "Write a compelling, professional cover letter for this Seek job posting.\nHighlight relevant experience and skills that match the job requirements.\nKeep it concise (300-400 words) and personalized to SustainRecruit.\nFocus on demonstrating value and enthusiasm for the role.",
+                "jobDetails": "Full Stack Engineer | 6 Month Contract | $900/day\nSydney | Hybrid (2 days in office)\nWe're working with one of Sydney's most forward-thinking digital teams who are building a suite of modern, data-driven web applications used by thousands of customers every day. They're now looking for a\ntrue\nFull Stack Engineer, someone equally confident crafting slick front-end experiences in React as they are building scalable back-end services in Node.js.\nThis is a hands-on role within a high-performing engineering squad that values clean code, autonomy, and solving complex problems the right way.\nWhat you'll be doing\nDesigning and developing full-stack features across React and Node.js.\nBuilding clean, reusable UI components and well-structured APIs.\nWorking closely with DevOps to improve CI/CD pipelines and automate deployments.\nContributing to architectural decisions and helping shape technical direction.\nCollaborating with product and design teams to deliver an exceptional user experience.\nTech environment\nReact, Node.js, TypeScript, Express, GraphQL, PostgreSQL, Docker, AWS (Lambda, ECS), CI/CD (GitHub Actions / Jenkins), Terraform.\nWhat's in it for you\n$900/day contract with likely extensions.\n2 days in a stunning Sydney office (great team culture, genuinely flexible).\nWork with talented engineers solving interesting, large-scale problems.\nMix of Greenfield feature builds and plenty of architectural input.\nJoin a team that values innovation, engineering excellence, and balance.\nIf you love working across the full stack, enjoy ownership, and want to build meaningful software in a modern tech environment, this is worth a look.\nApply now or reach out for a confidential chat.",
+                "resumeText": "JOHN DOE\nSoftware Engineer\nEmail: john.doe@email.com | Phone: (555) 123-4567\nLinkedIn: linkedin.com/in/johndoe | GitHub: github.com/johndoe\n\nSUMMARY\nExperienced Software Engineer with 5+ years of experience developing scalable web applications and distributed systems. Proficient in Python, JavaScript, and cloud technologies. Strong background in REST APIs, Docker, and CI/CD pipelines.\n\nEXPERIENCE\n\nSenior Software Engineer | TechCorp Inc. | San Francisco, CA | 2021 - Present\n• Developed and maintained microservices architecture serving 1M+ daily users\n• Implemented CI/CD pipelines using Jenkins and Docker, reducing deployment time by 60%\n• Led a team of 3 junior developers and mentored new hires\n• Technologies: Python, Flask, PostgreSQL, AWS, Docker, Kubernetes\n\nSoftware Engineer | StartupXYZ | Austin, TX | 2019 - 2021\n• Built REST APIs for mobile and web applications using Python and Django\n• Collaborated with cross-functional teams to deliver features on tight deadlines\n• Optimized database queries improving application performance by 40%\n• Technologies: Python, Django, MySQL, Redis, Git\n\nJunior Developer | DevShop LLC | Austin, TX | 2018 - 2019\n• Developed frontend components using React and JavaScript\n• Participated in code reviews and followed agile development practices\n• Fixed bugs and implemented small features under senior guidance\n• Technologies: JavaScript, React, Node.js, MongoDB\n\nEDUCATION\nBachelor of Science in Computer Science | University of Texas at Austin | 2018\nGPA: 3.8/4.0\nRelevant Coursework: Data Structures, Algorithms, Database Systems, Software Engineering\n\nSKILLS\nProgramming Languages: Python, JavaScript, Java, Go\nFrameworks: Django, Flask, React, Node.js\nDatabases: PostgreSQL, MySQL, MongoDB, Redis\nCloud & DevOps: AWS, Docker, Kubernetes, Jenkins, Git\nOther: REST APIs, Microservices, Agile Development, Testing\n\nCERTIFICATIONS\n• AWS Certified Solutions Architect - Associate (2022)\n• Docker Certified Associate (2021)\n\nPROJECTS\nE-commerce Platform | Personal Project | 2020\n• Built a full-stack e-commerce application using Python/Django and React\n• Implemented payment processing with Stripe API\n• Deployed on AWS using Docker containers\n• GitHub: github.com/johndoe/ecommerce-platform"
+              },
+              "response": {
+                "success": true,
+                "data": "Based on the provided documents, here is a compelling and professional cover letter tailored to the job posting.\n\n***\n\n**Subject: Application for Full Stack Engineer Contract Role**\n\nDear SustainRecruit Team,\n\nI am writing with great enthusiasm to express my interest in the Full Stack Engineer contract position you are advertising, which I discovered on Seek. With over five years of experience developing scalable web applications and a proven track record across both front-end and back-end technologies, I am confident I possess the skills and drive to make an immediate impact on your client's high-performing engineering squad.\n\nYour requirement for an engineer proficient in React and Node.js aligns perfectly with my experience. At DevShop LLC, I built frontend components using React and JavaScript, and at StartupXYZ, I developed robust REST APIs for web applications using Python and Django, demonstrating my full-stack capabilities. My recent role as a Senior Software Engineer at TechCorp Inc. involved developing and maintaining a microservices architecture serving over a million users, showcasing my ability to build and scale the kind of data-driven applications your client is creating.\n\nI was particularly drawn to the mention of working with DevOps to improve CI/CD pipelines. At TechCorp, I implemented CI/CD pipelines using Jenkins and Docker, which reduced deployment time by 60%. My proficiency with Docker, AWS, and Jenkins, coupled with my Docker Certified Associate certification, means I can quickly contribute to your client's tech environment, which includes AWS (ECS, Lambda), Docker, and CI/CD tools. Furthermore, my experience with PostgreSQL and my background in optimizing database queries to improve performance by 40% at StartupXYZ will be directly applicable.\n\nThe opportunity to join a team that values clean code, autonomy, and architectural input is highly appealing. I have a strong background in agile development, have led and mentored junior developers, and thrive in collaborative, cross-functional environments. I am eager to bring my skills in modern JavaScript, Node.js, and cloud-native development to help shape the technical direction of your client's projects.\n\nThank you for considering my application. I am very excited about the prospect of contributing to your client's innovative work and am available to discuss how my experience can bring value to your team.\n\nSincerely,\nJohn Doe"
+              },
+              "tokensUsed": null,
+              "cost": 0,
+              "processingTime": 16013
+            }
+          ],
+          "automationLogs": [],
+          "createdAt": "2025-10-16T22:41:28.658Z",
+          "updatedAt": "2025-10-16T22:41:28.658Z"
+        }
+      }
+    ],
+    "refresh_tokens": [
+      {
+        "_id": "68eecb60ea65555d0f65d5ee",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "tokenFamily": "1760480096160-esamwjxak",
+        "jti": "1760480096160-g0imdqvmf",
+        "isRevoked": false,
+        "expiresAt": "2025-11-13T22:14:56.000Z",
+        "createdAt": "2025-10-14T22:14:56.160Z",
+        "lastUsedAt": "2025-10-14T22:14:56.160Z",
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0",
+        "ipAddress": "127.0.0.1"
+      },
+      {
+        "_id": "68eecb87ea65555d0f65d5ef",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "tokenFamily": "1760480135454-b6sm9jzje",
+        "jti": "1760480135454-eui0yoqe2",
+        "isRevoked": false,
+        "expiresAt": "2025-11-13T22:15:35.000Z",
+        "createdAt": "2025-10-14T22:15:35.454Z",
+        "lastUsedAt": "2025-10-14T22:15:35.454Z",
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0",
+        "ipAddress": "127.0.0.1"
+      },
+      {
+        "_id": "68eecc85ea65555d0f65d5f1",
+        "userId": "68eecc84ea65555d0f65d5f0",
+        "tokenFamily": "1760480389046-c01leadhv",
+        "jti": "1760480389046-k0qte1xfg",
+        "isRevoked": true,
+        "expiresAt": "2025-11-13T22:19:49.000Z",
+        "createdAt": "2025-10-14T22:19:49.046Z",
+        "lastUsedAt": "2025-10-14T22:19:49.046Z",
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0",
+        "ipAddress": "127.0.0.1"
+      },
+      {
+        "_id": "68eedb927d1744a4714ca0fe",
+        "userId": "68eecc84ea65555d0f65d5f0",
+        "tokenFamily": "1760480389046-c01leadhv",
+        "jti": "1760484242953-fktsm25ez",
+        "isRevoked": false,
+        "expiresAt": "2025-11-13T23:24:02.000Z",
+        "createdAt": "2025-10-14T23:24:02.953Z",
+        "lastUsedAt": "2025-10-14T23:24:02.953Z",
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0",
+        "ipAddress": "127.0.0.1"
+      },
+      {
+        "_id": "68eedba97d1744a4714ca0ff",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "tokenFamily": "1760484265492-u7kt0ftyg",
+        "jti": "1760484265492-8u5invhgk",
+        "isRevoked": true,
+        "expiresAt": "2025-11-13T23:24:25.000Z",
+        "createdAt": "2025-10-14T23:24:25.492Z",
+        "lastUsedAt": "2025-10-14T23:24:25.492Z",
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0",
+        "ipAddress": "127.0.0.1"
+      },
+      {
+        "_id": "68eee126097c884bf4182efc",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "tokenFamily": "1760484265492-u7kt0ftyg",
+        "jti": "1760485670723-e3ee8x5g7",
+        "isRevoked": false,
+        "expiresAt": "2025-11-13T23:47:50.000Z",
+        "createdAt": "2025-10-14T23:47:50.723Z",
+        "lastUsedAt": "2025-10-14T23:47:50.723Z",
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64; rv:143.0) Gecko/20100101 Firefox/143.0",
+        "ipAddress": "127.0.0.1"
+      },
+      {
+        "_id": "68f17441e9843d08d22a26fb",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "tokenFamily": "1760654401284-v4qudro0w",
+        "jti": "1760654401284-gny7m447h",
+        "isRevoked": false,
+        "expiresAt": "2025-11-15T22:40:01.000Z",
+        "createdAt": "2025-10-16T22:40:01.284Z",
+        "lastUsedAt": "2025-10-16T22:40:01.284Z",
+        "userAgent": "Bun/1.2.21",
+        "ipAddress": "127.0.0.1"
+      }
+    ],
+    "usage": [
+      {
+        "_id": "68ec0d990cde8880d251f2d0",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/cover_letter",
+        "aiProvider": "openai",
+        "tokensUsed": 2476,
+        "cost": 0.0426196633524289,
+        "success": true,
+        "timestamp": "2025-10-12T20:20:41.632Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b2",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2d1",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/resume",
+        "aiProvider": "anthropic",
+        "tokensUsed": 947,
+        "cost": 0.09131505257252713,
+        "success": true,
+        "timestamp": "2025-10-12T18:20:41.632Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b3",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2d2",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/questionAndAnswers",
+        "aiProvider": "openai",
+        "tokensUsed": 2050,
+        "cost": 0.04798052606782172,
+        "success": true,
+        "timestamp": "2025-10-12T16:20:41.632Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b4",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2d3",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/jobs/hierarchy",
+        "aiProvider": "anthropic",
+        "tokensUsed": 1541,
+        "cost": 0.10983242465048756,
+        "success": true,
+        "timestamp": "2025-10-12T14:20:41.632Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b5",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2d4",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/cover_letter",
+        "aiProvider": "openai",
+        "tokensUsed": 1239,
+        "cost": 0.10445971295623788,
+        "success": true,
+        "timestamp": "2025-10-12T12:20:41.632Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b6",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2d5",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/resume",
+        "aiProvider": "anthropic",
+        "tokensUsed": 1844,
+        "cost": 0.01605782737451568,
+        "success": false,
+        "timestamp": "2025-10-12T10:20:41.632Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b7",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2d6",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/questionAndAnswers",
+        "aiProvider": "openai",
+        "tokensUsed": 1826,
+        "cost": 0.027225140591784706,
+        "success": true,
+        "timestamp": "2025-10-12T08:20:41.632Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b8",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2d7",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/jobs/hierarchy",
+        "aiProvider": "anthropic",
+        "tokensUsed": 2101,
+        "cost": 0.031480131799806216,
+        "success": true,
+        "timestamp": "2025-10-12T06:20:41.632Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b9",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2d8",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/cover_letter",
+        "aiProvider": "openai",
+        "tokensUsed": 967,
+        "cost": 0.020091991171954496,
+        "success": true,
+        "timestamp": "2025-10-12T04:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2ba",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2d9",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/resume",
+        "aiProvider": "anthropic",
+        "tokensUsed": 1743,
+        "cost": 0.010026374207790059,
+        "success": true,
+        "timestamp": "2025-10-12T02:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2bb",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2da",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/questionAndAnswers",
+        "aiProvider": "openai",
+        "tokensUsed": 1298,
+        "cost": 0.09121284512101063,
+        "success": true,
+        "timestamp": "2025-10-12T00:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2bc",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2db",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/jobs/hierarchy",
+        "aiProvider": "anthropic",
+        "tokensUsed": 1637,
+        "cost": 0.013373567857539907,
+        "success": true,
+        "timestamp": "2025-10-11T22:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2bd",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2dc",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/cover_letter",
+        "aiProvider": "openai",
+        "tokensUsed": 2080,
+        "cost": 0.020799944569608403,
+        "success": true,
+        "timestamp": "2025-10-11T20:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2be",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2dd",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/resume",
+        "aiProvider": "anthropic",
+        "tokensUsed": 714,
+        "cost": 0.06198541293746113,
+        "success": true,
+        "timestamp": "2025-10-11T18:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2bf",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2de",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/questionAndAnswers",
+        "aiProvider": "openai",
+        "tokensUsed": 1603,
+        "cost": 0.01639891880201029,
+        "success": true,
+        "timestamp": "2025-10-11T16:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c0",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2df",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/jobs/hierarchy",
+        "aiProvider": "anthropic",
+        "tokensUsed": 1491,
+        "cost": 0.018102563315361545,
+        "success": true,
+        "timestamp": "2025-10-11T14:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c1",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2e0",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/cover_letter",
+        "aiProvider": "openai",
+        "tokensUsed": 1719,
+        "cost": 0.05017292539622097,
+        "success": true,
+        "timestamp": "2025-10-11T12:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c2",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2e1",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/resume",
+        "aiProvider": "anthropic",
+        "tokensUsed": 687,
+        "cost": 0.07858753292741202,
+        "success": true,
+        "timestamp": "2025-10-11T10:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c3",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2e2",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/questionAndAnswers",
+        "aiProvider": "openai",
+        "tokensUsed": 688,
+        "cost": 0.08820601746634428,
+        "success": true,
+        "timestamp": "2025-10-11T08:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c4",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2e3",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/jobs/hierarchy",
+        "aiProvider": "anthropic",
+        "tokensUsed": 2326,
+        "cost": 0.040462375087838245,
+        "success": true,
+        "timestamp": "2025-10-11T06:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c5",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2e4",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/cover_letter",
+        "aiProvider": "openai",
+        "tokensUsed": 1023,
+        "cost": 0.024356458885044,
+        "success": true,
+        "timestamp": "2025-10-11T04:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c6",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2e5",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/resume",
+        "aiProvider": "anthropic",
+        "tokensUsed": 1000,
+        "cost": 0.03398427926810125,
+        "success": false,
+        "timestamp": "2025-10-11T02:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c7",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2e6",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/questionAndAnswers",
+        "aiProvider": "openai",
+        "tokensUsed": 1582,
+        "cost": 0.04170351700668546,
+        "success": true,
+        "timestamp": "2025-10-11T00:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c8",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2e7",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/jobs/hierarchy",
+        "aiProvider": "anthropic",
+        "tokensUsed": 860,
+        "cost": 0.05731601180941028,
+        "success": true,
+        "timestamp": "2025-10-10T22:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c9",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2e8",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/cover_letter",
+        "aiProvider": "openai",
+        "tokensUsed": 1313,
+        "cost": 0.10194818082267214,
+        "success": true,
+        "timestamp": "2025-10-10T20:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2ca",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2e9",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/resume",
+        "aiProvider": "anthropic",
+        "tokensUsed": 1685,
+        "cost": 0.04586308991183667,
+        "success": true,
+        "timestamp": "2025-10-10T18:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2cb",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2ea",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/questionAndAnswers",
+        "aiProvider": "openai",
+        "tokensUsed": 751,
+        "cost": 0.036241131065215905,
+        "success": true,
+        "timestamp": "2025-10-10T16:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2cc",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2eb",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/jobs/hierarchy",
+        "aiProvider": "anthropic",
+        "tokensUsed": 2115,
+        "cost": 0.04533974248825278,
+        "success": true,
+        "timestamp": "2025-10-10T14:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2cd",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2ec",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/cover_letter",
+        "aiProvider": "openai",
+        "tokensUsed": 1789,
+        "cost": 0.1011214643734163,
+        "success": true,
+        "timestamp": "2025-10-10T12:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2ce",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2ed",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/resume",
+        "aiProvider": "anthropic",
+        "tokensUsed": 2389,
+        "cost": 0.037863603894352144,
+        "success": true,
+        "timestamp": "2025-10-10T10:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2cf",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2ee",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/questionAndAnswers",
+        "aiProvider": "openai",
+        "tokensUsed": 749,
+        "cost": 0.06328642434303657,
+        "success": true,
+        "timestamp": "2025-10-10T08:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b2",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2ef",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/jobs/hierarchy",
+        "aiProvider": "anthropic",
+        "tokensUsed": 1397,
+        "cost": 0.03122833569966263,
+        "success": true,
+        "timestamp": "2025-10-10T06:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b3",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2f0",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/cover_letter",
+        "aiProvider": "openai",
+        "tokensUsed": 596,
+        "cost": 0.05000181289692376,
+        "success": true,
+        "timestamp": "2025-10-10T04:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b4",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2f1",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/resume",
+        "aiProvider": "anthropic",
+        "tokensUsed": 2199,
+        "cost": 0.059764314358059,
+        "success": true,
+        "timestamp": "2025-10-10T02:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b5",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2f2",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/questionAndAnswers",
+        "aiProvider": "openai",
+        "tokensUsed": 942,
+        "cost": 0.0804953443242754,
+        "success": true,
+        "timestamp": "2025-10-10T00:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b6",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2f3",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/jobs/hierarchy",
+        "aiProvider": "anthropic",
+        "tokensUsed": 1254,
+        "cost": 0.041757565575302164,
+        "success": true,
+        "timestamp": "2025-10-09T22:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b7",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2f4",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/cover_letter",
+        "aiProvider": "openai",
+        "tokensUsed": 1540,
+        "cost": 0.0892484984303171,
+        "success": true,
+        "timestamp": "2025-10-09T20:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b8",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2f5",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/resume",
+        "aiProvider": "anthropic",
+        "tokensUsed": 1492,
+        "cost": 0.01113610284234622,
+        "success": true,
+        "timestamp": "2025-10-09T18:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2b9",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2f6",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/questionAndAnswers",
+        "aiProvider": "openai",
+        "tokensUsed": 1555,
+        "cost": 0.10899787809793332,
+        "success": true,
+        "timestamp": "2025-10-09T16:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2ba",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2f7",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/jobs/hierarchy",
+        "aiProvider": "anthropic",
+        "tokensUsed": 2301,
+        "cost": 0.10828498689604198,
+        "success": true,
+        "timestamp": "2025-10-09T14:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2bb",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2f8",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/cover_letter",
+        "aiProvider": "openai",
+        "tokensUsed": 1682,
+        "cost": 0.04809043578184462,
+        "success": true,
+        "timestamp": "2025-10-09T12:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2bc",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2f9",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/resume",
+        "aiProvider": "anthropic",
+        "tokensUsed": 1799,
+        "cost": 0.014087296378744498,
+        "success": true,
+        "timestamp": "2025-10-09T10:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2bd",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2fa",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/questionAndAnswers",
+        "aiProvider": "openai",
+        "tokensUsed": 909,
+        "cost": 0.029090726167469723,
+        "success": true,
+        "timestamp": "2025-10-09T08:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2be",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2fb",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/jobs/hierarchy",
+        "aiProvider": "anthropic",
+        "tokensUsed": 1867,
+        "cost": 0.10703923914755528,
+        "success": true,
+        "timestamp": "2025-10-09T06:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2bf",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2fc",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/cover_letter",
+        "aiProvider": "openai",
+        "tokensUsed": 1244,
+        "cost": 0.10128064431398626,
+        "success": true,
+        "timestamp": "2025-10-09T04:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c0",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2fd",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/resume",
+        "aiProvider": "anthropic",
+        "tokensUsed": 2128,
+        "cost": 0.06135399904844451,
+        "success": false,
+        "timestamp": "2025-10-09T02:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c1",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2fe",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/questionAndAnswers",
+        "aiProvider": "openai",
+        "tokensUsed": 1921,
+        "cost": 0.09081933786049051,
+        "success": true,
+        "timestamp": "2025-10-09T00:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c2",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2ff",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/jobs/hierarchy",
+        "aiProvider": "anthropic",
+        "tokensUsed": 2065,
+        "cost": 0.015147243545675041,
+        "success": true,
+        "timestamp": "2025-10-08T22:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c3",
+          "platform": "indeed"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f300",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "endpoint": "/api/cover_letter",
+        "aiProvider": "openai",
+        "tokensUsed": 807,
+        "cost": 0.06340895001107198,
+        "success": true,
+        "timestamp": "2025-10-08T20:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c4",
+          "platform": "seek"
+        }
+      },
+      {
+        "_id": "68ec0d990cde8880d251f301",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "endpoint": "/api/resume",
+        "aiProvider": "anthropic",
+        "tokensUsed": 630,
+        "cost": 0.06274769656943784,
+        "success": true,
+        "timestamp": "2025-10-08T18:20:41.633Z",
+        "metadata": {
+          "jobId": "68ec0d990cde8880d251f2c5",
+          "platform": "linkedin"
+        }
+      },
+      {
+        "_id": "68f1744ae9843d08d22a26fc",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "endpoint": "cover_letter",
+        "jobId": "seek_87924796",
+        "aiProvider": "deepseek-chat",
+        "tokensUsed": 0,
+        "costUsd": 0,
+        "success": true,
+        "metadata": {
+          "processingTime": 8438,
+          "model": "deepseek-chat"
+        },
+        "timestamp": "2025-10-16T22:40:10.923Z"
+      },
+      {
+        "_id": "68f17498e9843d08d22a26fe",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "endpoint": "cover_letter",
+        "jobId": "seek_87852915",
+        "aiProvider": "deepseek-chat",
+        "tokensUsed": 0,
+        "costUsd": 0,
+        "success": true,
+        "metadata": {
+          "processingTime": 16013,
+          "model": "deepseek-chat"
+        },
+        "timestamp": "2025-10-16T22:41:28.655Z"
+      }
+    ],
+    "api_keys": [
+      {
+        "_id": "68ec0d990cde8880d251f2af",
+        "userId": "68ec0d990cde8880d251f2aa",
+        "keyHash": "da293167a8ac20908850cdf69818ae6632544d476799292cf5397f185ecd2880",
+        "keyPrefix": "sk_575f0001a",
+        "name": "Admin API Key",
+        "scopes": [
+          "admin",
+          "cover_letter",
+          "resume",
+          "questionAndAnswers",
+          "upload",
+          "jobs",
+          "files:read",
+          "files:write"
+        ],
+        "isActive": true,
+        "createdAt": "2024-01-15T00:00:00.000Z",
+        "lastUsed": "2025-10-12T20:20:41.622Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2b0",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "keyHash": "cf7625d1401f0e8b88445c5a7d5b51846f5d0a36e780f68480abfc034fde3e07",
+        "keyPrefix": "sk_e0388a794",
+        "name": "Premium User Key",
+        "scopes": [
+          "cover_letter",
+          "resume",
+          "questionAndAnswers",
+          "files:read"
+        ],
+        "isActive": true,
+        "createdAt": "2024-02-20T00:00:00.000Z",
+        "lastUsed": "2025-10-12T19:20:41.622Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2b1",
+        "userId": "68ec0d990cde8880d251f2ac",
+        "keyHash": "bdbdac0506e6b0f59082a2ff0a8e62b3bee3e86934ffbb30681330007819b201",
+        "keyPrefix": "sk_b12e45490",
+        "name": "Free User Key",
+        "scopes": [
+          "cover_letter",
+          "files:read"
+        ],
+        "isActive": true,
+        "createdAt": "2024-03-10T00:00:00.000Z",
+        "lastUsed": "2025-10-11T20:20:41.622Z"
+      }
+    ],
+    "rate_limits": [
+      {
+        "_id": "68eeaf6907fe91b5dacefc9e",
+        "identifierType": "user",
+        "identifier": "68ec0f98ed6e56a3da76d973",
+        "lastReset": "2025-10-14T20:15:37.201Z",
+        "limit": 1000,
+        "requestCount": 5,
+        "windowEnd": "2025-10-14T21:15:37.201Z",
+        "windowStart": "2025-10-14T20:15:37.201Z"
+      },
+      {
+        "_id": "68f1744224a6f855466536e3",
+        "identifierType": "user",
+        "identifier": "68ec0f98ed6e56a3da76d973",
+        "lastReset": "2025-10-16T22:40:02.472Z",
+        "limit": 1000,
+        "requestCount": 4,
+        "windowEnd": "2025-10-16T23:40:02.472Z",
+        "windowStart": "2025-10-16T22:40:02.472Z"
+      }
+    ],
+    "users": [
+      {
+        "_id": "68ec0d990cde8880d251f2ab",
+        "email": "premium@example.com",
+        "googleId": "google_36394495b8f14ca7b68317f397ad1e4b",
+        "name": "Premium User",
+        "picture": "https://ui-avatars.com/api/?name=Premium+User",
+        "userType": "premium",
+        "isPaid": true,
+        "apiPermissions": {
+          "cover_letter": true,
+          "resume": true,
+          "questionAndAnswers": true,
+          "upload": true,
+          "jobs": true
+        },
+        "platforms": [
+          {
+            "platform": "seek",
+            "credentials": {
+              "encrypted_data": "encrypted_seek_creds"
+            },
+            "isActive": true,
+            "lastSync": "2025-10-12T19:20:41.038Z",
+            "metadata": {
+              "totalJobs": 28
+            }
+          }
+        ],
+        "preferences": {
+          "notifications": true,
+          "autoApply": true,
+          "preferredAIProvider": "anthropic"
+        },
+        "createdAt": "2024-02-20T00:00:00.000Z",
+        "lastLogin": "2025-10-11T20:20:41.038Z",
+        "updatedAt": "2025-10-12T20:20:41.038Z"
+      },
+      {
+        "_id": "68ec0d990cde8880d251f2ac",
+        "email": "free@example.com",
+        "googleId": "google_b918eeefc29bed895ef0a425793d58e9",
+        "name": "Free User",
+        "picture": "https://ui-avatars.com/api/?name=Free+User",
+        "userType": "freetier",
+        "isPaid": false,
+        "apiPermissions": {
+          "cover_letter": true,
+          "resume": false,
+          "questionAndAnswers": true,
+          "upload": false,
+          "jobs": true
+        },
+        "platforms": [],
+        "preferences": {
+          "notifications": false,
+          "autoApply": false,
+          "preferredAIProvider": "openai"
+        },
+        "createdAt": "2024-03-10T00:00:00.000Z",
+        "lastLogin": "2025-10-10T20:20:41.038Z",
+        "updatedAt": "2025-10-12T20:20:41.038Z"
+      },
+      {
+        "_id": "68ec0f98ed6e56a3da76d973",
+        "email": "puskarwagle17@gmail.com",
+        "googleId": "107411674893141862021",
+        "name": "Puskar wagle",
+        "picture": "https://lh3.googleusercontent.com/a/ACg8ocLTulfTI9YgWeQfnpQANsMhOEwycZG42pLBDUytx4DxQd9V3X7TZg=s96-c",
+        "userType": "admin",
+        "isPaid": true,
+        "apiPermissions": {
+          "cover_letter": true,
+          "resume": true,
+          "questionAndAnswers": true,
+          "upload": true,
+          "jobs": true
+        },
+        "createdAt": "2025-10-12T20:29:12.635Z",
+        "lastLogin": "2025-10-17T08:43:56.858Z",
+        "password": "$2b$10$8tlQWjg5KGXqL35Ef4SCE.rRI4SXO47YIgt/P0LEwg0QgMUy7vg1u"
+      },
+      {
+        "_id": "68eecc84ea65555d0f65d5f0",
+        "email": "achaulagain123@gmail.com",
+        "googleId": "114208302882059729285",
+        "name": "Amit Chaulagain",
+        "picture": "https://lh3.googleusercontent.com/a/ACg8ocKQA7aD5BoZZ-b5U_33YmBUwu9PWwcFOM5BeWuO3oMJW0UY6w=s96-c",
+        "userType": "admin",
+        "isPaid": true,
+        "apiPermissions": {
+          "cover_letter": true,
+          "resume": true,
+          "questionAndAnswers": true,
+          "upload": true,
+          "jobs": true
+        },
+        "createdAt": "2025-10-14T22:19:48.436Z",
+        "lastLogin": "2025-10-14T22:19:48.436Z"
+      },
+      {
+        "_id": "68ef5dd3c77f1c95b2a91b7a",
+        "email": "test@example.com",
+        "password": "$2b$10$.FcUrqrTS1fGkN1fr8uZxuOxxq1YK17ylXkiENpd6aiNA9hY5qIaa",
+        "name": "Test User",
+        "userType": "freetier",
+        "isPaid": false,
+        "apiPermissions": {
+          "cover_letter": true,
+          "resume": false,
+          "questionAndAnswers": false,
+          "upload": true,
+          "jobs": true
+        },
+        "createdAt": "2025-10-15T08:39:47.158Z",
+        "lastLogin": "2025-10-15T09:08:22.734Z"
+      },
+      {
+        "_id": "68ef7b5f48bbec9c2ad3d892",
+        "email": "sakina@lagyo.kaam",
+        "password": "$2b$10$vbNxui.dbXj6efzW5aoMMuzgjoGgHihO5FA1pTW3XGiKKDNwLQQfa",
+        "name": "sakina@lagyo.kaam",
+        "userType": "freetier",
+        "isPaid": false,
+        "apiPermissions": {
+          "cover_letter": true,
+          "resume": false,
+          "questionAndAnswers": false,
+          "upload": true,
+          "jobs": true
+        },
+        "createdAt": "2025-10-15T10:45:51.273Z",
+        "lastLogin": "2025-10-15T10:45:51.273Z"
+      }
+    ],
+    "sessions": [
+      {
+        "_id": "68ec0d990cde8880d251f2ae",
+        "userId": "68ec0d990cde8880d251f2ab",
+        "token": "session_41ebc875d94ba8acc5814a6b72fd490349161093c893709b181cd739a4f6bd8a",
+        "createdAt": "2025-10-11T20:20:41.619Z",
+        "expiresAt": "2025-10-18T20:20:41.619Z"
+      },
+      {
+        "_id": "68f141ce9ccfa5f233aee348",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "token": "8eb7fc0bab53cf893e08df0f5b47ff246a43e710dc64d3a06bad3606110cca2a",
+        "expiresAt": "2025-10-17T19:04:46.953Z",
+        "createdAt": "2025-10-16T19:04:46.953Z"
+      },
+      {
+        "_id": "68f145ef9ccfa5f233aee349",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "token": "76bd2e4891dd795c576e6b8a3968eeef8de71fb2f01bed26168b3a1fe067f5de",
+        "expiresAt": "2025-10-17T19:22:23.093Z",
+        "createdAt": "2025-10-16T19:22:23.093Z"
+      },
+      {
+        "_id": "68f146229ccfa5f233aee34a",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "token": "90996403230dd46f4cc63994d04480358afc16bc0130ae9a40d927cf33780905",
+        "expiresAt": "2025-10-17T19:23:14.516Z",
+        "createdAt": "2025-10-16T19:23:14.516Z"
+      },
+      {
+        "_id": "68f147a79ccfa5f233aee34b",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "token": "7669690b56fafc62685f7ee40fd0934b27622cc32c6abac278419f7edb0519b3",
+        "expiresAt": "2025-10-17T19:29:43.006Z",
+        "createdAt": "2025-10-16T19:29:43.006Z"
+      },
+      {
+        "_id": "68f147b79ccfa5f233aee34c",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "token": "123dd119cd1770c946dbdd4bd4935be39e224a0a407d970f2d61ae17fab9cbfd",
+        "expiresAt": "2025-10-17T19:29:59.983Z",
+        "createdAt": "2025-10-16T19:29:59.983Z"
+      },
+      {
+        "_id": "68f148689ccfa5f233aee34d",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "token": "af87994e69ecafa0465d47a2ce56a265de6fbcbe0132c41b33acba2329db84d9",
+        "expiresAt": "2025-10-17T19:32:56.339Z",
+        "createdAt": "2025-10-16T19:32:56.339Z"
+      },
+      {
+        "_id": "68f149809ccfa5f233aee34e",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "token": "7af5f000be66c49b7b41ad71e9023e6a8859d99f5df2e4342b332c570ce6b8c5",
+        "expiresAt": "2025-10-17T19:37:36.376Z",
+        "createdAt": "2025-10-16T19:37:36.376Z"
+      },
+      {
+        "_id": "68f149eb9ccfa5f233aee34f",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "token": "16d1a80a1b33ca9fe71a5eda21cdcba9b1a2817a5f01f457d99d13d48e0ac5f6",
+        "expiresAt": "2025-10-17T19:39:23.465Z",
+        "createdAt": "2025-10-16T19:39:23.465Z"
+      },
+      {
+        "_id": "68f16d24e9843d08d22a26fa",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "token": "fa549f31017ce992641d4516b9cfa28371d15ec08196601370fc972f6338774c",
+        "expiresAt": "2025-10-17T22:09:40.122Z",
+        "createdAt": "2025-10-16T22:09:40.122Z"
+      },
+      {
+        "_id": "68f201cc474a5b2e917443a9",
+        "userId": "68ec0f98ed6e56a3da76d973",
+        "token": "5a44b438f16cdae7b567afb8befedd321103329391ced8630274ddfa60377b42",
+        "expiresAt": "2025-10-18T08:43:56.869Z",
+        "createdAt": "2025-10-17T08:43:56.870Z"
+      }
+    ]
+  }
+}

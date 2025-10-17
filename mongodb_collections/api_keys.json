@@ -1,0 +1,52 @@
+[
+  {
+    "_id": "68ec0d990cde8880d251f2af",
+    "userId": "68ec0d990cde8880d251f2aa",
+    "keyHash": "da293167a8ac20908850cdf69818ae6632544d476799292cf5397f185ecd2880",
+    "keyPrefix": "sk_575f0001a",
+    "name": "Admin API Key",
+    "scopes": [
+      "admin",
+      "cover_letter",
+      "resume",
+      "questionAndAnswers",
+      "upload",
+      "jobs",
+      "files:read",
+      "files:write"
+    ],
+    "isActive": true,
+    "createdAt": "2024-01-15T00:00:00.000Z",
+    "lastUsed": "2025-10-12T20:20:41.622Z"
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2b0",
+    "userId": "68ec0d990cde8880d251f2ab",
+    "keyHash": "cf7625d1401f0e8b88445c5a7d5b51846f5d0a36e780f68480abfc034fde3e07",
+    "keyPrefix": "sk_e0388a794",
+    "name": "Premium User Key",
+    "scopes": [
+      "cover_letter",
+      "resume",
+      "questionAndAnswers",
+      "files:read"
+    ],
+    "isActive": true,
+    "createdAt": "2024-02-20T00:00:00.000Z",
+    "lastUsed": "2025-10-12T19:20:41.622Z"
+  },
+  {
+    "_id": "68ec0d990cde8880d251f2b1",
+    "userId": "68ec0d990cde8880d251f2ac",
+    "keyHash": "bdbdac0506e6b0f59082a2ff0a8e62b3bee3e86934ffbb30681330007819b201",
+    "keyPrefix": "sk_b12e45490",
+    "name": "Free User Key",
+    "scopes": [
+      "cover_letter",
+      "files:read"
+    ],
+    "isActive": true,
+    "createdAt": "2024-03-10T00:00:00.000Z",
+    "lastUsed": "2025-10-11T20:20:41.622Z"
+  }
+]
