@@ -2,10 +2,11 @@
 export interface ProviderConfig {
   id: string;
   name: string;
-  type: 'claude' | 'deepseek' | 'gemini';
-  apiKey: string;
+  type: 'claude' | 'deepseek' | 'gemini' | 'ollama';
+  apiKey?: string;
   model: string;
   enabled: boolean;
+  baseUrl?: string; // For Ollama and other local providers
 }
 
 export interface QueryRequest {

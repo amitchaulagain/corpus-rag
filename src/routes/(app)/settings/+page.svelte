@@ -56,11 +56,12 @@
     if (type.includes('claude')) return '🟣';
     if (type.includes('deepseek')) return '🔵';
     if (type.includes('gemini')) return '🟢';
+    if (type === 'ollama') return '🦙';
     return '🤖';
   }
 </script>
 
-<main class="container mx-auto max-w-5xl p-6">
+<main class="container mx-auto max-w-7xl p-6">
   <header class="mb-8">
     <h1 class="text-4xl font-bold mb-4 text-primary">⚙️ AI Provider Settings</h1>
     <p class="text-base-content/70">Manage which AI providers are active for search, cover letters, and other features</p>
@@ -101,7 +102,9 @@
               </div>
               <div class="flex justify-between text-sm">
                 <span class="opacity-70">API Key:</span>
-                {#if provider.hasApiKey}
+                {#if provider.type === 'ollama'}
+                  <span class="badge badge-info badge-sm">Local (No Key)</span>
+                {:else if provider.hasApiKey}
                   <span class="badge badge-success badge-sm">✓ Configured</span>
                 {:else}
                   <span class="badge badge-error badge-sm">✗ Missing</span>
@@ -109,7 +112,7 @@
               </div>
               <div class="flex justify-between text-sm">
                 <span class="opacity-70">Status:</span>
-                {#if !provider.hasApiKey}
+                {#if !provider.hasApiKey && provider.type !== 'ollama'}
                   <span class="badge badge-warning badge-sm">No API Key</span>
                 {:else if provider.enabled}
                   <span class="badge badge-success badge-sm">Active</span>
@@ -119,9 +122,13 @@
               </div>
             </div>
 
-            {#if !provider.hasApiKey}
+            {#if !provider.hasApiKey && provider.type !== 'ollama'}
               <div class="alert alert-warning mt-4 text-xs">
                 <span>⚠️ Configure API key in <code>src/config/providers.json</code></span>
+              </div>
+            {:else if provider.type === 'ollama'}
+              <div class="alert alert-info mt-4 text-xs">
+                <span>💡 Runs locally via Ollama (http://localhost:11434)</span>
               </div>
             {/if}
           </div>

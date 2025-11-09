@@ -16,7 +16,7 @@ export const GET: RequestHandler = async () => {
       type: p.type,
       model: p.model,
       enabled: p.enabled,
-      hasApiKey: !!p.apiKey
+      hasApiKey: !!p.apiKey || p.type === 'ollama' // Ollama doesn't need API key
     }));
 
     return json({ success: true, providers: safe });

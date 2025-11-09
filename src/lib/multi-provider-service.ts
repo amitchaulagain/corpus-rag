@@ -3,6 +3,7 @@ import { ProviderConfigManager } from './provider-config';
 import { ClaudeProvider } from './providers/claude-provider';
 import { DeepSeekProvider } from './providers/deepseek-provider';
 import { GeminiProvider } from './providers/gemini-provider';
+import { OllamaProvider } from './providers/ollama-provider';
 import type { BaseAIProvider } from './providers/base-provider';
 import type { QueryResponse } from './providers/base-provider';
 
@@ -55,6 +56,55 @@ export class MultiProviderService {
     }
 
     return resultMap;
+  }
+
+  async queryAllStreaming(
+    userId: string,
+    question: string,
+    onResult: (providerId: string, result: QueryResponse) => void
+  ): Promise<void> {
+    // Get all user documents
+    const documentsText = await this.getAllUserDocuments(userId);
+
+    // Build prompt - work even without documents
+    const prompt = documentsText && documentsText.trim().length > 0
+      ? this.buildPrompt(documentsText, question)
+      : `Answer this question directly: ${question}`;
+
+    // Get enabled providers
+    const configs = await this.configManager.getEnabledProviders();
+
+    if (configs.length === 0) {
+      onResult('error', {
+        success: false,
+        error: 'No AI providers configured',
+        metadata: { model: 'unknown', processingTime: 0 }
+      });
+      return;
+    }
+
+    // Query all providers and stream results as they complete
+    await Promise.all(
+      configs.map(async (config) => {
+        try {
+          // Add timeout wrapper for each provider query (10 minutes)
+          const timeoutPromise = new Promise<never>((_, reject) => {
+            setTimeout(() => reject(new Error('Query timeout after 10 minutes')), 600000);
+          });
+
+          const queryPromise = this.createProvider(config).query({ prompt });
+
+          const response = await Promise.race([queryPromise, timeoutPromise]);
+          onResult(config.id, response);
+        } catch (error) {
+          onResult(config.id, {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error',
+            metadata: { model: config.model, processingTime: 0 }
+          });
+        }
+      })
+    );
   }
 
   async querySingle(
@@ -123,6 +173,8 @@ Please provide a clear and concise answer based on the information in the docume
         return new DeepSeekProvider(config);
       case 'gemini':
         return new GeminiProvider(config);
+      case 'ollama':
+        return new OllamaProvider(config);
       default:
         throw new Error(`Unknown provider type: ${config.type}`);
     }

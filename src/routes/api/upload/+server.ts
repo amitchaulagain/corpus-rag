@@ -16,23 +16,20 @@ export const POST: RequestHandler = async ({ request }) => {
       return json({ success: false, error: 'Missing file or userId' }, { status: 400 });
     }
 
-    // Allow TXT and PDF files
+    // Allow only TXT files
     const fileExt = file.name.toLowerCase();
-    if (!fileExt.endsWith('.txt') && !fileExt.endsWith('.pdf')) {
+    if (!fileExt.endsWith('.txt')) {
       return json(
-        { success: false, error: 'Only .txt and .pdf files are allowed' },
+        { success: false, error: 'Only .txt files are allowed' },
         { status: 400 }
       );
     }
 
     const filePath = await storage.saveFile(userId, file);
 
-    // For text files, read the content; for PDFs, just confirm upload
-    let textContent = '';
-    if (fileExt.endsWith('.txt')) {
-      const buffer = await file.arrayBuffer();
-      textContent = new TextDecoder().decode(buffer);
-    }
+    // Read text file content
+    const buffer = await file.arrayBuffer();
+    const textContent = new TextDecoder().decode(buffer);
 
     return json({
       success: true,
@@ -63,61 +60,17 @@ export const GET: RequestHandler = async ({ url }) => {
 
     // If filename is provided, return file content
     if (filename) {
-      let content: string = '';
-      
-      // Handle different file types
-      if (filename.endsWith('.pdf')) {
-        // For PDF files, try to read from text-cache first
-        try {
-          const cacheDir = './data/text-cache';
-          const cachedTextPath = `${cacheDir}/${userId}/${filename}.txt`;
-          
-          console.log('Checking for cached PDF text at:', cachedTextPath);
-          
-          try {
-            const cachedContent = await fs.readFile(cachedTextPath, 'utf-8');
-            if (cachedContent && cachedContent.trim()) {
-              content = cachedContent;
-              console.log('✅ PDF text loaded from cache:', content.length, 'characters');
-            } else {
-              throw new Error('Cached content is empty');
-            }
-          } catch (cacheError) {
-            // If cache doesn't exist, try to parse PDF directly
-            console.log('No cache found, attempting PDF parsing...');
-            
-            const { createRequire } = await import('module');
-            const require = createRequire(import.meta.url);
-            const pdfParse = require('pdf-parse');
-            
-            const filePath = storage.getFilePath(userId, filename);
-            const dataBuffer = await fs.readFile(filePath);
-            const pdfData = await pdfParse(dataBuffer);
-            content = pdfData.text;
-            
-            // Cache the extracted text for future use
-            await fs.mkdir(`${cacheDir}/${userId}`, { recursive: true });
-            await fs.writeFile(cachedTextPath, content, 'utf-8');
-            
-            console.log('✅ PDF text extracted and cached:', content.length, 'characters');
-          }
-        } catch (error: any) {
-          console.error('❌ Failed to parse PDF:', error);
-          return json({ 
-            success: false, 
-            error: `Failed to extract text from PDF: ${error.message}. Please upload a .txt file instead.` 
-          }, { status: 500 });
-        }
-      } else if (filename.endsWith('.txt')) {
-        // Read text file directly
-        content = await storage.getFileContent(userId, filename);
-        console.log('✅ TXT file read:', content.length, 'characters');
-      } else {
-        return json({ 
-          success: false, 
-          error: 'Unsupported file type. Only .txt and .pdf files are supported.' 
+      // Only support .txt files
+      if (!filename.endsWith('.txt')) {
+        return json({
+          success: false,
+          error: 'Unsupported file type. Only .txt files are supported.'
         }, { status: 400 });
       }
+
+      // Read text file directly
+      const content = await storage.getFileContent(userId, filename);
+      console.log('✅ TXT file read:', content.length, 'characters');
       
       return json({
         success: true,
@@ -133,7 +86,7 @@ export const GET: RequestHandler = async ({ url }) => {
       success: true,
       files: files.map((filename) => ({
         name: filename,
-        type: filename.endsWith('.pdf') ? 'pdf' : 'txt'
+        type: 'txt'
       }))
     });
   } catch (error) {

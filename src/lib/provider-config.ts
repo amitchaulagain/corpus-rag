@@ -44,7 +44,8 @@ export class ProviderConfigManager {
 
   async getEnabledProviders(): Promise<ProviderConfig[]> {
     const providers = await this.loadProviders();
-    return providers.filter((p) => p.enabled && p.apiKey);
+    // Ollama doesn't need API key, so check for it or allow if type is ollama
+    return providers.filter((p) => p.enabled && (p.apiKey || p.type === 'ollama'));
   }
 
   async getProvider(id: string): Promise<ProviderConfig | null> {
@@ -99,6 +100,7 @@ export class ProviderConfigManager {
     const { ClaudeProvider } = await import('./providers/claude-provider');
     const { DeepSeekProvider } = await import('./providers/deepseek-provider');
     const { GeminiProvider } = await import('./providers/gemini-provider');
+    const { OllamaProvider } = await import('./providers/ollama-provider');
 
     const results = await Promise.all(
       providers.map(async (config) => {
@@ -113,6 +115,9 @@ export class ProviderConfigManager {
             break;
           case 'gemini':
             provider = new GeminiProvider(config);
+            break;
+          case 'ollama':
+            provider = new OllamaProvider(config);
             break;
           default:
             return { id: config.id, name: config.name, success: false };

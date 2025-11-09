@@ -290,6 +290,12 @@
 
           <!-- Help & Settings -->
           <li class="w-full">
+            <a href="/ollama" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/ollama'} title={isSidebarCollapsed ? 'Ollama' : ''}>
+              <span class="text-xl">🦙</span>
+              {#if !isSidebarCollapsed}<span>Ollama</span>{/if}
+            </a>
+          </li>
+          <li class="w-full">
             <a href="/api-docs" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/api-docs'} title={isSidebarCollapsed ? 'API Docs' : ''}>
               <span class="text-xl">📖</span>
               {#if !isSidebarCollapsed}<span>API Docs</span>{/if}

@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import '$styles/shared.css';
   import AdminGuard from '$lib/components/AdminGuard.svelte';
+  import { employerQuestionsStore } from '$lib/employer-questions-store';
 
 
   let user = null;
@@ -9,9 +10,6 @@
   let selectedJob = null;
   let jobContent = null;
   let isLoading = false;
-  let isGenerating = false;
-  let generatedAnswers = '';
-  let parsedAnswers = [];
   let employerQuestionsPrompt = '';
   let jobDescriptionStates = {}; // Track checkbox state per job filename
 
@@ -23,10 +21,21 @@
   let lastSavedPrompt = '';
   let isSavingPrompt = false;
 
-  // Comparison mode variables
-  let isComparing = false;
-  let comparisonResults = null;
   let providers = [];
+
+  // Reactive store bindings
+  $: generatedAnswers = $employerQuestionsStore.generatedAnswers;
+  $: parsedAnswers = $employerQuestionsStore.parsedAnswers;
+  $: isGenerating = $employerQuestionsStore.isGenerating;
+  $: isComparing = $employerQuestionsStore.isComparing;
+
+  // Transform comparisonResults from object to array for UI compatibility
+  $: comparisonResults = $employerQuestionsStore.comparisonResults
+    ? Object.entries($employerQuestionsStore.comparisonResults).map(([providerId, result]) => ({
+        providerId,
+        ...result
+      }))
+    : null;
 
 
   // Reactive statement to help with debugging
@@ -40,7 +49,17 @@
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       user = JSON.parse(storedUser);
-      loadJobs();
+      await loadJobs();
+
+      // Restore selected job if stored
+      const storedJobFilename = $employerQuestionsStore.selectedJobFilename;
+      if (storedJobFilename && jobs.length > 0) {
+        const job = jobs.find(j => j.filename === storedJobFilename);
+        if (job) {
+          selectedJob = job;
+          await selectJob(job);
+        }
+      }
     }
 
     // Load prompt from the server
@@ -187,9 +206,9 @@ Questions: [Questions List]`;
 
     selectedJob = job;
     jobContent = null;
-    generatedAnswers = '';
-    parsedAnswers = [];
-    comparisonResults = null;
+
+    // Clear store state when selecting a new job
+    employerQuestionsStore.clearResults();
 
     try {
       const response = await fetch(`/api/jobs/${job.filename}`);
@@ -211,8 +230,8 @@ Questions: [Questions List]`;
   async function compareAnswers() {
     if (!selectedJob || !jobContent || !jobContent.questions) return;
 
-    isComparing = true;
-    comparisonResults = null;
+    // Start comparison using store
+    employerQuestionsStore.startComparison(selectedJob.filename);
 
     try {
       const response = await fetch('/api/employer-questions/compare', {
@@ -226,23 +245,60 @@ Questions: [Questions List]`;
             type: q.type || 'select',
             options: q.opts || []
           })),
-          details: jobDescriptionStates[selectedJob.filename] ? jobContent.details : null
-        })
+          details: jobDescriptionStates[selectedJob.filename] ? jobContent.details : null,
+          stream: true
+        }),
+        signal: employerQuestionsStore.getAbortSignal()
       });
 
-      const data = await response.json();
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-      if (data.success) {
-        comparisonResults = data.results;
-        await saveComparisonResults(data.results);
-      } else {
-        alert('Failed to compare: ' + data.error);
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6));
+
+            if (data.done) {
+              employerQuestionsStore.finishComparison();
+              // Auto-save the comparison results
+              await saveComparisonResults($employerQuestionsStore.comparisonResults);
+              break;
+            }
+
+            if (data.error) {
+              alert(`Error: ${data.error}`);
+              employerQuestionsStore.finishComparison();
+              break;
+            }
+
+            if (data.providerId && data.result) {
+              // Add result as it arrives using store
+              employerQuestionsStore.updateComparisonResult(data.providerId, data.result);
+            }
+          }
+        }
       }
     } catch (error) {
-      console.error('Failed to compare answers:', error);
-      alert('Failed to compare: ' + error.message);
-    } finally {
-      isComparing = false;
+      if (error.name === 'AbortError') {
+        console.log('Comparison cancelled');
+      } else {
+        console.error('Failed to compare answers:', error);
+        alert('Failed to compare: ' + error.message);
+      }
+      employerQuestionsStore.finishComparison();
     }
   }
 
@@ -280,9 +336,18 @@ Questions: [Questions List]`;
       const data = await response.json();
 
       if (data.success && data.data && data.data.response) {
-        comparisonResults = JSON.parse(data.data.response);
-        generatedAnswers = '';
-        parsedAnswers = [];
+        const savedResults = JSON.parse(data.data.response);
+        // Update store with saved results
+        employerQuestionsStore.startComparison(selectedJob.filename);
+
+        // If savedResults is an object with provider IDs
+        if (typeof savedResults === 'object' && !Array.isArray(savedResults)) {
+          Object.entries(savedResults).forEach(([providerId, result]) => {
+            employerQuestionsStore.updateComparisonResult(providerId, result);
+          });
+        }
+
+        employerQuestionsStore.finishComparison();
       }
       // Silently fail if no saved response
     } catch (error) {
@@ -398,6 +463,16 @@ Questions: [Questions List]`;
       maximumFractionDigits: 4
     });
     return formatter.format(amount);
+  }
+
+  function cancelGeneration() {
+    employerQuestionsStore.cancelGeneration();
+  }
+
+  function clearResults() {
+    if (confirm('Clear all results? This will not delete saved responses.')) {
+      employerQuestionsStore.clearResults();
+    }
   }
 </script>
 

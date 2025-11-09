@@ -1,15 +1,21 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
+  import { comparisonStore } from '$lib/comparison-store';
 
   let isAuthenticated = false;
   let user: any = null;
-  let question = '';
-  let comparisonResults: any = null;
-  let isLoading = false;
   let providers: any[] = [];
   let uploadedFiles: any[] = [];
   let attachFile = true;
   let selectedFile: string = '';
+
+  // Reactive state from store
+  $: question = $comparisonStore.question;
+  $: comparisonResults = $comparisonStore.comparisonResults;
+  $: isLoading = $comparisonStore.isLoading;
+
+  // Local input value for form
+  let questionInput = '';
 
   onMount(async () => {
     const storedUser = localStorage.getItem('user');
@@ -33,6 +39,15 @@
     if (user) {
       await loadFiles();
     }
+
+    // Restore question input from store if available
+    if ($comparisonStore.question) {
+      questionInput = $comparisonStore.question;
+    }
+  });
+
+  onDestroy(() => {
+    // Store persists across navigation, no cleanup needed
   });
 
   async function loadFiles() {
@@ -51,13 +66,13 @@
   async function handleCompare(event: Event) {
     event.preventDefault();
 
-    if (!question.trim() || !user) return;
+    if (!questionInput.trim() || !user) return;
 
-    isLoading = true;
-    comparisonResults = null;
+    // Start comparison in store
+    comparisonStore.startComparison(questionInput.trim());
 
     try {
-      let finalQuestion = question.trim();
+      let finalQuestion = questionInput.trim();
 
       // Attach file content if enabled
       if (attachFile && selectedFile) {
@@ -68,27 +83,79 @@
         }
       }
 
+      const abortSignal = comparisonStore.getAbortSignal();
+
       const response = await fetch('/api/query/compare', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user.email,
-          question: finalQuestion
-        })
+          question: finalQuestion,
+          stream: true,
+          skipDocuments: true // Search page handles file attachment manually
+        }),
+        signal: abortSignal
       });
 
-      const data = await response.json();
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-      if (data.success) {
-        comparisonResults = data.results;
-      } else {
-        alert(`Error: ${data.error || 'Query failed'}`);
+      if (!reader) {
+        throw new Error('No response body');
       }
-    } catch (error) {
-      console.error('Query failed:', error);
-      alert(`Error: ${error.message}`);
-    } finally {
-      isLoading = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6));
+
+            if (data.done) {
+              comparisonStore.finishComparison();
+              break;
+            }
+
+            if (data.error) {
+              alert(`Error: ${data.error}`);
+              comparisonStore.finishComparison();
+              break;
+            }
+
+            if (data.providerId && data.result) {
+              // Update result in store as it arrives
+              comparisonStore.updateResult(data.providerId, data.result);
+            }
+          }
+        }
+      }
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        console.log('Comparison cancelled by user');
+      } else {
+        console.error('Query failed:', error);
+        alert(`Error: ${error.message}`);
+      }
+      comparisonStore.finishComparison();
+    }
+  }
+
+  function handleClearResults() {
+    if (confirm('Clear all comparison results?')) {
+      comparisonStore.clearResults();
+      questionInput = '';
+    }
+  }
+
+  function handleCancelComparison() {
+    if (confirm('Cancel ongoing comparison?')) {
+      comparisonStore.cancelComparison();
     }
   }
 
@@ -121,6 +188,7 @@
     if (id.includes('claude')) return '🟣';
     if (id.includes('deepseek')) return '🔵';
     if (id.includes('gemini')) return '🟢';
+    if (id.includes('ollama') || id.includes('llama')) return '🦙';
     return '🤖';
   }
 </script>
@@ -139,7 +207,7 @@
           <div class="flex gap-3 mb-4">
             <input
               type="text"
-              bind:value={question}
+              bind:value={questionInput}
               placeholder="Ask a question about your documents..."
               class="input input-bordered flex-1 text-lg"
               class:input-disabled={isLoading}
@@ -148,8 +216,8 @@
             <button
               type="submit"
               class="btn btn-primary btn-lg"
-              class:btn-disabled={isLoading || !question.trim() || providers.length === 0}
-              disabled={isLoading || !question.trim() || providers.length === 0}
+              class:btn-disabled={isLoading || !questionInput.trim() || providers.length === 0}
+              disabled={isLoading || !questionInput.trim() || providers.length === 0}
             >
               {#if isLoading}
                 <span class="loading loading-spinner"></span>
@@ -158,6 +226,24 @@
                 Compare All AIs
               {/if}
             </button>
+            {#if isLoading}
+              <button
+                type="button"
+                class="btn btn-error btn-lg"
+                on:click={handleCancelComparison}
+              >
+                Cancel
+              </button>
+            {/if}
+            {#if comparisonResults && !isLoading}
+              <button
+                type="button"
+                class="btn btn-ghost btn-lg"
+                on:click={handleClearResults}
+              >
+                Clear
+              </button>
+            {/if}
           </div>
 
           <!-- File Attachment Toggle -->
@@ -196,92 +282,103 @@
       </div>
     </div>
 
-    <!-- Loading State -->
-    {#if isLoading}
-      <div class="flex flex-col items-center py-16">
-        <span class="loading loading-spinner loading-lg text-primary mb-4"></span>
-        <p class="text-lg font-semibold">Querying all AI providers...</p>
-        <p class="text-base-content/70">This may take a few seconds</p>
-      </div>
-    {/if}
-
     <!-- Comparison Results -->
-    {#if comparisonResults && !isLoading}
+    {#if comparisonResults}
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {#each Object.entries(comparisonResults).filter(([providerId]) => providers.some(p => p.id === providerId)) as [providerId, result]}
-          <div class="card bg-base-100 shadow-xl border-2 {result.success ? 'border-success' : 'border-error'}">
-            <div class="card-body">
-              <!-- Provider Header -->
-              <div class="flex items-center justify-between mb-4">
-                <h3 class="card-title text-lg">
-                  {getProviderIcon(providerId)} {getProviderName(providerId)}
-                </h3>
-                {#if result.success}
-                  <span class="badge badge-success">Success</span>
-                {:else}
-                  <span class="badge badge-error">Failed</span>
-                {/if}
-              </div>
-
-              <!-- Answer -->
-              {#if result.success && result.answer}
-                <div class="prose prose-sm max-w-none mb-4">
-                  <div class="whitespace-pre-wrap leading-relaxed text-base-content">
-                    {result.answer}
-                  </div>
-                </div>
-              {:else if result.error}
-                {@const isClaudeBillingError = providerId.includes('claude') && result.error.includes('credit balance is too low')}
-                {#if isClaudeBillingError}
-                  <div class="alert alert-warning mb-4">
-                    <div class="text-sm">
-                      <span>
-                        The Claude API requires a paid balance. Please visit
-                        <a href="https://console.anthropic.com/settings/billing" target="_blank" class="link">
-                          Anthropic's billing page
-                        </a>, pay $5 USD plus taxes, and get an API key.
-                      </span>
-                    </div>
-                  </div>
-                {:else}
-                  <div class="alert alert-error mb-4">
-                    <span class="text-sm">{result.error}</span>
-                  </div>
-                {/if}
-              {/if}
-
-              <!-- Metadata -->
-              <div class="divider my-2"></div>
-              <div class="text-xs opacity-70 space-y-1">
-                {#if result.metadata}
-                  <div class="flex justify-between">
-                    <span>⏱️ Time:</span>
-                    <span class="font-semibold">{formatTime(result.metadata.processingTime)}</span>
-                  </div>
-                  {#if result.metadata.tokensUsed}
-                    <div class="flex justify-between">
-                      <span>🎯 Tokens:</span>
-                      <span class="font-semibold">{result.metadata.tokensUsed?.toLocaleString()}</span>
-                    </div>
+        <!-- Show placeholder cards for all enabled providers -->
+        {#each providers as provider}
+          {@const result = comparisonResults[provider.id]}
+          {#if result}
+            <div class="card bg-base-100 shadow-xl border-2 {result.success ? 'border-success' : 'border-error'}">
+              <div class="card-body">
+                <!-- Provider Header -->
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="card-title text-lg">
+                    {getProviderIcon(provider.id)} {provider.name}
+                  </h3>
+                  {#if result.success}
+                    <span class="badge badge-success">Success</span>
+                  {:else}
+                    <span class="badge badge-error">Failed</span>
                   {/if}
-                  <div class="flex justify-between">
-                    <span>🤖 Model:</span>
-                    <span class="font-mono text-xs">{result.metadata.model}</span>
+                </div>
+
+                <!-- Answer -->
+                {#if result.success && result.answer}
+                  <div class="prose prose-sm max-w-none mb-4">
+                    <div class="whitespace-pre-wrap leading-relaxed text-base-content">
+                      {result.answer}
+                    </div>
                   </div>
-                  {#if result.metadata.cost}
-                    <div class="flex justify-between items-start mt-1 pt-1 border-t border-base-content/10">
-                      <span>💰 Cost:</span>
-                      <div class="text-right font-semibold">
-                        <div>{formatCurrency(result.metadata.cost.usd, 'USD')}</div>
-                        <div class="opacity-70">{formatCurrency(result.metadata.cost.aud, 'AUD')}</div>
-                        <div class="opacity-70">{formatCurrency(result.metadata.cost.npr, 'NPR')}</div>
+                {:else if result.error}
+                  {@const isClaudeBillingError = provider.id.includes('claude') && result.error.includes('credit balance is too low')}
+                  {#if isClaudeBillingError}
+                    <div class="alert alert-warning mb-4">
+                      <div class="text-sm">
+                        <span>
+                          The Claude API requires a paid balance. Please visit
+                          <a href="https://console.anthropic.com/settings/billing" target="_blank" class="link">
+                            Anthropic's billing page
+                          </a>, pay $5 USD plus taxes, and get an API key.
+                        </span>
                       </div>
                     </div>
+                  {:else}
+                    <div class="alert alert-error mb-4">
+                      <span class="text-sm">{result.error}</span>
+                    </div>
                   {/if}
                 {/if}
+
+                <!-- Metadata -->
+                <div class="divider my-2"></div>
+                <div class="text-xs opacity-70 space-y-1">
+                  {#if result.metadata}
+                    <div class="flex justify-between">
+                      <span>⏱️ Time:</span>
+                      <span class="font-semibold">{formatTime(result.metadata.processingTime)}</span>
+                    </div>
+                    {#if result.metadata.tokensUsed}
+                      <div class="flex justify-between">
+                        <span>🎯 Tokens:</span>
+                        <span class="font-semibold">{result.metadata.tokensUsed?.toLocaleString()}</span>
+                      </div>
+                    {/if}
+                    <div class="flex justify-between">
+                      <span>🤖 Model:</span>
+                      <span class="font-mono text-xs">{result.metadata.model}</span>
+                    </div>
+                    {#if result.metadata.cost}
+                      <div class="flex justify-between items-start mt-1 pt-1 border-t border-base-content/10">
+                        <span>💰 Cost:</span>
+                        <div class="text-right font-semibold">
+                          <div>{formatCurrency(result.metadata.cost.usd, 'USD')}</div>
+                          <div class="opacity-70">{formatCurrency(result.metadata.cost.aud, 'AUD')}</div>
+                          <div class="opacity-70">{formatCurrency(result.metadata.cost.npr, 'NPR')}</div>
+                        </div>
+                      </div>
+                    {/if}
+                  {/if}
+                </div>
               </div>
             </div>
-          </div>
+          {:else if isLoading}
+            <!-- Loading placeholder -->
+            <div class="card bg-base-100 shadow-xl border-2 border-base-300">
+              <div class="card-body">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="card-title text-lg">
+                    {getProviderIcon(provider.id)} {provider.name}
+                  </h3>
+                  <span class="loading loading-spinner loading-sm"></span>
+                </div>
+                <div class="flex flex-col items-center justify-center py-8 opacity-50">
+                  <span class="loading loading-dots loading-lg"></span>
+                  <p class="text-sm mt-4">Waiting for response...</p>
+                </div>
+              </div>
+            </div>
+          {/if}
         {/each}
       </div>
 

@@ -473,7 +473,7 @@
 
     /* Better space utilization on smaller screens */
     .api-docs-container {
-      padding: 1rem;
+      padding: 1.5rem;
     }
 
     /* Medium screens - reduce padding slightly */
@@ -507,7 +507,7 @@
   </style>
 </svelte:head>
 
-<div class="container mx-auto api-docs-container">
+<div class="container mx-auto max-w-7xl api-docs-container">
   <h1 class="text-3xl font-bold mb-4">🚀 API Documentation</h1>
 
   <div class="alert alert-info mb-6">

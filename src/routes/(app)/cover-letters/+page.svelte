@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import '$styles/shared.css';
   import AdminGuard from '$lib/components/AdminGuard.svelte';
+  import { coverLetterStore } from '$lib/cover-letter-store';
 
   // all variables
   let user = null;
@@ -9,8 +10,6 @@
   let selectedJob = null;
   let jobContent = null;
   let isLoading = false;
-  let isGenerating = false;
-  let generatedCoverLetter = '';
   let coverLetterPrompt = '';
 
   let lastSavedPrompt = '';
@@ -22,9 +21,12 @@
   let jobsWithSavedResponses = new Set();
   let isSavingPrompt = false;
 
-  // Comparison mode variables
-  let isComparing = false;
-  let comparisonResults = null;
+  // Reactive state from store
+  $: generatedCoverLetter = $coverLetterStore.generatedCoverLetter;
+  $: isGenerating = $coverLetterStore.isGenerating;
+  $: isComparing = $coverLetterStore.isComparing;
+  $: comparisonResults = $coverLetterStore.comparisonResults;
+
   let providers = [];
 
   // Job editing variables
@@ -35,7 +37,15 @@
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       user = JSON.parse(storedUser);
-      loadJobs();
+      await loadJobs();
+
+      // Restore the selected job if it matches the stored job filename
+      if ($coverLetterStore.selectedJobFilename && jobs.length > 0) {
+        const storedJob = jobs.find(job => job.filename === $coverLetterStore.selectedJobFilename);
+        if (storedJob) {
+          await selectJob(storedJob);
+        }
+      }
     }
 
     // Load prompt from the server
@@ -192,9 +202,12 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
 
     selectedJob = job;
     jobContent = null;
-    generatedCoverLetter = '';
-    comparisonResults = null;
     isEditingJob = false;
+
+    // Clear store results when selecting a different job
+    if ($coverLetterStore.selectedJobFilename !== job.filename) {
+      coverLetterStore.clearResults();
+    }
 
     try {
       const response = await fetch(`/api/jobs/${job.filename}`);
@@ -264,10 +277,12 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
   async function compareCoverLetters() {
     if (!selectedJob || !jobContent) return;
 
-    isComparing = true;
-    comparisonResults = null;
+    // Start comparison in store
+    coverLetterStore.startComparison(selectedJob.filename);
 
     try {
+      const abortSignal = coverLetterStore.getAbortSignal();
+
       const response = await fetch('/api/cover-letter/compare', {
         method: 'POST',
         headers: {
@@ -276,24 +291,60 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
         body: JSON.stringify({
           userId: user.email,
           prompt: coverLetterPrompt,
-          jobDescription: jobContent.description || jobContent.text || JSON.stringify(jobContent)
-        })
+          jobDescription: jobContent.description || jobContent.text || JSON.stringify(jobContent),
+          stream: true
+        }),
+        signal: abortSignal
       });
 
-      const data = await response.json();
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
 
-      if (data.success) {
-        comparisonResults = data.results;
-        // Auto-save the comparison results
-        await saveComparisonResults(data.results);
-      } else {
-        alert('Failed to compare: ' + data.error);
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6));
+
+            if (data.done) {
+              coverLetterStore.finishComparison();
+              // Auto-save the comparison results
+              await saveComparisonResults($coverLetterStore.comparisonResults);
+              break;
+            }
+
+            if (data.error) {
+              alert(`Error: ${data.error}`);
+              coverLetterStore.finishComparison();
+              break;
+            }
+
+            if (data.providerId && data.result) {
+              // Update result in store as it arrives
+              coverLetterStore.updateComparisonResult(data.providerId, data.result);
+            }
+          }
+        }
       }
     } catch (error) {
-      console.error('Failed to compare cover letters:', error);
-      alert('Failed to compare: ' + error.message);
-    } finally {
-      isComparing = false;
+      if (error.name === 'AbortError') {
+        console.log('Comparison cancelled by user');
+      } else {
+        console.error('Failed to compare cover letters:', error);
+        alert('Failed to compare: ' + error.message);
+      }
+      coverLetterStore.finishComparison();
     }
   }
 
@@ -332,8 +383,14 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
 
       if (data.success && data.data && data.data.response) {
         // The response is already JSON stringified, so parse it
-        comparisonResults = JSON.parse(data.data.response);
-        generatedCoverLetter = ''; // Clear old single response
+        const savedResults = JSON.parse(data.data.response);
+
+        // Update store with saved results
+        coverLetterStore.startComparison(selectedJob.filename);
+        for (const [providerId, result] of Object.entries(savedResults)) {
+          coverLetterStore.updateComparisonResult(providerId, result);
+        }
+        coverLetterStore.finishComparison();
       }
       // Silently fail if no saved response - don't alert the user
     } catch (error) {
@@ -389,6 +446,18 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
       console.error('Failed to copy:', err);
       alert('Failed to copy to clipboard');
     });
+  }
+
+  function handleCancelComparison() {
+    if (confirm('Cancel ongoing comparison?')) {
+      coverLetterStore.cancelGeneration();
+    }
+  }
+
+  function handleClearResults() {
+    if (confirm('Clear all cover letter results?')) {
+      coverLetterStore.clearResults();
+    }
   }
 </script>
 
@@ -520,6 +589,24 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
                 🔍 Compare All AIs
               {/if}
             </button>
+            {#if isComparing}
+              <button
+                class="generate-btn"
+                on:click={handleCancelComparison}
+                style="background: #dc3545;"
+              >
+                ❌ Cancel
+              </button>
+            {/if}
+            {#if comparisonResults && !isComparing}
+              <button
+                class="generate-btn"
+                on:click={handleClearResults}
+                style="background: #6c757d;"
+              >
+                🗑️ Clear
+              </button>
+            {/if}
           </div>
         </div>
 

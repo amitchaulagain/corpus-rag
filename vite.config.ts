@@ -7,6 +7,11 @@ export default defineConfig({
   server: {
     port: 3000,
     host: '0.0.0.0',
+    allowedHosts: ['onlyforthedevs.inquisitivemind.tech'],
+    hmr: {
+      host: 'onlyforthedevs.inquisitivemind.tech',
+      protocol: 'wss'
+    },
     watch: {
       ignored: ['**/src/lib/prompts/**', '**/data/**']
     }

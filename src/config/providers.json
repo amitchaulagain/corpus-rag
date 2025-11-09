@@ -19,7 +19,15 @@
       "name": "Gemini 2.0 Flash",
       "type": "gemini",
       "model": "gemini-2.0-flash-exp",
-      "enabled": false
+      "enabled": true
+    },
+    {
+      "id": "ollama-llama2",
+      "name": "Llama 2 (Local)",
+      "type": "ollama",
+      "model": "llama2",
+      "baseUrl": "http://localhost:11434",
+      "enabled": true
     }
   ]
 }

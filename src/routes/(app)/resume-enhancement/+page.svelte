@@ -4,6 +4,7 @@
   import AdminGuard from '$lib/components/AdminGuard.svelte';
   import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
   import jsPDF from 'jspdf';
+  import { resumeEnhancementStore } from '$lib/resume-enhancement-store';
 
   let user: any = null;
   let jobs: any[] = [];
@@ -11,13 +12,8 @@
   let jobContent: any = null;
   let jobDescription: string = '';
   let isLoading: boolean = false;
-  let isGenerating: boolean = false;
-  let enhancedResume: string | null = null;
   let originalResume: string = '';
   let enhancementFocus: string = 'general';
-  let analysisResult: any = null;
-  let fitScore: number = 0;
-  let enhancedFitScore: number = 0;
   let comparisonView: 'unified' | 'sidebyside' = 'sidebyside';
   let enhancementPrompt: string = '';
   let defaultPrompt: string = '';
@@ -34,6 +30,13 @@
   let newJob = { company: '', title: '', location: '', description: '' };
   let isSavingPrompt: boolean = false;
 
+  // Use store for state management
+  $: enhancedResume = $resumeEnhancementStore.enhancedResume;
+  $: analysisResult = $resumeEnhancementStore.analysisResult;
+  $: fitScore = $resumeEnhancementStore.fitScore;
+  $: enhancedFitScore = $resumeEnhancementStore.enhancedFitScore;
+  $: isGenerating = $resumeEnhancementStore.isGenerating;
+
   onMount(async () => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -41,6 +44,14 @@
       loadJobs();
       loadAvailableResumes();
       loadPrompt();
+
+      // Restore selected job if available
+      if ($resumeEnhancementStore.selectedJobFilename) {
+        const jobToRestore = jobs.find(j => j.filename === $resumeEnhancementStore.selectedJobFilename);
+        if (jobToRestore) {
+          await selectJob(jobToRestore);
+        }
+      }
     }
   });
 
@@ -359,9 +370,8 @@ Format your response clearly showing:
       return;
     }
 
-    isGenerating = true;
-    enhancedResume = null;
-    analysisResult = null;
+    // Start enhancement with store
+    resumeEnhancementStore.startEnhancement(selectedJob.filename);
 
     try {
       console.log('=== ENHANCEMENT REQUEST ===');
@@ -371,7 +381,7 @@ Format your response clearly showing:
       console.log('✓ Selected resume file:', selectedResumeFile);
       console.log('✓ User email:', user.email);
       console.log('========================');
-      
+
       const requestPayload = {
         type: 'resume_enhancement',
         jobDetails: jobDescription,
@@ -380,79 +390,104 @@ Format your response clearly showing:
         enhancementFocus: enhancementFocus,
         customPrompt: enhancementPrompt
       };
-      
+
       console.log('Sending to API:', {
         ...requestPayload,
         resumeText: `${originalResume.length} chars`,
         customPrompt: `${enhancementPrompt.length} chars`
       });
-      
+
+      // Get abort signal from store
+      const abortSignal = resumeEnhancementStore.getAbortSignal();
+
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(requestPayload)
+        body: JSON.stringify(requestPayload),
+        signal: abortSignal
       });
-      
+
       console.log('API response status:', response.status);
 
       const data = await response.json();
 
       if (data.success) {
         const fullResponse = data.data.generatedText;
-        
+
         const originalFitMatch = fullResponse.match(/original fit score[:\s]+(\d+)/i);
         const enhancedFitMatch = fullResponse.match(/enhanced fit score[:\s]+(\d+)/i);
-        
-        if (originalFitMatch) fitScore = parseInt(originalFitMatch[1]);
-        if (enhancedFitMatch) enhancedFitScore = parseInt(enhancedFitMatch[1]);
-        
-        enhancedResume = fullResponse;
-        await analyzeEnhancement();
+
+        const origFit = originalFitMatch ? parseInt(originalFitMatch[1]) : 0;
+        const enhFit = enhancedFitMatch ? parseInt(enhancedFitMatch[1]) : 0;
+
+        // Calculate analysis
+        const analysis = await calculateAnalysis(fullResponse, origFit, enhFit);
+
+        // Set result in store
+        resumeEnhancementStore.setEnhancementResult(fullResponse, analysis, origFit, enhFit);
       } else {
+        resumeEnhancementStore.cancelEnhancement();
         alert('Failed to enhance resume: ' + data.error);
       }
     } catch (error: any) {
-      console.error('Failed to enhance resume:', error);
-      alert('Failed to enhance resume: ' + error.message);
-    } finally {
-      isGenerating = false;
+      if (error.name === 'AbortError') {
+        console.log('Enhancement cancelled by user');
+      } else {
+        console.error('Failed to enhance resume:', error);
+        alert('Failed to enhance resume: ' + error.message);
+      }
+      resumeEnhancementStore.cancelEnhancement();
     }
   }
 
-  async function analyzeEnhancement() {
-    if (!enhancedResume || !originalResume) return;
-    
+  async function calculateAnalysis(enhanced: string, origFit: number, enhFit: number) {
+    if (!enhanced || !originalResume) return null;
+
     try {
       const lines1 = originalResume.split('\n');
-      const lines2 = enhancedResume.split('\n');
-      
-      analysisResult = {
+      const lines2 = enhanced.split('\n');
+
+      const analysis = {
         totalLines: lines2.length,
         linesAdded: 0,
         linesRemoved: 0,
-        fitScoreImprovement: enhancedFitScore - fitScore
+        fitScoreImprovement: enhFit - origFit
       };
-      
+
       const originalLines = new Set(lines1);
       const enhancedLines = new Set(lines2);
-      
+
       lines2.forEach(line => {
         if (!originalLines.has(line) && line.trim()) {
-          analysisResult.linesAdded++;
+          analysis.linesAdded++;
         }
       });
-      
+
       lines1.forEach(line => {
         if (!enhancedLines.has(line) && line.trim()) {
-          analysisResult.linesRemoved++;
+          analysis.linesRemoved++;
         }
       });
+
+      return analysis;
     } catch (error: any) {
-      console.error('Failed to analyze:', error);
+      console.error('Failed to calculate analysis:', error);
+      return null;
     }
   }
+
+  function cancelEnhancement() {
+    resumeEnhancementStore.cancelEnhancement();
+  }
+
+  function clearResults() {
+    if (confirm('Clear all enhancement results? This will reset the page.')) {
+      resumeEnhancementStore.clearResults();
+    }
+  }
+
 
   function generateDiff() {
     if (!originalResume || !enhancedResume) return [];
@@ -802,6 +837,16 @@ Format your response clearly showing:
                 ✨ Enhance Resume
               {/if}
             </button>
+            {#if isGenerating}
+              <button class="cancel-btn" on:click={cancelEnhancement}>
+                ✖ Cancel
+              </button>
+            {/if}
+            {#if enhancedResume}
+              <button class="clear-btn" on:click={clearResults}>
+                🗑️ Clear Results
+              </button>
+            {/if}
           </div>
         </div>
 
@@ -1475,17 +1520,38 @@ Format your response clearly showing:
     background: #dc3545;
     color: white;
     border: none;
-    padding: 6px 15px;
+    padding: 12px 30px;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 1rem;
     font-weight: 600;
     transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
 
   .cancel-btn:hover {
     background: #c82333;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .clear-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .clear-btn:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
   }
 
   .job-text-editor {

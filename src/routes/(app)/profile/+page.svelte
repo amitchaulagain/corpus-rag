@@ -57,7 +57,7 @@
   }
 </script>
 
-<main class="container mx-auto max-w-4xl p-6">
+<main class="container mx-auto max-w-7xl p-6">
   <div class="mb-8">
     <h1 class="text-4xl font-bold mb-4 text-primary">👤 Profile</h1>
     <p class="text-base-content/70">View your account information and permissions</p>

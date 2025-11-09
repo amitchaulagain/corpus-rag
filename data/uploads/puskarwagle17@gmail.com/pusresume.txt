@@ -1,0 +1,15 @@
+| Field                            | Description / Example                                                    | Your Entry                         |
+| :------------------------------- | :----------------------------------------------------------------------- | :--------------------------------- |
+| **Full Name**                    | Your full legal name or professional alias                               | `Puskar Wagle`                     |
+| **Email**                        | Professional email address                                               | `puskarwagle17e@gmail.com`                |
+| **GitHub URL**                   | Your GitHub profile link                                                 | `https://github.com/puskarwagle`    |
+| **LinkedIn URL**                 | Optional, but looks professional                                         | `https://linkedin.com/in/puskarwagle` |
+| **Location**                     | City, Country (or just “Nepal” for remote)                               | `Harion,Sarlahi Nepal`                 |
+| **Portfolio / Website**          | Optional, if you have one                                                | `https://inquisitivemind.tech`           |
+| **High School Name**             | Full name of your school                                                 | `chaturbhujesor bahumukhi campus`             |
+| **Year Graduated (High School)** | Approx. year                                                             | `2019`                             |
+| **GitHub Projects (3–4)**        | Name + 1-sentence description (can reuse from the ones in the resume)    | 1. <br>2. <br>3. <br>4.            |
+| **Temple Website Project**       | (Optional) If you want to name the temple differently or add URL         | `https://shriharivyas.org`      |
+| **Preferred Job Title**          | What you want the title to say at the top                                | `Full-Stack & Automation Engineer` |
+| **Profile Summary**              | Short version of your own words (optional, or I’ll keep the current one) | —                                  |
+| **References Note**              | Keep “Available upon request” or provide specific names                  | —                                  |

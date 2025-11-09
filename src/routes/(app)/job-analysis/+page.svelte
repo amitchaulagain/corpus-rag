@@ -2,8 +2,13 @@
   import { onMount } from 'svelte';
   import '$styles/shared.css';
   import AdminGuard from '$lib/components/AdminGuard.svelte';
+  import { jobAnalysisStore } from '$lib/job-analysis-store';
 
   import JobAnalysisResult from '$lib/components/JobAnalysisResult.svelte';
+
+  // Reactive bindings to store
+  $: analysisResult = $jobAnalysisStore.analysisResult;
+  $: isGenerating = $jobAnalysisStore.isGenerating;
 
   // all variables
   let user = null;
@@ -11,8 +16,6 @@
   let selectedJob = null;
   let jobContent = null;
   let isLoading = false;
-  let isGenerating = false;
-  let analysisResult = null;
   let analysisPrompt = '';
 
   let lastSavedPrompt = '';
@@ -33,6 +36,14 @@
     if (storedUser) {
       user = JSON.parse(storedUser);
       loadJobs();
+    }
+
+    // Restore selected job from store
+    if ($jobAnalysisStore.selectedJobFilename) {
+      const job = jobs.find(j => j.filename === $jobAnalysisStore.selectedJobFilename);
+      if (job) {
+        await selectJob(job);
+      }
     }
 
     // Load prompt from the server
@@ -206,8 +217,12 @@ Be honest, specific, and actionable. Include concrete examples from both the job
 
     selectedJob = job;
     jobContent = null;
-    analysisResult = null;
     isEditingJob = false;
+
+    // Clear analysis result in store when switching jobs
+    if ($jobAnalysisStore.selectedJobFilename !== job.filename) {
+      jobAnalysisStore.clearResults();
+    }
 
     try {
       const response = await fetch(`/api/jobs/${job.filename}`);
@@ -274,8 +289,10 @@ Be honest, specific, and actionable. Include concrete examples from both the job
   async function generateAnalysis() {
     if (!selectedJob || !jobContent) return;
 
-    isGenerating = true;
-    analysisResult = null;
+    // Start analysis in store
+    jobAnalysisStore.startAnalysis(selectedJob.filename);
+    const abortSignal = jobAnalysisStore.getAbortSignal();
+
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
@@ -287,7 +304,8 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           jobDetails: jobContent,
           userEmail: user.email,
           customPrompt: analysisPrompt
-        })
+        }),
+        signal: abortSignal
       });
 
       const data = await response.json();
@@ -320,7 +338,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           }
 
           // Parse the JSON
-          analysisResult = JSON.parse(jsonString);
+          const result = JSON.parse(jsonString);
 
           // Fetch original resume from local storage
           try {
@@ -338,7 +356,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
                 const resumeData = await resumeResponse.json();
 
                 if (resumeData.success && resumeData.content) {
-                  analysisResult.original_resume = resumeData.content;
+                  result.original_resume = resumeData.content;
                 } else {
                   console.error('Resume data missing content:', resumeData);
                 }
@@ -353,12 +371,15 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           }
 
           // Check if resume fields were truncated (common AI issue)
-          if (analysisResult.updated_resume && analysisResult.updated_resume.length < 100) {
+          if (result.updated_resume && result.updated_resume.length < 100) {
             console.warn('Updated resume seems truncated, may need to increase max tokens');
           }
 
+          // Set the result in the store
+          jobAnalysisStore.setAnalysisResult(result);
+
           // Save the response
-          await saveResponse(analysisResult);
+          await saveResponse(result);
         } catch (e) {
           console.error('Failed to parse analysis JSON:', e);
           console.error('Raw response:', data.data.generatedText);
@@ -373,16 +394,21 @@ Be honest, specific, and actionable. Include concrete examples from both the job
 
           alert('The analysis result was not valid JSON or was truncated. The AI response may be too long. Please try again or check console for details.');
           // Show the error with raw text for debugging
-          analysisResult = { error: 'Invalid JSON response', raw: data.data.generatedText };
+          const errorResult = { error: 'Invalid JSON response', raw: data.data.generatedText };
+          jobAnalysisStore.setAnalysisResult(errorResult);
         }
       } else {
         alert('Failed to generate analysis: ' + data.error);
+        jobAnalysisStore.cancelAnalysis();
       }
     } catch (error) {
-      console.error('Failed to generate analysis:', error);
-      alert('Failed to generate analysis: ' + error.message);
-    } finally {
-      isGenerating = false;
+      if (error.name === 'AbortError') {
+        console.log('Analysis generation was cancelled');
+      } else {
+        console.error('Failed to generate analysis:', error);
+        alert('Failed to generate analysis: ' + error.message);
+      }
+      jobAnalysisStore.cancelAnalysis();
     }
   }
 
@@ -419,7 +445,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
       const data = await response.json();
 
       if (data.success && data.data) {
-        analysisResult = data.data.response;
+        jobAnalysisStore.setAnalysisResult(data.data.response);
       } else {
         alert('No saved analysis found for this job.');
       }
@@ -427,6 +453,14 @@ Be honest, specific, and actionable. Include concrete examples from both the job
       console.error('Failed to load saved response:', error);
       alert('Failed to load saved response: ' + error.message);
     }
+  }
+
+  function cancelAnalysis() {
+    jobAnalysisStore.cancelAnalysis();
+  }
+
+  function clearResults() {
+    jobAnalysisStore.clearResults();
   }
 
   function formatFileSize(bytes) {
@@ -439,7 +473,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
 </script>
 
 <AdminGuard>
-<main class="container mx-auto max-w-6xl p-6">
+<main class="container mx-auto max-w-7xl p-6">
   <div class="mb-8">
     <h1 class="text-4xl font-bold mb-4 text-primary">🎯 Job Analysis</h1>
     <p class="text-base-content/70">Analyze job requirements and assess your resume fit</p>
@@ -601,12 +635,29 @@ Be honest, specific, and actionable. Include concrete examples from both the job
                 🎯 Analyze Job
               {/if}
             </button>
+            {#if isGenerating}
+              <button
+                class="cancel-btn-alt"
+                on:click={cancelAnalysis}
+              >
+                ⏹ Cancel
+              </button>
+            {/if}
             {#if selectedJob && jobsWithSavedResponses.has(selectedJob.filename)}
               <button
                 class="load-btn"
                 on:click={loadLastResponse}
+                disabled={isGenerating}
               >
                 📂 Load Saved
+              </button>
+            {/if}
+            {#if analysisResult && !isGenerating}
+              <button
+                class="clear-btn"
+                on:click={clearResults}
+              >
+                🗑 Clear
               </button>
             {/if}
           </div>
@@ -809,6 +860,37 @@ Be honest, specific, and actionable. Include concrete examples from both the job
     background: #6c757d;
     cursor: not-allowed;
     opacity: 0.6;
+  }
+
+  .cancel-btn-alt {
+    background: #ffc107;
+    color: #000;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+    font-weight: 600;
+  }
+
+  .cancel-btn-alt:hover {
+    background: #e0a800;
+  }
+
+  .clear-btn {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+  }
+
+  .clear-btn:hover {
+    background: #c82333;
   }
 
   .quick-action-btn-inline {

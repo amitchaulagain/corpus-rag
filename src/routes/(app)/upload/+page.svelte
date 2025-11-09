@@ -98,7 +98,7 @@
   }
 </script>
 
-<main class="container mx-auto max-w-4xl p-6">
+<main class="container mx-auto max-w-7xl p-6">
   <h1 class="text-4xl font-bold mb-8">📄 Files</h1>
 
   <!-- Debug Info -->
