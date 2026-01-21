@@ -827,6 +827,30 @@ Visit `http://localhost:3000/api-docs` for Swagger UI with:
 
 ---
 
+## 🛠️ Setup Using Docker
+
+```bash
+  git clone <your-repo-url>
+  cd corpus-rag
+```
+or
+
+```bash
+  git pull origin <branch>
+```
+Make sure mongodb is not running (i.e. port 27017 is free) and run the command:
+
+```bash 
+  docker compose up --build
+```
+Later, stop the docker containers with:
+
+```bash
+  docker compose down
+```
+
+---
+
 ## 🛠️ Setup
 
 1. **Install dependencies**:
@@ -848,7 +872,7 @@ Visit `http://localhost:3000/api-docs` for Swagger UI with:
    JWT_ISSUER=corpus-rag-api
 
    # MongoDB
-   MONGODB_URI=mongodb://localhost:27017/job-assistant
+   MONGODB_URI=mongodb://localhost:27017/inquisitive_mind
 
    # Email Configuration (Optional - for password reset emails)
    EMAIL_HOST=smtp.gmail.com

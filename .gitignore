@@ -76,6 +76,7 @@ coverage/
 # Temporary folders
 tmp/
 temp/
+generated-responses/
 
 # Google Cloud credentials
 service-account.json
