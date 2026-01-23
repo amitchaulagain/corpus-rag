@@ -11,7 +11,13 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "setup": "node -e \"const fs=require('fs'); if(!fs.existsSync('.env')){fs.writeFileSync('.env','# AI Provider API Keys\\nCLAUDE_API_KEY=your-claude-api-key\\nDEEPSEEK_API_KEY=your-deepseek-api-key\\nGEMINI_API_KEY=your-gemini-api-key\\n\\n# JWT Authentication\\nJWT_SECRET=your-super-secret-jwt-key-min-32-characters-long\\nJWT_ACCESS_EXPIRY=15m\\nJWT_REFRESH_EXPIRY=30d\\nJWT_ISSUER=corpus-rag-api\\n\\n# MongoDB\\nMONGODB_URI=mongodb://localhost:27017/job-assistant\\n'); console.log('✅ .env created! Update with your credentials then run: npm run dev');} else {console.log('✅ .env already exists! Run: npm run dev');}\"",
     "init-jwt": "node --import tsx src/lib/init-jwt-db.ts",
-    "seed-plans": "node --import tsx scripts/seed-token-plans.ts"
+    "seed-plans": "node --import tsx scripts/seed-token-plans.ts",
+    "seed-rbac": "node --import tsx scripts/seed-rbac.ts",
+    "migrate-rbac": "node --import tsx scripts/migrate-users-to-rbac.ts",
+    "migrate-rbac:force": "node --import tsx scripts/migrate-users-to-rbac.ts --force",
+    "verify-rbac": "node --import tsx scripts/verify-rbac.ts",
+    "create-test-users": "node --import tsx scripts/create-test-users.ts",
+    "create-test-users": "node --import tsx scripts/create-test-users.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^3.0.0",

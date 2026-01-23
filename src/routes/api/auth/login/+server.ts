@@ -41,6 +41,9 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     }
 
     // Update last login
+    if (!user._id) {
+      return json({ success: false, error: 'User ID not found' }, { status: 500 });
+    }
     await userModel.updateLastLogin(user._id);
 
     // Create session

@@ -24,13 +24,17 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
       user = await userModel.create({
         email,
         name: email.split('@')[0], // Use email prefix as name
-        userType: 'user', // Default to user, admin can be set manually in database
-        isPaid: false
+        userType: 'freetier', // Default to freetier, admin can be set manually in database
+        isPaid: false,
+        apiPermissions: UserModel.getDefaultPermissions('freetier')
       });
       console.log('Created new user:', email);
     }
 
     // Create session
+    if (!user._id) {
+      return json({ success: false, error: 'User ID not found' }, { status: 500 });
+    }
     const session = await sessionModel.create(user._id.toString());
 
     // Set cookie

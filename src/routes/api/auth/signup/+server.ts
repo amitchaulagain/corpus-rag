@@ -59,6 +59,9 @@ export const POST: RequestHandler = async ({ request, cookies, url }) => {
     console.log(`Created new user: ${email} (${userType}${isAdminEmail && isAllowedHost ? ' - auto-promoted' : ''})`);
 
     // Create session
+    if (!user._id) {
+      return json({ success: false, error: 'User creation failed' }, { status: 500 });
+    }
     const session = await sessionModel.create(user._id.toString());
 
     // Set cookie

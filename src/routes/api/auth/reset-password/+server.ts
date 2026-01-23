@@ -33,6 +33,9 @@ export const POST: RequestHandler = async ({ request }) => {
     const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
 
     // Update password
+    if (!user._id) {
+      return json({ success: false, error: 'User ID not found' }, { status: 500 });
+    }
     await userModel.updatePassword(user._id, hashedPassword);
 
     // Clear reset token

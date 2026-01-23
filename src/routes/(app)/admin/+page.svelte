@@ -1,16 +1,15 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte';
   import '$styles/shared.css';
+  import { getAuthHeaders } from '$lib/auth-helper.js';
 
-  let users = [];
+  let users: any[] = [];
   let isLoading = true;
-  let sessionToken = '';
-  let currentUser = null;
-  let selectedUser = null;
+  let currentUser: any = null;
+  let selectedUser: any = null;
   let showEditModal = false;
 
   onMount(async () => {
-    sessionToken = localStorage.getItem('session_token') || '';
     const storedUser = localStorage.getItem('user');
 
     if (storedUser) {
@@ -34,10 +33,9 @@
   async function loadUsers() {
     isLoading = true;
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch('/api/admin/users', {
-        headers: {
-          'Authorization': `Bearer ${sessionToken}`
-        }
+        headers
       });
 
       if (response.ok) {
@@ -99,12 +97,10 @@
     if (!confirm('Are you sure you want to delete this user?')) return;
 
     try {
+      const headers = await getAuthHeaders();
       const response = await fetch('/api/admin/users', {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionToken}`
-        },
+        headers,
         body: JSON.stringify({ userId })
       });
 
@@ -132,7 +128,10 @@
       <p class="text-base-content/70">Manage users and permissions</p>
     </div>
     <div class="flex gap-2">
-      <a href="/admin/orders" class="btn btn-primary">📦 Manage Orders</a>
+      <a href="/admin/rbac" class="btn btn-primary">🔐 RBAC Management</a>
+      <a href="/admin/audit-logs" class="btn btn-primary">📋 Audit Logs</a>
+      <a href="/admin/analytics" class="btn btn-primary">📊 Analytics</a>
+      <a href="/admin/orders" class="btn btn-secondary">📦 Manage Orders</a>
       <a href="/" class="btn btn-ghost">← Back to Home</a>
     </div>
   </div>

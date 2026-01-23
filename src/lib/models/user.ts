@@ -1,5 +1,6 @@
 // User Model and Types
 import { ObjectId, type Db } from 'mongodb';
+import type { RoleAssignment } from './role.js';
 
 export type UserType = 'admin' | 'premium' | 'freetier';
 
@@ -18,9 +19,22 @@ export interface User {
   password?: string; // Hashed password for email/password auth
   passwordResetToken?: string;
   passwordResetExpiry?: Date;
+  
+  // Legacy fields (for backward compatibility)
   userType: UserType;
   isPaid: boolean;
   apiPermissions: ApiPermissions;
+  
+  // New RBAC fields
+  roles?: RoleAssignment[];           // Multiple roles across departments
+  primaryDepartmentId?: ObjectId | null;    // Primary department
+  departments?: ObjectId[];           // All departments user belongs to
+  
+  // Agent fields (if user is an agent)
+  agentProfile?: {
+    agentId: ObjectId;               // Reference to agents collection
+    isActive: boolean;
+  };
   
   // Token Management
   tokenBalance?: number;              // Current available tokens (default: 0)
@@ -91,9 +105,18 @@ export class UserModel {
 
   async updateApiPermissions(userId: string | ObjectId, permissions: Partial<ApiPermissions>): Promise<void> {
     const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    const user = await this.findById(objectId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    // Merge with existing permissions to ensure all fields are present
+    const mergedPermissions: ApiPermissions = {
+      ...user.apiPermissions,
+      ...permissions
+    };
     await this.db.collection<User>('users').updateOne(
       { _id: objectId },
-      { $set: { apiPermissions: permissions } }
+      { $set: { apiPermissions: mergedPermissions } }
     );
   }
 
@@ -205,6 +228,112 @@ export class UserModel {
     await this.db.collection<User>('users').updateOne(
       { _id: objectId },
       { $set: update }
+    );
+  }
+
+  // Role management methods
+  async assignRole(userId: string | ObjectId, roleAssignment: RoleAssignment): Promise<void> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    
+    // First, ensure roles and departments arrays exist
+    const user = await this.findById(objectId);
+    
+    // Initialize arrays if they don't exist (separate update)
+    if (!user?.roles || !Array.isArray(user.roles)) {
+      await this.db.collection<User>('users').updateOne(
+        { _id: objectId },
+        { $set: { roles: [] } }
+      );
+    }
+    if (!user?.departments || !Array.isArray(user.departments)) {
+      await this.db.collection<User>('users').updateOne(
+        { _id: objectId },
+        { $set: { departments: [] } }
+      );
+    }
+    
+    // Now push the role assignment
+    const updates: any = {
+      $push: { roles: roleAssignment }
+    };
+    
+    // Add department if specified
+    if (roleAssignment.departmentId) {
+      updates.$addToSet = { departments: roleAssignment.departmentId };
+    }
+    
+    await this.db.collection<User>('users').updateOne(
+      { _id: objectId },
+      updates
+    );
+  }
+
+  async removeRole(userId: string | ObjectId, roleName: string, departmentId?: ObjectId | null): Promise<void> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    const query: any = { role: roleName };
+    if (departmentId !== undefined) {
+      query.departmentId = departmentId;
+    }
+    await this.db.collection<User>('users').updateOne(
+      { _id: objectId },
+      { $pull: { roles: query } }
+    );
+  }
+
+  async getActiveRoles(userId: string | ObjectId): Promise<RoleAssignment[]> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    const user = await this.findById(objectId);
+    if (!user || !user.roles) return [];
+    
+    const now = new Date();
+    return user.roles.filter(role => 
+      role.isActive && 
+      (!role.expiresAt || role.expiresAt > now)
+    );
+  }
+
+  async addDepartment(userId: string | ObjectId, departmentId: ObjectId): Promise<void> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    await this.db.collection<User>('users').updateOne(
+      { _id: objectId },
+      { $addToSet: { departments: departmentId } }
+    );
+  }
+
+  async removeDepartment(userId: string | ObjectId, departmentId: ObjectId): Promise<void> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    // Remove department and any roles associated with it
+    await this.db.collection<User>('users').updateOne(
+      { _id: objectId },
+      { 
+        $pull: { 
+          departments: departmentId,
+          roles: { departmentId: departmentId }
+        }
+      }
+    );
+  }
+
+  async setPrimaryDepartment(userId: string | ObjectId, departmentId: ObjectId | null): Promise<void> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    await this.db.collection<User>('users').updateOne(
+      { _id: objectId },
+      { $set: { primaryDepartmentId: departmentId } }
+    );
+  }
+
+  async setAgentProfile(userId: string | ObjectId, agentId: ObjectId, isActive: boolean = true): Promise<void> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    await this.db.collection<User>('users').updateOne(
+      { _id: objectId },
+      { 
+        $set: { 
+          agentProfile: {
+            agentId,
+            isActive
+          }
+        }
+      }
     );
   }
 

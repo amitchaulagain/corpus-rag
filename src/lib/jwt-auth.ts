@@ -3,10 +3,13 @@ import jwt from 'jsonwebtoken';
 import type { ApiScope } from './api-types';
 import type { UserType } from './models/user';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-change-in-production';
-const JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || '15m';
-const JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY || '30d';
-const JWT_ISSUER = process.env.JWT_ISSUER || 'corpus-rag-api';
+// Re-export ApiScope for convenience
+export type { ApiScope } from './api-types';
+
+const JWT_SECRET: string = process.env.JWT_SECRET || 'fallback-secret-change-in-production';
+const JWT_ACCESS_EXPIRY: string = process.env.JWT_ACCESS_EXPIRY || '15m';
+const JWT_REFRESH_EXPIRY: string = process.env.JWT_REFRESH_EXPIRY || '30d';
+const JWT_ISSUER: string = process.env.JWT_ISSUER || 'corpus-rag-api';
 
 export interface AccessTokenPayload {
   sub: string;           // userId
@@ -14,6 +17,13 @@ export interface AccessTokenPayload {
   type: 'access';
   userType: UserType;
   scopes: ApiScope[];
+  // RBAC fields
+  roles?: string[];                  // All active roles
+  departments?: string[];            // Department IDs
+  primaryDepartment?: string;
+  permissions?: string[];             // Flattened permissions (resource:action:scope)
+  isAgent?: boolean;                 // Is user an agent
+  agentId?: string;                  // Agent ID if applicable
   iat: number;
   exp: number;
   jti: string;
@@ -46,23 +56,39 @@ export class JwtAuth {
     userId: string,
     email: string,
     userType: UserType,
-    scopes: ApiScope[]
+    scopes: ApiScope[],
+    rbacData?: {
+      roles?: string[];
+      departments?: string[];
+      primaryDepartment?: string;
+      permissions?: string[];
+      isAgent?: boolean;
+      agentId?: string;
+    }
   ): { token: string; jti: string; expiresIn: number } {
     const jti = this.generateJti();
 
-    const payload: Omit<AccessTokenPayload, 'iat' | 'exp' | 'iss'> = {
+    const payload: Record<string, any> = {
       sub: userId,
       email,
       type: 'access',
       userType,
       scopes,
+      ...(rbacData && {
+        roles: rbacData.roles,
+        departments: rbacData.departments,
+        primaryDepartment: rbacData.primaryDepartment,
+        permissions: rbacData.permissions,
+        isAgent: rbacData.isAgent,
+        agentId: rbacData.agentId
+      }),
       jti
     };
 
-    const token = jwt.sign(payload, JWT_SECRET, {
+    const token = jwt.sign(payload as object, JWT_SECRET, {
       expiresIn: JWT_ACCESS_EXPIRY,
       issuer: JWT_ISSUER
-    });
+    } as jwt.SignOptions);
 
     const decoded = jwt.decode(token) as AccessTokenPayload;
     const expiresIn = decoded.exp - decoded.iat;
@@ -78,17 +104,17 @@ export class JwtAuth {
     const jti = this.generateJti();
     const family = tokenFamily || this.generateJti();
 
-    const payload: Omit<RefreshTokenPayload, 'iat' | 'exp' | 'iss'> = {
+    const payload: Record<string, any> = {
       sub: userId,
       type: 'refresh',
       tokenFamily: family,
       jti
     };
 
-    const token = jwt.sign(payload, JWT_SECRET, {
+    const token = jwt.sign(payload as object, JWT_SECRET, {
       expiresIn: JWT_REFRESH_EXPIRY,
       issuer: JWT_ISSUER
-    });
+    } as jwt.SignOptions);
 
     const decoded = jwt.decode(token) as RefreshTokenPayload;
     const expiresAt = new Date(decoded.exp * 1000);
@@ -103,17 +129,17 @@ export class JwtAuth {
   ): { token: string; jti: string; expiresIn: number } {
     const jti = this.generateJti();
 
-    const payload: Omit<ServiceAccountTokenPayload, 'iat' | 'exp' | 'iss'> = {
+    const payload: Record<string, any> = {
       sub: serviceAccountId,
       type: 'service',
       scopes,
       jti
     };
 
-    const token = jwt.sign(payload, JWT_SECRET, {
+    const token = jwt.sign(payload as object, JWT_SECRET, {
       expiresIn: JWT_ACCESS_EXPIRY,
       issuer: JWT_ISSUER
-    });
+    } as jwt.SignOptions);
 
     const decoded = jwt.decode(token) as ServiceAccountTokenPayload;
     const expiresIn = decoded.exp - decoded.iat;

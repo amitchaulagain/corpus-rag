@@ -200,8 +200,76 @@ async function createIndexes(db: Db) {
     await db.collection('users').createIndex({ currentPlan: 1 });
     // console.log('  ✅ users - Additional token-related indexes');
 
-    // console.log('\n🎉 Optimized schema created with 9 collections:');
-    // console.log('   • users (with embedded platforms + token management)');
+    // ========================================
+    // USERS COLLECTION - RBAC Indexes
+    // ========================================
+    await db.collection('users').createIndex({ 'roles.role': 1 });
+    await db.collection('users').createIndex({ 'roles.departmentId': 1 });
+    await db.collection('users').createIndex({ 'roles.isActive': 1 });
+    await db.collection('users').createIndex({ departments: 1 });
+    await db.collection('users').createIndex({ primaryDepartmentId: 1 });
+    await db.collection('users').createIndex({ 'agentProfile.agentId': 1 });
+    await db.collection('users').createIndex({ 'agentProfile.isActive': 1 });
+    // console.log('  ✅ users - RBAC indexes');
+
+    // ========================================
+    // COLLECTION 10: ROLES
+    // ========================================
+    await db.collection('roles').createIndex({ name: 1 }, { unique: true });
+    await db.collection('roles').createIndex({ isSystemRole: 1 });
+    await db.collection('roles').createIndex({ departmentSpecific: 1 });
+    // console.log('  ✅ roles - Role definitions');
+
+    // ========================================
+    // COLLECTION 11: DEPARTMENTS
+    // ========================================
+    await db.collection('departments').createIndex({ code: 1 }, { unique: true });
+    await db.collection('departments').createIndex({ name: 1 });
+    await db.collection('departments').createIndex({ isActive: 1 });
+    await db.collection('departments').createIndex({ parentDepartmentId: 1 });
+    // console.log('  ✅ departments - Department definitions');
+
+    // ========================================
+    // COLLECTION 12: AGENTS
+    // ========================================
+    await db.collection('agents').createIndex({ userId: 1 }, { unique: true });
+    await db.collection('agents').createIndex({ agencyName: 1 });
+    await db.collection('agents').createIndex({ isActive: 1 });
+    await db.collection('agents').createIndex({ licenseNumber: 1 }, { sparse: true });
+    // console.log('  ✅ agents - Agent/agency profiles');
+
+    // ========================================
+    // COLLECTION 13: AGENT_JOB_SEEKER_RELATIONSHIPS
+    // ========================================
+    await db.collection('agent_job_seeker_relationships').createIndex({ agentId: 1, jobSeekerId: 1 }, { unique: true });
+    await db.collection('agent_job_seeker_relationships').createIndex({ agentId: 1, status: 1 });
+    await db.collection('agent_job_seeker_relationships').createIndex({ jobSeekerId: 1, status: 1 });
+    await db.collection('agent_job_seeker_relationships').createIndex({ status: 1 });
+    // console.log('  ✅ agent_job_seeker_relationships - Agent-job seeker links');
+
+    // ========================================
+    // COLLECTION 14: AGENT_APPLICATIONS
+    // ========================================
+    await db.collection('agent_applications').createIndex({ agentId: 1, createdAt: -1 });
+    await db.collection('agent_applications').createIndex({ jobSeekerId: 1, createdAt: -1 });
+    await db.collection('agent_applications').createIndex({ jobId: 1 });
+    await db.collection('agent_applications').createIndex({ status: 1 });
+    await db.collection('agent_applications').createIndex({ 'charges.status': 1 });
+    await db.collection('agent_applications').createIndex({ submittedAt: -1 });
+    // console.log('  ✅ agent_applications - Agent-submitted applications');
+
+    // ========================================
+    // COLLECTION 15: AUDIT_LOGS
+    // ========================================
+    await db.collection('audit_logs').createIndex({ userId: 1, timestamp: -1 });
+    await db.collection('audit_logs').createIndex({ action: 1, timestamp: -1 });
+    await db.collection('audit_logs').createIndex({ resourceType: 1, resourceId: 1, timestamp: -1 });
+    await db.collection('audit_logs').createIndex({ timestamp: -1 });
+    await db.collection('audit_logs').createIndex({ 'details.metadata': 1 });
+    // console.log('  ✅ audit_logs - System audit trail');
+
+    // console.log('\n🎉 Optimized schema created with 14 collections:');
+    // console.log('   • users (with embedded platforms + token management + RBAC)');
     // console.log('   • sessions (OAuth tokens with TTL auto-expiry)');
     // console.log('   • jobs (with embedded applications)');
     // console.log('   • usage (API usage analytics)');
@@ -210,6 +278,11 @@ async function createIndexes(db: Db) {
     // console.log('   • orders (token purchases)');
     // console.log('   • token_transactions (token audit trail)');
     // console.log('   • stripe_webhooks (payment events)');
+    // console.log('   • roles (RBAC role definitions)');
+    // console.log('   • departments (department definitions)');
+    // console.log('   • agents (agent/agency profiles)');
+    // console.log('   • agent_job_seeker_relationships (agent-job seeker links)');
+    // console.log('   • agent_applications (agent-submitted applications)');
     // console.log('\n✅ All indexes created successfully!');
   } catch (error: any) {
     // Ignore index already exists errors

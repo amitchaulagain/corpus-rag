@@ -223,6 +223,30 @@
             </a>
           </li>
           <li class="w-full">
+            <a href="/admin" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/admin'} title={isSidebarCollapsed ? 'Admin' : ''}>
+              <span class="text-xl">🛠️</span>
+              {#if !isSidebarCollapsed}<span>Admin Panel</span>{/if}
+            </a>
+          </li>
+          <li class="w-full">
+            <a href="/admin/rbac" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/admin/rbac'} title={isSidebarCollapsed ? 'RBAC' : ''}>
+              <span class="text-xl">🔐</span>
+              {#if !isSidebarCollapsed}<span>RBAC Management</span>{/if}
+            </a>
+          </li>
+          <li class="w-full">
+            <a href="/admin/audit-logs" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/admin/audit-logs'} title={isSidebarCollapsed ? 'Audit Logs' : ''}>
+              <span class="text-xl">📋</span>
+              {#if !isSidebarCollapsed}<span>Audit Logs</span>{/if}
+            </a>
+          </li>
+          <li class="w-full">
+            <a href="/admin/analytics" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/admin/analytics'} title={isSidebarCollapsed ? 'Analytics' : ''}>
+              <span class="text-xl">📊</span>
+              {#if !isSidebarCollapsed}<span>Analytics</span>{/if}
+            </a>
+          </li>
+          <li class="w-full">
             <a href="/admin/orders" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/admin/orders'} title={isSidebarCollapsed ? 'Orders' : ''}>
               <span class="text-xl">📦</span>
               {#if !isSidebarCollapsed}<span>Orders</span>{/if}
@@ -286,6 +310,30 @@
             <a href="/resume-enhancement" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/resume-enhancement'} title={isSidebarCollapsed ? 'Resume Enhancement' : ''}>
               <span class="text-xl">✨</span>
               {#if !isSidebarCollapsed}<span>Resume Enhancement</span>{/if}
+            </a>
+          </li>
+
+          <!-- Divider -->
+          {#if !isSidebarCollapsed}
+            <li><hr class="my-2" /></li>
+          {/if}
+
+          <!-- Agent Section -->
+          {#if !isSidebarCollapsed}
+            <li class="menu-title">
+              <span class="text-xs text-base-content/60">Agent</span>
+            </li>
+          {/if}
+          <li class="w-full">
+            <a href="/agents/register" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/agents/register'} title={isSidebarCollapsed ? 'Register Agent' : ''}>
+              <span class="text-xl">🤝</span>
+              {#if !isSidebarCollapsed}<span>Register Agent</span>{/if}
+            </a>
+          </li>
+          <li class="w-full">
+            <a href="/agents/dashboard" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/agents/dashboard'} title={isSidebarCollapsed ? 'Agent Dashboard' : ''}>
+              <span class="text-xl">📊</span>
+              {#if !isSidebarCollapsed}<span>Agent Dashboard</span>{/if}
             </a>
           </li>
 

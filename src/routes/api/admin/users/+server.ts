@@ -1,136 +1,61 @@
-// Admin: Manage users
+// Admin User Management (Enhanced with RBAC)
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getDB } from '$lib/db/mongodb';
-import { UserModel, type UserType, type ApiPermissions } from '$lib/models/user';
-import { requireAdmin } from '$lib/auth-middleware';
+import { requireAuthRBAC, requirePermission, requireRole } from '$lib/rbac-middleware.js';
+import { getDB } from '$lib/db/mongodb.js';
+import { UserModel } from '$lib/models/user.js';
+import { getUserRoles, getUserPermissions } from '$lib/rbac-middleware.js';
 
-// GET - List all users
+// List all users (admin only)
 export const GET: RequestHandler = async (event) => {
   try {
-    await requireAdmin(event);
-
+    // Require admin role or users:read permission
+    const auth = await requirePermission(event, 'users', 'read', 'all').catch(() => 
+      requireRole(event, 'admin')
+    );
+    
     const db = await getDB();
     const userModel = new UserModel(db);
-
+    
     const users = await userModel.listAll();
-
+    
+    // Get RBAC data for each user
+    const usersWithRBAC = await Promise.all(
+      users.map(async (user) => {
+        const roles = await getUserRoles(user._id!);
+        const permissions = await getUserPermissions(user._id!);
+        
+        return {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+          userType: user.userType,
+          isPaid: user.isPaid,
+          roles,
+          permissions: permissions.length,
+          departments: user.departments?.length || 0,
+          primaryDepartment: user.primaryDepartmentId,
+          isAgent: !!user.agentProfile?.isActive,
+          agentId: user.agentProfile?.agentId,
+          tokenBalance: user.tokenBalance || 0,
+          totalTokensPurchased: user.totalTokensPurchased || 0,
+          totalTokensUsed: user.totalTokensUsed || 0,
+          createdAt: user.createdAt,
+          lastLogin: user.lastLogin
+        };
+      })
+    );
+    
     return json({
       success: true,
-      users: users.map(u => ({
-        id: u._id,
-        email: u.email,
-        name: u.name,
-        userType: u.userType,
-        isPaid: u.isPaid,
-        apiPermissions: u.apiPermissions,
-        createdAt: u.createdAt,
-        lastLogin: u.lastLogin
-      }))
+      users: usersWithRBAC,
+      total: usersWithRBAC.length
     });
-
-  } catch (error) {
-    return json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to list users'
-      },
-      { status: error instanceof Error && error.message.includes('Admin') ? 403 : 500 }
-    );
-  }
-};
-
-// PUT - Update user type/permissions
-export const PUT: RequestHandler = async (event) => {
-  try {
-    await requireAdmin(event);
-
-    const { userId, userType, isPaid, apiPermissions } = await event.request.json();
-
-    if (!userId) {
-      return json(
-        { success: false, error: 'userId is required' },
-        { status: 400 }
-      );
+  } catch (error: any) {
+    if (error.status) {
+      return json({ success: false, error: error.message }, { status: error.status });
     }
-
-    const db = await getDB();
-    const userModel = new UserModel(db);
-
-    // Update user type if provided
-    if (userType !== undefined && isPaid !== undefined) {
-      await userModel.updateUserType(userId, userType as UserType, isPaid);
-    }
-
-    // Update API permissions if provided
-    if (apiPermissions) {
-      await userModel.updateApiPermissions(userId, apiPermissions as Partial<ApiPermissions>);
-    }
-
-    // Get updated user
-    const user = await userModel.findById(userId);
-
-    return json({
-      success: true,
-      user: {
-        id: user?._id,
-        email: user?.email,
-        name: user?.name,
-        userType: user?.userType,
-        isPaid: user?.isPaid,
-        apiPermissions: user?.apiPermissions
-      }
-    });
-
-  } catch (error) {
-    return json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to update user'
-      },
-      { status: error instanceof Error && error.message.includes('Admin') ? 403 : 500 }
-    );
-  }
-};
-
-// DELETE - Delete user
-export const DELETE: RequestHandler = async (event) => {
-  try {
-    await requireAdmin(event);
-
-    const { userId } = await event.request.json();
-
-    if (!userId) {
-      return json(
-        { success: false, error: 'userId is required' },
-        { status: 400 }
-      );
-    }
-
-    const db = await getDB();
-    const userModel = new UserModel(db);
-
-    const deleted = await userModel.delete(userId);
-
-    if (!deleted) {
-      return json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
-    }
-
-    return json({
-      success: true,
-      message: 'User deleted successfully'
-    });
-
-  } catch (error) {
-    return json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete user'
-      },
-      { status: error instanceof Error && error.message.includes('Admin') ? 403 : 500 }
-    );
+    console.error('List users error:', error);
+    return json({ success: false, error: 'Failed to list users' }, { status: 500 });
   }
 };

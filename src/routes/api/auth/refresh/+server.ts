@@ -6,6 +6,7 @@ import { UserModel } from '$lib/models/user';
 import { RefreshTokenModel } from '$lib/models/refresh-token';
 import { JwtAuth } from '$lib/jwt-auth';
 import type { RefreshTokenPayload } from '$lib/jwt-auth';
+import { getUserRoles, getUserPermissions } from '$lib/rbac-middleware.js';
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   try {
@@ -51,31 +52,50 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 
     // Get user
     const user = await userModel.findById(decoded.sub);
-    if (!user) {
+    if (!user || !user._id) {
       return json({ success: false, error: 'User not found' }, { status: 404 });
     }
 
     // Revoke old refresh token
     await refreshTokenModel.revoke(decoded.jti);
 
-    // Generate new tokens (rotate refresh token)
+    // Get RBAC data
+    const roles = await getUserRoles(user._id);
+    const departments = user.departments?.map(d => d.toString()) || [];
+    const primaryDepartment = user.primaryDepartmentId?.toString();
+    const permissions = await getUserPermissions(user._id);
+    const isAgent = !!user.agentProfile?.isActive;
+    const agentId = user.agentProfile?.agentId?.toString();
+
+    // Get scopes (legacy)
+    const scopes = Object.entries(user.apiPermissions)
+      .filter(([_, allowed]) => allowed)
+      .map(([scope]) => scope as any);
+
+    // Generate new tokens (rotate refresh token) with RBAC data
     const newAccessToken = JwtAuth.generateAccessToken(
-      user._id!.toString(),
+      user._id.toString(),
       user.email,
       user.userType,
-      Object.entries(user.apiPermissions)
-        .filter(([_, allowed]) => allowed)
-        .map(([scope]) => scope as any)
+      scopes,
+      {
+        roles,
+        departments,
+        primaryDepartment,
+        permissions,
+        isAgent,
+        agentId
+      }
     );
 
     const newRefreshToken = JwtAuth.generateRefreshToken(
-      user._id!.toString(),
+      user._id.toString(),
       decoded.tokenFamily // Keep same family
     );
 
     // Store new refresh token
     await refreshTokenModel.create({
-      userId: user._id!,
+      userId: user._id,
       tokenFamily: newRefreshToken.tokenFamily,
       jti: newRefreshToken.jti,
       isRevoked: false,

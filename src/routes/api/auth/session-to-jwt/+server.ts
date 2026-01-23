@@ -6,6 +6,7 @@ import { SessionModel } from '$lib/models/session.js';
 import { UserModel } from '$lib/models/user.js';
 import { RefreshTokenModel } from '$lib/models/refresh-token.js';
 import { JwtAuth, type ApiScope } from '$lib/jwt-auth.js';
+import { getUserRoles, getUserPermissions } from '$lib/rbac-middleware.js';
 
 export const POST: RequestHandler = async ({ request, getClientAddress }) => {
   try {
@@ -29,25 +30,41 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
 
     // Get user
     const user = await userModel.findById(session.userId);
-    if (!user) {
+    if (!user || !user._id) {
       return json({ success: false, error: 'User not found' }, { status: 404 });
     }
 
-    // Get scopes based on user permissions
+    // Get scopes based on user permissions (legacy)
     const scopes: ApiScope[] = Object.entries(user.apiPermissions)
       .filter(([_, allowed]) => allowed)
       .map(([scope]) => scope as ApiScope);
 
-    // Generate JWT access token
+    // Get RBAC data
+    const roles = await getUserRoles(user._id!);
+    const departments = user.departments?.map(d => d.toString()) || [];
+    const primaryDepartment = user.primaryDepartmentId?.toString();
+    const permissions = await getUserPermissions(user._id!);
+    const isAgent = !!user.agentProfile?.isActive;
+    const agentId = user.agentProfile?.agentId?.toString();
+
+    // Generate JWT access token with RBAC data
     const accessTokenData = JwtAuth.generateAccessToken(
       user._id!.toString(),
       user.email,
       user.userType,
-      scopes
+      scopes,
+      {
+        roles,
+        departments,
+        primaryDepartment,
+        permissions,
+        isAgent,
+        agentId
+      }
     );
 
     // Generate JWT refresh token
-    const refreshTokenData = JwtAuth.generateRefreshToken(user._id!.toString());
+    const refreshTokenData = JwtAuth.generateRefreshToken(user._id.toString());
 
     // Store refresh token in database
     await refreshTokenModel.create({
@@ -70,7 +87,12 @@ export const POST: RequestHandler = async ({ request, getClientAddress }) => {
       user: {
         id: user._id,
         email: user.email,
-        userType: user.userType
+        userType: user.userType,
+        roles,
+        departments,
+        primaryDepartment,
+        isAgent,
+        agentId
       }
     });
   } catch (error: any) {

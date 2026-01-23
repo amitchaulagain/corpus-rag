@@ -5,13 +5,21 @@ export class ClaudeProvider extends BaseAIProvider {
     const startTime = Date.now();
 
     try {
+      if (!this.config.apiKey) {
+        return {
+          success: false,
+          error: 'Claude API key not configured',
+          metadata: { model: this.config.model, processingTime: Date.now() - startTime }
+        };
+      }
+
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'x-api-key': this.config.apiKey,
           'anthropic-version': '2023-06-01',
           'content-type': 'application/json'
-        },
+        } as HeadersInit,
         body: JSON.stringify({
           model: this.config.model,
           max_tokens: request.maxTokens || 4096,
@@ -71,13 +79,17 @@ export class ClaudeProvider extends BaseAIProvider {
 
   async testConnection(): Promise<boolean> {
     try {
+      if (!this.config.apiKey) {
+        return false;
+      }
+
       const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
           'x-api-key': this.config.apiKey,
           'anthropic-version': '2023-06-01',
           'content-type': 'application/json'
-        },
+        } as HeadersInit,
         body: JSON.stringify({
           model: this.config.model,
           max_tokens: 10,
