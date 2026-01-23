@@ -4,9 +4,11 @@ import { MultiProviderService } from '$lib/multi-provider-service';
 import { requirePermission } from '$lib/auth-middleware';
 import { getDB } from '$lib/db/mongodb';
 import { JobModel } from '$lib/models/job';
+import { TokenService } from '$lib/services/token-service';
 import { ObjectId } from 'mongodb';
 
 const multiProvider = new MultiProviderService();
+const TOKEN_COST_QA = TokenService.TOKEN_COSTS.qaGeneration;
 
 export const POST: RequestHandler = async (event) => {
   try {
@@ -35,6 +37,29 @@ export const POST: RequestHandler = async (event) => {
           error: 'Missing required fields: job_id, questions (array), resume_text, useAi are required'
         },
         { status: 400 }
+      );
+    }
+
+    // Check token balance before processing
+    const tokenService = await TokenService.create();
+    const tokenCheck = await tokenService.checkTokens(
+      new ObjectId(auth.user._id),
+      TOKEN_COST_QA
+    );
+
+    if (!tokenCheck.hasEnoughTokens) {
+      return json(
+        {
+          success: false,
+          error: 'Insufficient tokens',
+          tokenInfo: {
+            currentBalance: tokenCheck.currentBalance,
+            requiredTokens: tokenCheck.requiredTokens,
+            remainingAfter: tokenCheck.remainingAfter
+          },
+          purchaseUrl: '/plans'
+        },
+        { status: 402 } // 402 Payment Required
       );
     }
 
@@ -117,6 +142,22 @@ ${job_details ? `\nJob Context: ${typeof job_details === 'string' ? job_details 
       }
 
       if (jobRecord) {
+        // Deduct tokens after successful generation
+        const tokenDeduction = await tokenService.deductTokens(
+          new ObjectId(auth.user._id),
+          TOKEN_COST_QA,
+          {
+            jobId: jobRecord._id,
+            endpoint: '/api/questionAndAnswers',
+            aiProvider: useAi,
+            description: `Q&A generation for ${company || 'job'} - ${job_title || job_id}`
+          }
+        );
+
+        if (!tokenDeduction.success) {
+          console.error('Token deduction failed after successful generation:', tokenDeduction);
+        }
+
         const apiCallRecord = {
           timestamp: new Date(),
           endpoint: '/api/questionAndAnswers',
@@ -155,16 +196,36 @@ ${job_details ? `\nJob Context: ${typeof job_details === 'string' ? job_details 
             questionAnswers
           });
         }
+      } else {
+        // Deduct tokens even if no job record
+        const tokenDeduction = await tokenService.deductTokens(
+          new ObjectId(auth.user._id),
+          TOKEN_COST_QA,
+          {
+            endpoint: '/api/questionAndAnswers',
+            aiProvider: useAi,
+            description: `Q&A generation for ${company || 'job'} - ${job_title || job_id}`
+          }
+        );
+
+        if (!tokenDeduction.success) {
+          console.error('Token deduction failed after successful generation:', tokenDeduction);
+        }
       }
     } catch (trackingError) {
       console.error('Job tracking error:', trackingError);
     }
 
-    // Return answers and job_id
+    // Get final token balance
+    const finalBalance = await tokenService.getBalance(new ObjectId(auth.user._id));
+
+    // Return answers, job_id, and token usage info
     return json({
       answers: result.answer,
       job_id,
-      questions_count: questions.length
+      questions_count: questions.length,
+      tokensUsed: TOKEN_COST_QA,
+      remainingBalance: finalBalance
     });
 
   } catch (error) {

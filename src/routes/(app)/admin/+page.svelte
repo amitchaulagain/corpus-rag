@@ -131,7 +131,10 @@
       <h1 class="text-4xl font-bold mb-4 text-primary">🛠️ Admin Dashboard</h1>
       <p class="text-base-content/70">Manage users and permissions</p>
     </div>
-    <a href="/" class="btn btn-ghost">← Back to Home</a>
+    <div class="flex gap-2">
+      <a href="/admin/orders" class="btn btn-primary">📦 Manage Orders</a>
+      <a href="/" class="btn btn-ghost">← Back to Home</a>
+    </div>
   </div>
 
   {#if isLoading}

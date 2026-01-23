@@ -8,6 +8,7 @@ Example: If Q1 is select (recommend option 3), Q2 is checkbox (recommend options
 Return: [3, [1,4], 2]
 
 Rules:
+
 - Return ONLY the array, no explanations or text
 - Use 0-based indexing (first option = 0, second = 1, etc.)
 - Array length must match number of questions

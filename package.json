@@ -10,7 +10,8 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "setup": "node -e \"const fs=require('fs'); if(!fs.existsSync('.env')){fs.writeFileSync('.env','# AI Provider API Keys\\nCLAUDE_API_KEY=your-claude-api-key\\nDEEPSEEK_API_KEY=your-deepseek-api-key\\nGEMINI_API_KEY=your-gemini-api-key\\n\\n# JWT Authentication\\nJWT_SECRET=your-super-secret-jwt-key-min-32-characters-long\\nJWT_ACCESS_EXPIRY=15m\\nJWT_REFRESH_EXPIRY=30d\\nJWT_ISSUER=corpus-rag-api\\n\\n# MongoDB\\nMONGODB_URI=mongodb://localhost:27017/job-assistant\\n'); console.log('✅ .env created! Update with your credentials then run: npm run dev');} else {console.log('✅ .env already exists! Run: npm run dev');}\"",
-    "init-jwt": "node --import tsx src/lib/init-jwt-db.ts"
+    "init-jwt": "node --import tsx src/lib/init-jwt-db.ts",
+    "seed-plans": "node --import tsx scripts/seed-token-plans.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^3.0.0",
@@ -21,6 +22,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.0.0",
     "@types/nodemailer": "^7.0.2",
+    "@types/stripe": "^8.0.417",
     "@vitest/ui": "^3.2.4",
     "concurrently": "^9.2.1",
     "cross-env": "^10.0.0",
@@ -47,6 +49,7 @@
     "mongodb": "^6.20.0",
     "nodemailer": "^7.0.9",
     "pdf-parse": "^2.1.7",
+    "stripe": "^17.7.0",
     "swagger-ui-dist": "^5.29.4"
   }
 }

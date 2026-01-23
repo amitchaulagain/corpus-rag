@@ -21,6 +21,24 @@ export interface User {
   userType: UserType;
   isPaid: boolean;
   apiPermissions: ApiPermissions;
+  
+  // Token Management
+  tokenBalance?: number;              // Current available tokens (default: 0)
+  totalTokensPurchased?: number;      // Lifetime tokens purchased (default: 0)
+  totalTokensUsed?: number;           // Lifetime tokens consumed (default: 0)
+  
+  // Subscription Plan (for display/pricing)
+  currentPlan?: 'silver' | 'gold' | 'diamond' | null;
+  planExpiresAt?: Date;              // Optional: if plans have expiry
+  
+  // Payment & Billing
+  stripeCustomerId?: string;         // Stripe customer ID
+  defaultPaymentMethodId?: string;  // Default payment method
+  
+  // Metadata
+  lastTokenPurchaseAt?: Date;
+  lastTokenUsageAt?: Date;
+  
   createdAt: Date;
   lastLogin: Date;
 }
@@ -35,6 +53,9 @@ export class UserModel {
   async create(userData: Omit<User, '_id' | 'createdAt' | 'lastLogin'>): Promise<User> {
     const user: User = {
       ...userData,
+      tokenBalance: userData.tokenBalance ?? 0,
+      totalTokensPurchased: userData.totalTokensPurchased ?? 0,
+      totalTokensUsed: userData.totalTokensUsed ?? 0,
       createdAt: new Date(),
       lastLogin: new Date()
     };
@@ -113,6 +134,77 @@ export class UserModel {
     await this.db.collection<User>('users').updateOne(
       { _id: objectId },
       { $unset: { passwordResetToken: '', passwordResetExpiry: '' } }
+    );
+  }
+
+  // Token management methods
+  async getTokenBalance(userId: string | ObjectId): Promise<number> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    const user = await this.findById(objectId);
+    return user?.tokenBalance ?? 0;
+  }
+
+  async addTokens(userId: string | ObjectId, amount: number): Promise<void> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    await this.db.collection<User>('users').updateOne(
+      { _id: objectId },
+      { 
+        $inc: { 
+          tokenBalance: amount,
+          totalTokensPurchased: amount
+        },
+        $set: {
+          lastTokenPurchaseAt: new Date()
+        }
+      }
+    );
+  }
+
+  async deductTokens(userId: string | ObjectId, amount: number): Promise<boolean> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    const result = await this.db.collection<User>('users').updateOne(
+      { 
+        _id: objectId,
+        tokenBalance: { $gte: amount }  // Only update if sufficient balance
+      },
+      { 
+        $inc: { 
+          tokenBalance: -amount,
+          totalTokensUsed: amount
+        },
+        $set: {
+          lastTokenUsageAt: new Date()
+        }
+      }
+    );
+    return result.modifiedCount > 0;
+  }
+
+  async updateTokenBalance(userId: string | ObjectId, balance: number): Promise<void> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    await this.db.collection<User>('users').updateOne(
+      { _id: objectId },
+      { $set: { tokenBalance: balance } }
+    );
+  }
+
+  async setStripeCustomerId(userId: string | ObjectId, customerId: string): Promise<void> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    await this.db.collection<User>('users').updateOne(
+      { _id: objectId },
+      { $set: { stripeCustomerId: customerId } }
+    );
+  }
+
+  async setCurrentPlan(userId: string | ObjectId, plan: 'silver' | 'gold' | 'diamond' | null, expiresAt?: Date): Promise<void> {
+    const objectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    const update: any = { currentPlan: plan };
+    if (expiresAt) {
+      update.planExpiresAt = expiresAt;
+    }
+    await this.db.collection<User>('users').updateOne(
+      { _id: objectId },
+      { $set: update }
     );
   }
 

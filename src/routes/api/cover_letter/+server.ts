@@ -5,9 +5,11 @@ import { requirePermission } from '$lib/auth-middleware';
 import { getDB } from '$lib/db/mongodb';
 import { JobModel } from '$lib/models/job';
 import { UsageModel } from '$lib/models/usage';
+import { TokenService } from '$lib/services/token-service';
 import { ObjectId } from 'mongodb';
 
 const multiProvider = new MultiProviderService();
+const TOKEN_COST_COVER_LETTER = TokenService.TOKEN_COSTS.coverLetter;
 
 export const POST: RequestHandler = async (event) => {
   let requestBody: any = {};
@@ -38,6 +40,29 @@ export const POST: RequestHandler = async (event) => {
           error: 'Missing required fields: job_id, job_details, resume_text, useAi are required'
         },
         { status: 400 }
+      );
+    }
+
+    // Check token balance before processing
+    const tokenService = await TokenService.create();
+    const tokenCheck = await tokenService.checkTokens(
+      new ObjectId(auth.user._id),
+      TOKEN_COST_COVER_LETTER
+    );
+
+    if (!tokenCheck.hasEnoughTokens) {
+      return json(
+        {
+          success: false,
+          error: 'Insufficient tokens',
+          tokenInfo: {
+            currentBalance: tokenCheck.currentBalance,
+            requiredTokens: tokenCheck.requiredTokens,
+            remainingAfter: tokenCheck.remainingAfter
+          },
+          purchaseUrl: '/plans' // Frontend should handle this
+        },
+        { status: 402 } // 402 Payment Required
       );
     }
 
@@ -132,6 +157,23 @@ Please format as a professional cover letter with proper greeting and closing.`;
         });
       }
 
+      // Deduct tokens after successful generation (with job record if available)
+      const tokenDeduction = await tokenService.deductTokens(
+        new ObjectId(auth.user._id),
+        TOKEN_COST_COVER_LETTER,
+        {
+          jobId: jobRecord?._id,
+          endpoint: '/api/cover_letter',
+          aiProvider: useAi,
+          description: `Cover letter generation for ${company || 'job'} - ${job_title || job_id}`
+        }
+      );
+
+      if (!tokenDeduction.success) {
+        // This shouldn't happen since we checked, but handle it gracefully
+        console.error('Token deduction failed after successful generation:', tokenDeduction);
+      }
+
       // Create or update job application record (embedded in job)
       if (jobRecord) {
         const apiCallRecord = {
@@ -173,10 +215,15 @@ Please format as a professional cover letter with proper greeting and closing.`;
       // Don't fail the request if tracking fails
     }
 
-    // Return only cover_letter and job_id
+    // Get final token balance (in case deduction happened in tracking block)
+    const finalBalance = await tokenService.getBalance(new ObjectId(auth.user._id));
+
+    // Return cover_letter, job_id, and token usage info
     return json({
       cover_letter: result.answer,
-      job_id
+      job_id,
+      tokensUsed: TOKEN_COST_COVER_LETTER,
+      remainingBalance: finalBalance
     });
 
   } catch (error) {

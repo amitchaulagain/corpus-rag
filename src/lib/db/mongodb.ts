@@ -156,12 +156,60 @@ async function createIndexes(db: Db) {
     await db.collection('api_keys').createIndex({ userId: 1, isActive: 1 });
     // console.log('  ✅ api_keys - External API authentication (hashed keys)');
 
-    // console.log('\n🎉 Optimized schema created with 5 collections:');
-    // console.log('   • users (with embedded platforms)');
+    // ========================================
+    // COLLECTION 6: TOKEN PLANS
+    // ========================================
+    await db.collection('token_plans').createIndex({ planId: 1 }, { unique: true });
+    await db.collection('token_plans').createIndex({ isActive: 1, displayOrder: 1 });
+    // console.log('  ✅ token_plans - Subscription plan configurations');
+
+    // ========================================
+    // COLLECTION 7: ORDERS
+    // ========================================
+    await db.collection('orders').createIndex({ userId: 1, createdAt: -1 });
+    await db.collection('orders').createIndex({ orderNumber: 1 }, { unique: true });
+    await db.collection('orders').createIndex({ status: 1 });
+    await db.collection('orders').createIndex({ stripePaymentIntentId: 1 }, { sparse: true });
+    await db.collection('orders').createIndex({ stripeSessionId: 1 }, { sparse: true });
+    await db.collection('orders').createIndex({ stripeCustomerId: 1 });
+    await db.collection('orders').createIndex({ createdAt: -1 });
+    // console.log('  ✅ orders - Token purchase orders');
+
+    // ========================================
+    // COLLECTION 8: TOKEN TRANSACTIONS
+    // ========================================
+    await db.collection('token_transactions').createIndex({ userId: 1, createdAt: -1 });
+    await db.collection('token_transactions').createIndex({ type: 1 });
+    await db.collection('token_transactions').createIndex({ orderId: 1 }, { sparse: true });
+    await db.collection('token_transactions').createIndex({ jobId: 1 }, { sparse: true });
+    // console.log('  ✅ token_transactions - Token movement audit trail');
+
+    // ========================================
+    // COLLECTION 9: STRIPE WEBHOOKS
+    // ========================================
+    await db.collection('stripe_webhooks').createIndex({ stripeEventId: 1 }, { unique: true });
+    await db.collection('stripe_webhooks').createIndex({ processed: 1, createdAt: -1 });
+    await db.collection('stripe_webhooks').createIndex({ eventType: 1 });
+    // console.log('  ✅ stripe_webhooks - Stripe webhook event tracking');
+
+    // ========================================
+    // USERS COLLECTION - Additional Token Indexes
+    // ========================================
+    await db.collection('users').createIndex({ tokenBalance: 1 });
+    await db.collection('users').createIndex({ stripeCustomerId: 1 }, { unique: true, sparse: true });
+    await db.collection('users').createIndex({ currentPlan: 1 });
+    // console.log('  ✅ users - Additional token-related indexes');
+
+    // console.log('\n🎉 Optimized schema created with 9 collections:');
+    // console.log('   • users (with embedded platforms + token management)');
     // console.log('   • sessions (OAuth tokens with TTL auto-expiry)');
     // console.log('   • jobs (with embedded applications)');
     // console.log('   • usage (API usage analytics)');
     // console.log('   • api_keys (external API authentication)');
+    // console.log('   • token_plans (subscription plans)');
+    // console.log('   • orders (token purchases)');
+    // console.log('   • token_transactions (token audit trail)');
+    // console.log('   • stripe_webhooks (payment events)');
     // console.log('\n✅ All indexes created successfully!');
   } catch (error: any) {
     // Ignore index already exists errors

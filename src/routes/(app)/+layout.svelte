@@ -222,6 +222,12 @@
               {#if !isSidebarCollapsed}<span>Job Tracking</span>{/if}
             </a>
           </li>
+          <li class="w-full">
+            <a href="/admin/orders" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/admin/orders'} title={isSidebarCollapsed ? 'Orders' : ''}>
+              <span class="text-xl">📦</span>
+              {#if !isSidebarCollapsed}<span>Orders</span>{/if}
+            </a>
+          </li>
 
           <!-- Divider -->
           {#if !isSidebarCollapsed}

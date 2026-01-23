@@ -11,11 +11,19 @@
     todayApiCalls: 0
   };
 
+  let orderStats = {
+    totalOrders: 0,
+    pendingOrders: 0,
+    completedOrders: 0,
+    totalRevenue: 0
+  };
+
   let recentActivity = [];
   let isLoading = true;
 
   onMount(async () => {
     await loadStats();
+    await loadOrderStats();
     await loadActivity();
     isLoading = false;
   });
@@ -39,6 +47,30 @@
     }
   }
 
+  async function loadOrderStats() {
+    try {
+      const token = localStorage.getItem('session_token');
+      const response = await fetch('/api/admin/orders?limit=1', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data.stats) {
+          orderStats = {
+            totalOrders: data.data.stats.totalOrders || 0,
+            pendingOrders: data.data.stats.pendingOrders || 0,
+            completedOrders: data.data.stats.completedOrders || 0,
+            totalRevenue: data.data.stats.totalRevenue || 0
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load order stats:', error);
+    }
+  }
+
   async function loadActivity() {
     try {
       const token = localStorage.getItem('session_token');
@@ -56,6 +88,13 @@
     } catch (error) {
       console.error('Failed to load activity:', error);
     }
+  }
+
+  function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount / 100); // Amount is in cents
   }
 </script>
 
@@ -120,15 +159,50 @@
         <div class="stat-value">{stats.totalApiCalls.toLocaleString()}</div>
         <div class="stat-desc text-accent-content/60">All-time requests</div>
       </div>
+
+      <!-- Total Revenue -->
+      <div class="stat bg-gradient-to-br from-purple-500 to-purple-700 text-white rounded-xl shadow-xl">
+        <div class="stat-figure text-4xl opacity-50">💰</div>
+        <div class="stat-title text-white/80">Total Revenue</div>
+        <div class="stat-value text-2xl">{formatCurrency(orderStats.totalRevenue)}</div>
+        <div class="stat-desc text-white/60">From completed orders</div>
+      </div>
+
+      <!-- Total Orders -->
+      <div class="stat bg-gradient-to-br from-cyan-500 to-cyan-700 text-white rounded-xl shadow-xl">
+        <div class="stat-figure text-4xl opacity-50">📦</div>
+        <div class="stat-title text-white/80">Total Orders</div>
+        <div class="stat-value">{orderStats.totalOrders}</div>
+        <div class="stat-desc text-white/60">All orders</div>
+      </div>
+
+      <!-- Pending Orders -->
+      <div class="stat bg-gradient-to-br from-orange-500 to-orange-700 text-white rounded-xl shadow-xl">
+        <div class="stat-figure text-4xl opacity-50">⏳</div>
+        <div class="stat-title text-white/80">Pending Orders</div>
+        <div class="stat-value">{orderStats.pendingOrders}</div>
+        <div class="stat-desc text-white/60">Awaiting completion</div>
+      </div>
     </div>
 
     <!-- Quick Actions -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       <a href="/users" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border-2 hover:border-primary">
         <div class="card-body items-center text-center">
           <span class="text-6xl mb-4">👥</span>
           <h3 class="card-title text-2xl">User Management</h3>
           <p class="text-base-content/70">Manage users and permissions</p>
+        </div>
+      </a>
+
+      <a href="/admin/orders" class="card bg-base-100 shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1 border-2 hover:border-primary">
+        <div class="card-body items-center text-center">
+          <span class="text-6xl mb-4">📦</span>
+          <h3 class="card-title text-2xl">Orders</h3>
+          <p class="text-base-content/70">Manage orders and payments</p>
+          {#if orderStats.pendingOrders > 0}
+            <div class="badge badge-warning mt-2">{orderStats.pendingOrders} Pending</div>
+          {/if}
         </div>
       </a>
 
