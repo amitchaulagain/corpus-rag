@@ -26,6 +26,8 @@ This application has two main components:
 
 ## 🚀 Quick Start
 
+> **📌 Branch Information:** This project uses `develop` for development and `alpha` for production. See [Git Branches](#-git-branches) section for details.
+
 ### For Administrators (Web UI Access)
 1. Start the server: `npm run dev`
 2. Navigate to `http://localhost:3000`
@@ -827,16 +829,34 @@ Visit `http://localhost:3000/api-docs` for Swagger UI with:
 
 ---
 
+## 🌿 Git Branches
+
+**Branch Strategy:**
+- **`develop`** - Development branch (for active development and testing)
+- **`alpha`** - Production branch (stable, deployed to production)
+
+**Usage:**
+- For development work, use: `git checkout develop`
+- For production deployment, use: `git checkout alpha`
+- Always merge `develop` → `alpha` when ready for production
+
+---
+
 ## 🛠️ Setup Using Docker
 
 ```bash
   git clone <your-repo-url>
   cd corpus-rag
+  git checkout develop  # For development
+  # or
+  git checkout alpha    # For production
 ```
 or
 
 ```bash
-  git pull origin <branch>
+  git pull origin develop  # Pull latest development changes
+  # or
+  git pull origin alpha    # Pull latest production changes
 ```
 Make sure mongodb is not running (i.e. port 27017 is free) and run the command:
 
