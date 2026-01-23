@@ -2,13 +2,16 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getDB } from '$lib/db/mongodb.js';
-import { UserModel } from '$lib/models/user.js';
+import { UserModel, type UserType } from '$lib/models/user.js';
 import { SessionModel } from '$lib/models/session.js';
 import bcrypt from 'bcrypt';
 
 const SALT_ROUNDS = 10;
 
-export const POST: RequestHandler = async ({ request, cookies }) => {
+// Hosts allowed for auto-admin promotion
+const ALLOWED_HOSTS = ['localhost', 'localhost:3000', 'onlyforthedevs.inquisitivemind.tech'];
+
+export const POST: RequestHandler = async ({ request, cookies, url }) => {
   try {
     const { email, password, name } = await request.json();
 
@@ -34,17 +37,26 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
 
+    // Check for auto-admin promotion: email starts with "admin@" and request from allowed host
+    const emailLocalPart = email.split('@')[0].toLowerCase();
+    const requestHost = url.host || request.headers.get('host') || '';
+    const isAllowedHost = ALLOWED_HOSTS.some(h => requestHost.includes(h));
+    const isAdminEmail = emailLocalPart === 'admin';
+
+    const userType: UserType = (isAdminEmail && isAllowedHost) ? 'admin' : 'freetier';
+    const isPaid = userType === 'admin';
+
     // Create user
     const user = await userModel.create({
       email,
       password: hashedPassword,
       name: name || email.split('@')[0],
-      userType: 'freetier',
-      isPaid: false,
-      apiPermissions: UserModel.getDefaultPermissions('freetier')
+      userType,
+      isPaid,
+      apiPermissions: UserModel.getDefaultPermissions(userType)
     });
 
-    console.log('Created new user with password:', email);
+    console.log(`Created new user: ${email} (${userType}${isAdminEmail && isAllowedHost ? ' - auto-promoted' : ''})`);
 
     // Create session
     const session = await sessionModel.create(user._id.toString());

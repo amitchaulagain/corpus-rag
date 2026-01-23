@@ -1,25 +1,22 @@
 import tailwindcss from "@tailwindcss/vite";
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
 
-export default defineConfig(({ mode }) => {
-  // Load env file based on `mode` in the current working directory.
-  // This ensures environment variables are available to the server
-  const env = loadEnv(mode, process.cwd(), '');
-  
-  return {
-    plugins: [tailwindcss(), sveltekit()],
-    server: {
-      port: 3000,
-      host: '0.0.0.0',
-      allowedHosts: ['onlyforthedevs.inquisitivemind.tech'],
-      hmr: {
-        host: 'onlyforthedevs.inquisitivemind.tech',
-        protocol: 'wss'
-      },
-      watch: {
-        ignored: ['**/src/lib/prompts/**', '**/data/**']
-      }
+const isProduction = process.env.NODE_ENV === 'production';
+const externalHost = 'onlyforthedevs.inquisitivemind.tech';
+
+export default defineConfig({
+  plugins: [tailwindcss(), sveltekit()],
+  server: {
+    port: 3000,
+    host: '0.0.0.0',
+    allowedHosts: ['localhost', externalHost],
+    hmr: isProduction ? {
+      host: externalHost,
+      protocol: 'wss'
+    } : true,
+    watch: {
+      ignored: ['**/src/lib/prompts/**', '**/data/**']
     }
-  };
+  }
 });

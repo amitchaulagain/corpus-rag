@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .
+    container_name: corpus-rag
+    ports:
+      - "3000:3000"
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB_NAME: inquisitive_mind
+    volumes:
+      - .:/app                    # Mount source code for hot reload
+      - /app/node_modules         # Preserve container's node_modules (anonymous volume)
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    container_name: corpus-rag-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
