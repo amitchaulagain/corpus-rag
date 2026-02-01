@@ -21,6 +21,8 @@ export interface ApiCallRecord {
     error?: string;
   };
   tokensUsed?: number;
+  inputTokens?: number;
+  outputTokens?: number;
   cost?: number;
   processingTime?: number; // milliseconds
 }
@@ -69,6 +71,13 @@ export interface Job {
   closingDate?: Date;
   jobType?: string; // 'full-time', 'part-time', 'contract', etc.
   workMode?: string; // 'remote', 'hybrid', 'onsite'
+
+  // Extended job info (HR, requirements – from scraping or parsing)
+  hrContact?: { name?: string; email?: string; phone?: string };
+  requiredSkills?: string[];
+  requiredExperience?: string;
+  /** Extra fields from platform (e.g. posted, application_volume, category) */
+  jobDetails?: Record<string, any>;
 
   // Status tracking
   status: ApplicationStatus;
@@ -237,6 +246,126 @@ export class JobModel {
     );
 
     return result.modifiedCount > 0;
+  }
+
+  /**
+   * Upsert a job application from an external client (e.g. finalboss Seek bot).
+   * Idempotent by (userId, platform, platformJobId). Creates or updates one document.
+   */
+  async upsertJobApplication(
+    userId: string | ObjectId,
+    payload: {
+      platform: PlatformType;
+      platformJobId: string;
+      title: string;
+      company: string;
+      url?: string;
+      description?: string;
+      location?: string;
+      salary?: string;
+      jobType?: string;
+      workMode?: string;
+      postedDate?: string;
+      closingDate?: string;
+      hrContact?: { name?: string; email?: string; phone?: string };
+      requiredSkills?: string[];
+      requiredExperience?: string;
+      jobDetails?: Record<string, any>;
+      application: {
+        coverLetter?: string;
+        tailoredResume?: string;
+        questionAnswers?: Array<{ question: string; answer: string }>;
+        apiCalls?: Array<Partial<ApiCallRecord> & { endpoint: string; timestamp?: Date | string }>;
+      };
+      rawData?: Record<string, any>;
+    }
+  ): Promise<{ job: Job; created: boolean }> {
+    const userObjectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    const now = new Date();
+
+    const rawApiCalls = payload.application?.apiCalls ?? [];
+    const apiCalls: ApiCallRecord[] = rawApiCalls.map((c) => ({
+      timestamp: c.timestamp ? (c.timestamp instanceof Date ? c.timestamp : new Date(c.timestamp)) : now,
+      endpoint: c.endpoint,
+      aiProvider: c.aiProvider ?? 'unknown',
+      request: c.request ?? {},
+      response: c.response ?? { success: true },
+      tokensUsed: c.tokensUsed,
+      inputTokens: c.inputTokens,
+      outputTokens: c.outputTokens,
+      cost: c.cost,
+      processingTime: c.processingTime
+    }));
+
+    const application: Application = {
+      status: 'applied',
+      appliedAt: now,
+      coverLetter: payload.application?.coverLetter ?? '',
+      tailoredResume: payload.application?.tailoredResume ?? '',
+      questionAnswers: payload.application?.questionAnswers ?? [],
+      apiCalls,
+      automationLogs: [],
+      createdAt: now,
+      updatedAt: now
+    };
+
+    const jobDoc: Omit<Job, '_id'> = {
+      userId: userObjectId,
+      platform: payload.platform,
+      platformJobId: payload.platformJobId,
+      title: payload.title,
+      company: payload.company,
+      url: payload.url,
+      description: payload.description,
+      location: payload.location,
+      salary: payload.salary,
+      jobType: payload.jobType,
+      workMode: payload.workMode,
+      postedDate: payload.postedDate ? new Date(payload.postedDate) : undefined,
+      status: 'applied',
+      application,
+      firstSeenAt: now,
+      lastUpdatedAt: now,
+      ...(payload.rawData && Object.keys(payload.rawData).length > 0 ? { rawData: payload.rawData } : {})
+    };
+
+    const existing = await this.findByPlatformId(userObjectId, payload.platform, payload.platformJobId);
+
+    if (existing && existing._id) {
+      await this.db.collection<Job>('jobs').updateOne(
+        { _id: existing._id },
+        {
+          $set: {
+            title: jobDoc.title,
+            company: jobDoc.company,
+            url: jobDoc.url,
+            description: jobDoc.description,
+            location: jobDoc.location,
+            salary: jobDoc.salary,
+            jobType: jobDoc.jobType,
+            workMode: jobDoc.workMode,
+            postedDate: jobDoc.postedDate,
+            closingDate: jobDoc.closingDate,
+            hrContact: jobDoc.hrContact,
+            requiredSkills: jobDoc.requiredSkills,
+            requiredExperience: jobDoc.requiredExperience,
+            jobDetails: jobDoc.jobDetails,
+            status: jobDoc.status,
+            application,
+            lastUpdatedAt: now,
+            ...(jobDoc.rawData ? { rawData: jobDoc.rawData } : {})
+          }
+        }
+      );
+      const updated = await this.findById(existing._id);
+      return { job: updated!, created: false };
+    }
+
+    const result = await this.db.collection<Job>('jobs').insertOne(jobDoc as Job);
+    return {
+      job: { ...jobDoc, _id: result.insertedId } as Job,
+      created: true
+    };
   }
 
   // Analytics

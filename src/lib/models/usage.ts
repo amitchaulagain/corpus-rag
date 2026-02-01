@@ -15,6 +15,8 @@ export interface UsageRecord {
   metadata?: {
     processingTime?: number;
     model?: string;
+    inputTokens?: number;
+    outputTokens?: number;
   };
 }
 

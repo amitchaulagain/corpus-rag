@@ -223,6 +223,12 @@
             </a>
           </li>
           <li class="w-full">
+            <a href="/job-analytics" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath.includes('job-analytics')} title={isSidebarCollapsed ? 'Job Analytics' : ''}>
+              <span class="text-xl">📈</span>
+              {#if !isSidebarCollapsed}<span>Job Analytics</span>{/if}
+            </a>
+          </li>
+          <li class="w-full">
             <a href="/admin" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/admin'} title={isSidebarCollapsed ? 'Admin' : ''}>
               <span class="text-xl">🛠️</span>
               {#if !isSidebarCollapsed}<span>Admin Panel</span>{/if}

@@ -17,7 +17,7 @@
     "migrate-rbac:force": "node --import tsx scripts/migrate-users-to-rbac.ts --force",
     "verify-rbac": "node --import tsx scripts/verify-rbac.ts",
     "create-test-users": "node --import tsx scripts/create-test-users.ts",
-    "create-test-users": "node --import tsx scripts/create-test-users.ts"
+    "clear-job-analytics": "node --import tsx scripts/clear-job-analytics.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^3.0.0",

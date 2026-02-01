@@ -118,6 +118,13 @@ ${job_details ? `\nJob Context: ${typeof job_details === 'string' ? job_details 
     }
 
     const processingTime = Date.now() - startTime;
+    const meta = result.metadata;
+    const tokensUsed = meta?.tokensUsed ?? result.tokensUsed ?? 0;
+    const costUsd = (typeof meta?.cost === 'object' && meta?.cost != null && 'usd' in meta.cost)
+      ? (meta.cost as { usd: number }).usd
+      : (typeof result.cost === 'number' ? result.cost : 0);
+    const inputTokens = meta?.inputTokens;
+    const outputTokens = meta?.outputTokens;
 
     // Track this job and API call in database
     try {
@@ -172,8 +179,10 @@ ${job_details ? `\nJob Context: ${typeof job_details === 'string' ? job_details 
             success: true,
             data: result.answer
           },
-          tokensUsed: result.tokensUsed,
-          cost: result.cost || 0,
+          tokensUsed,
+          inputTokens,
+          outputTokens,
+          cost: costUsd,
           processingTime
         };
 
@@ -219,12 +228,15 @@ ${job_details ? `\nJob Context: ${typeof job_details === 'string' ? job_details 
     // Get final token balance
     const finalBalance = await tokenService.getBalance(new ObjectId(auth.user._id));
 
-    // Return answers, job_id, and token usage info
+    // Return answers, job_id, and token usage info (for clients to save and send to job-applications)
     return json({
       answers: result.answer,
       job_id,
       questions_count: questions.length,
       tokensUsed: TOKEN_COST_QA,
+      actualTokensUsed: tokensUsed,
+      inputTokens,
+      outputTokens,
       remainingBalance: finalBalance
     });
 

@@ -111,6 +111,13 @@ Please format as a professional cover letter with proper greeting and closing.`;
     }
 
     const processingTime = Date.now() - startTime;
+    const meta = result.metadata;
+    const tokensUsed = meta?.tokensUsed ?? result.tokensUsed ?? 0;
+    const costUsd = (typeof meta?.cost === 'object' && meta?.cost != null && 'usd' in meta.cost)
+      ? (meta.cost as { usd: number }).usd
+      : (typeof result.cost === 'number' ? result.cost : 0);
+    const inputTokens = meta?.inputTokens;
+    const outputTokens = meta?.outputTokens;
 
     // Track usage in the usage collection for dashboard
     try {
@@ -121,12 +128,14 @@ Please format as a professional cover letter with proper greeting and closing.`;
         endpoint: 'cover_letter',
         jobId: job_id,
         aiProvider: useAi,
-        tokensUsed: result.tokensUsed || 0,
-        costUsd: result.cost || 0,
+        tokensUsed,
+        costUsd,
         success: true,
         metadata: {
           processingTime,
-          model: useAi
+          model: useAi,
+          inputTokens,
+          outputTokens
         }
       });
     } catch (usageError) {
@@ -189,8 +198,10 @@ Please format as a professional cover letter with proper greeting and closing.`;
             success: true,
             data: result.answer
           },
-          tokensUsed: result.tokensUsed,
-          cost: result.cost || 0,
+          tokensUsed,
+          inputTokens,
+          outputTokens,
+          cost: costUsd,
           processingTime
         };
 
@@ -218,11 +229,14 @@ Please format as a professional cover letter with proper greeting and closing.`;
     // Get final token balance (in case deduction happened in tracking block)
     const finalBalance = await tokenService.getBalance(new ObjectId(auth.user._id));
 
-    // Return cover_letter, job_id, and token usage info
+    // Return cover_letter, job_id, and token usage info (for clients to save and send to job-applications)
     return json({
       cover_letter: result.answer,
       job_id,
       tokensUsed: TOKEN_COST_COVER_LETTER,
+      actualTokensUsed: tokensUsed,
+      inputTokens,
+      outputTokens,
       remainingBalance: finalBalance
     });
 

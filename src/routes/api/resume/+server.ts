@@ -115,6 +115,13 @@ Please format as a complete resume with sections for:
     }
 
     const processingTime = Date.now() - startTime;
+    const meta = result.metadata;
+    const tokensUsed = meta?.tokensUsed ?? result.tokensUsed ?? 0;
+    const costUsd = (typeof meta?.cost === 'object' && meta?.cost != null && 'usd' in meta.cost)
+      ? (meta.cost as { usd: number }).usd
+      : (typeof result.cost === 'number' ? result.cost : 0);
+    const inputTokens = meta?.inputTokens;
+    const outputTokens = meta?.outputTokens;
 
     // Track this job and API call in database
     try {
@@ -168,8 +175,10 @@ Please format as a complete resume with sections for:
             success: true,
             data: result.answer
           },
-          tokensUsed: result.tokensUsed,
-          cost: result.cost || 0,
+          tokensUsed,
+          inputTokens,
+          outputTokens,
+          cost: costUsd,
           processingTime
         };
 
@@ -209,11 +218,14 @@ Please format as a complete resume with sections for:
     // Get final token balance
     const finalBalance = await tokenService.getBalance(new ObjectId(auth.user._id));
 
-    // Return resume, job_id, and token usage info
+    // Return resume, job_id, and token usage info (for clients to save and send to job-applications)
     return json({
       resume: result.answer,
       job_id,
       tokensUsed: TOKEN_COST_RESUME,
+      actualTokensUsed: tokensUsed,
+      inputTokens,
+      outputTokens,
       remainingBalance: finalBalance
     });
 

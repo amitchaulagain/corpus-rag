@@ -284,7 +284,9 @@
                                             <th>Time</th>
                                             <th>Endpoint</th>
                                             <th>AI Provider</th>
-                                            <th>Tokens</th>
+                                            <th>Input</th>
+                                            <th>Output</th>
+                                            <th>Total</th>
                                             <th>Cost</th>
                                             <th>Duration</th>
                                             <th>Status</th>
@@ -296,7 +298,9 @@
                                               <td>{formatDate(call.timestamp)}</td>
                                               <td><code class="text-xs">{call.endpoint}</code></td>
                                               <td><span class="badge badge-sm">{call.aiProvider}</span></td>
-                                              <td>{call.tokensUsed || 'N/A'}</td>
+                                              <td>{call.inputTokens != null ? call.inputTokens.toLocaleString() : '—'}</td>
+                                              <td>{call.outputTokens != null ? call.outputTokens.toLocaleString() : '—'}</td>
+                                              <td>{call.tokensUsed != null ? call.tokensUsed.toLocaleString() : 'N/A'}</td>
                                               <td>{formatCost(call.cost || 0)}</td>
                                               <td>{call.processingTime}ms</td>
                                               <td>
