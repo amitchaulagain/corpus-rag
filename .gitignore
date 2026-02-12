@@ -86,3 +86,4 @@ google_credentials.json
 
 # Application credentials
 oauth_credentials.json
+bun.lock
