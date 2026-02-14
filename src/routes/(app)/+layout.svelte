@@ -294,6 +294,12 @@
               {#if !isSidebarCollapsed}<span>Q&A</span>{/if}
             </a>
           </li>
+          <li class="w-full">
+            <a href="/generic-questions" class="flex items-center gap-3 w-full {isSidebarCollapsed ? 'justify-center' : ''}" class:active={currentPath === '/generic-questions'} title={isSidebarCollapsed ? 'Generic Questions' : ''}>
+              <span class="text-xl">📝</span>
+              {#if !isSidebarCollapsed}<span>Generic Questions</span>{/if}
+            </a>
+          </li>
 
           <!-- Divider -->
           {#if !isSidebarCollapsed}

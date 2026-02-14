@@ -268,7 +268,49 @@ async function createIndexes(db: Db) {
     await db.collection('audit_logs').createIndex({ 'details.metadata': 1 });
     // console.log('  ✅ audit_logs - System audit trail');
 
-    // console.log('\n🎉 Optimized schema created with 14 collections:');
+    // ========================================
+    // COLLECTION 16: GENERIC_QUESTIONS
+    // ========================================
+    await db.collection('generic_questions').createIndex({ userId: 1, isActive: 1 });
+    await db.collection('generic_questions').createIndex({ userId: 1, questionId: 1 });
+    await db.collection('generic_questions').createIndex({ userId: 1, createdAt: -1 });
+    // console.log('  ✅ generic_questions - User-specific generic Q&A');
+
+    // ========================================
+    // COLLECTION 17: GENERIC_QUESTIONS_SETTINGS
+    // ========================================
+    await db.collection('generic_questions_settings').createIndex({ userId: 1 }, { unique: true });
+    // console.log('  ✅ generic_questions_settings - User Q&A preferences');
+
+    // ========================================
+    // COLLECTION 18: DOCUMENTS (RAG)
+    // ========================================
+    await db.collection('documents').createIndex({ userId: 1, profileId: 1 });
+    await db.collection('documents').createIndex({ userId: 1, fileHash: 1 }, { unique: true, sparse: true });
+    await db.collection('documents').createIndex({ userId: 1, docType: 1, updatedAt: -1 });
+    await db.collection('documents').createIndex({ userId: 1, source: 1 });
+    await db.collection('documents').createIndex({ jobId: 1 }, { sparse: true });
+
+    // ========================================
+    // COLLECTION 19: DOCUMENT_CHUNKS (RAG)
+    // ========================================
+    await db.collection('document_chunks').createIndex({ userId: 1, profileId: 1, documentId: 1 });
+    await db.collection('document_chunks').createIndex({ userId: 1, docType: 1, updatedAt: -1 });
+    await db.collection('document_chunks').createIndex({ userId: 1, jobId: 1, updatedAt: -1 }, { sparse: true });
+    await db.collection('document_chunks').createIndex({ userId: 1, chunkHash: 1 }, { unique: true });
+    await db.collection('document_chunks').createIndex({ userId: 1, keywords: 1 });
+
+    // ========================================
+    // COLLECTION 20: QA_CACHE (RAG)
+    // ========================================
+    await db.collection('qa_cache').createIndex(
+      { userId: 1, profileId: 1, jobId: 1, questionHash: 1, promptVersion: 1, profileVersion: 1 },
+      { unique: true }
+    );
+    await db.collection('qa_cache').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, sparse: true });
+    await db.collection('qa_cache').createIndex({ userId: 1, updatedAt: -1 });
+
+    // console.log('\n🎉 Optimized schema created with 16 collections:');
     // console.log('   • users (with embedded platforms + token management + RBAC)');
     // console.log('   • sessions (OAuth tokens with TTL auto-expiry)');
     // console.log('   • jobs (with embedded applications)');

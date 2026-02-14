@@ -3,6 +3,14 @@ import type { RequestHandler } from './$types';
 import { authenticateRequest, handleApiRequest, requireScope, handleOptions, addCorsHeaders } from '$lib/api-utils.js';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
+import { MultiProviderService } from '$lib/multi-provider-service';
+import { getDB } from '$lib/db/mongodb';
+import { UserModel } from '$lib/models/user';
+import { RetrievalService } from '$lib/services/retrieval-service';
+import { RAG_CONFIG } from '$lib/rag-config';
+
+const multiProvider = new MultiProviderService();
 
 // Handle preflight OPTIONS requests
 export const OPTIONS: RequestHandler = () => {
@@ -19,7 +27,7 @@ export const POST: RequestHandler = async (event) => {
     console.log('=== GENERATE API DEBUG ===');
     console.log('Raw request body:', JSON.stringify(requestBody, null, 2));
     
-    const { type, jobDetails, details, questions, userEmail, customPrompt, enhancementFocus, filename, jobId, jobTitle, prompt: userPrompt, resumeText } = requestBody;
+    const { type, jobDetails, details, questions, userEmail, customPrompt, enhancementFocus, filename, jobId, jobTitle, prompt: userPrompt, resumeText, useRag = true, retrievalConfig, profileId = 'default' } = requestBody;
     
     console.log('Extracted values:');
     console.log('- type:', type);
@@ -305,36 +313,91 @@ Focus on concrete, measurable improvements that will help with ATS systems and h
       throw new Error('Invalid generation type. Must be "cover_letter", "employer_answers", "job_analysis", "resume_enhancement", or "resume_comparison"');
     }
 
-    // Call the query endpoint to generate response
-    // Default to deepseek provider (can be made configurable)
-    const providerId = 'deepseek-chat'; // Use deepseek-chat as default provider
-    
-    const ragResponse = await fetch(`${event.url.origin}/api/query`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': event.request.headers.get('Authorization') || ''
-      },
-      body: JSON.stringify({
-        userId: userEmail || 'anonymous',
-        question: analysisContext ? `${analysisContext}\n\n${prompt}` : prompt,
-        providerId: providerId
-      })
-    });
+    // Default provider (can be made configurable later)
+    const providerId = 'deepseek-chat';
+    let finalQuestion = analysisContext ? `${analysisContext}\n\n${prompt}` : prompt;
+    let retrievalStats: Record<string, unknown> = {};
+    let evidence: Array<Record<string, unknown>> = [];
+    let warning: string | undefined;
+    let contextSnapshotId: string | undefined;
 
-    if (!ragResponse.ok) {
-      const errorData = await ragResponse.text();
-      throw new Error(`AI generation failed: ${ragResponse.status} - ${errorData}`);
+    // Make resume_enhancement retrieval-first while preserving response contract.
+    if (type === 'resume_enhancement' && useRag !== false && RAG_CONFIG.enabled && userEmail) {
+      try {
+        const db = await getDB();
+        const userModel = new UserModel(db);
+        const user = await userModel.findByEmail(userEmail);
+
+        if (user?._id) {
+          const retrievalService = new RetrievalService(db);
+          const retrieval = await retrievalService.retrieve(
+            user._id,
+            `Resume enhancement for ${jobTitle || ''}\nFocus: ${enhancementFocus || 'general'}\n${typeof jobDetails === 'string' ? jobDetails : JSON.stringify(jobDetails)}`,
+            {
+              profileId,
+              jobId,
+              topK: retrievalConfig?.topK,
+              initialK: retrievalConfig?.initialK,
+              maxContextTokens: retrievalConfig?.maxContextTokens
+            }
+          );
+
+          const contextBlock = retrieval.chunks
+            .map((c, index) => `[${index + 1}] (score=${c.score.toFixed(3)}, docType=${c.docType})\n${c.text}`)
+            .join('\n\n');
+
+          retrievalStats = {
+            ...retrieval.stats,
+            topK: retrievalConfig?.topK ?? RAG_CONFIG.topK
+          };
+          evidence = retrieval.chunks.map((c) => ({
+            chunkId: c.chunkId,
+            docId: c.docId,
+            type: 'rag_chunk',
+            score: Number(c.score.toFixed(4)),
+            snippet: c.text.length > 260 ? `${c.text.slice(0, 260)}...` : c.text,
+            reason: 'Retrieved for resume enhancement',
+            docType: c.docType
+          }));
+
+          if (contextBlock.trim().length > 0) {
+            contextSnapshotId = crypto
+              .createHash('sha256')
+              .update(JSON.stringify({ userEmail, jobId, enhancementFocus, contextBlock }))
+              .digest('hex');
+            finalQuestion = `RETRIEVED EVIDENCE (USE THIS FIRST):\n${contextBlock}\n\n${finalQuestion}`;
+          } else {
+            warning = 'RAG enabled but no indexed chunks found. Fallback prompting used.';
+          }
+        }
+      } catch (retrievalError) {
+        warning = `RAG retrieval failed, fallback used: ${retrievalError instanceof Error ? retrievalError.message : 'unknown error'}`;
+      }
     }
 
-    const ragResult = await ragResponse.json();
+    const providerResult = await multiProvider.querySingle(
+      userEmail || 'anonymous',
+      finalQuestion,
+      providerId,
+      contextSnapshotId ? undefined : resumeText,
+      contextSnapshotId
+        ? {
+            prebuiltPrompt: finalQuestion,
+            disableAutoDocuments: true,
+            contextSnapshotId,
+            retrievalMetadata: {
+              retrievalStats,
+              evidence
+            }
+          }
+        : undefined
+    );
 
-    if (!ragResult.success) {
-      throw new Error(`AI generation failed: ${ragResult.error || 'Unknown error'}`);
+    if (!providerResult.success) {
+      throw new Error(`AI generation failed: ${providerResult.error || 'Unknown error'}`);
     }
 
-    // Handle response structure from /api/query
-    const answer = ragResult.answer;
+    const answer = providerResult.answer;
 
     if (!answer) {
       throw new Error('AI response is empty or invalid');
@@ -343,7 +406,10 @@ Focus on concrete, measurable improvements that will help with ATS systems and h
     return {
       type,
       generatedText: answer,
-      prompt: prompt.substring(0, 200) + '...' // Truncated prompt for reference
+      prompt: prompt.substring(0, 200) + '...', // Truncated prompt for reference
+      retrievalStats,
+      evidence,
+      warning
     };
   });
 

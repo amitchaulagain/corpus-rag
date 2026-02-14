@@ -1,0 +1,9 @@
+Superadmin Test Resume
+
+Experience:
+- Built Node.js and TypeScript backend services for hiring workflow automation.
+- Designed MongoDB schemas and indexing strategy for high-throughput recruiter pipelines.
+- Led team of 4 engineers and improved API reliability to 99.95% uptime.
+
+Skills:
+Node.js, TypeScript, React, MongoDB, AWS, CI/CD, System Design, Leadership

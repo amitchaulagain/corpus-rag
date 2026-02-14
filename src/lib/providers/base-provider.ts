@@ -32,6 +32,8 @@ export interface QueryResponse {
     outputTokens?: number;
     processingTime: number;
     cost?: Cost;
+    retrieval?: Record<string, unknown>;
+    [key: string]: unknown;
   };
 }
 

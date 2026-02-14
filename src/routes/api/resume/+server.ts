@@ -6,6 +6,10 @@ import { getDB } from '$lib/db/mongodb';
 import { JobModel } from '$lib/models/job';
 import { TokenService } from '$lib/services/token-service';
 import { ObjectId } from 'mongodb';
+import crypto from 'crypto';
+import { RAG_CONFIG } from '$lib/rag-config';
+import { RetrievalService } from '$lib/services/retrieval-service';
+import { QaCacheModel } from '$lib/models/qa-cache';
 
 const multiProvider = new MultiProviderService();
 const TOKEN_COST_RESUME = TokenService.TOKEN_COSTS.resumeTailoring;
@@ -25,7 +29,11 @@ export const POST: RequestHandler = async (event) => {
       platform = 'other',
       job_title,
       company,
-      platform_job_id
+      platform_job_id,
+      useRag = true,
+      profileId = 'default',
+      profileVersion = 'v1',
+      retrievalConfig
     } = requestBody;
 
     // Validate required fields
@@ -63,15 +71,111 @@ export const POST: RequestHandler = async (event) => {
     }
 
     const startTime = Date.now();
+    const db = await getDB();
+    const userObjectId = new ObjectId(auth.user._id);
+    const qaCacheModel = new QaCacheModel(db);
+    const effectiveJobId = String(platform_job_id || job_id);
+    const promptVersion = crypto.createHash('sha256').update(String(prompt || 'default-resume-prompt')).digest('hex');
+    const questionHash = crypto
+      .createHash('sha256')
+      .update(
+        JSON.stringify({
+          job_id,
+          platform_job_id,
+          job_details,
+          prompt,
+          resumeHash: crypto.createHash('sha256').update(String(resume_text)).digest('hex')
+        })
+      )
+      .digest('hex');
+    const ragEnabled = RAG_CONFIG.enabled && useRag !== false;
+    let retrievalStats: Record<string, unknown> = {};
+    let evidence: Array<Record<string, unknown>> = [];
+    let warning: string | undefined;
+
+    if (ragEnabled) {
+      const cached = await qaCacheModel.get({
+        userId: userObjectId,
+        profileId,
+        jobId: effectiveJobId,
+        questionHash,
+        promptVersion,
+        profileVersion
+      });
+      if (cached?.answer) {
+        const finalBalanceCached = await tokenService.getBalance(userObjectId);
+        return json({
+          resume: cached.answer,
+          job_id,
+          tokensUsed: 0,
+          actualTokensUsed: 0,
+          inputTokens: 0,
+          outputTokens: 0,
+          remainingBalance: finalBalanceCached,
+          retrievalStats: cached.retrievalStats ?? {},
+          evidence: cached.evidence ?? [],
+          cacheHit: true
+        });
+      }
+    }
 
     // Build the full prompt for AI
     // Use user's custom prompt if provided, otherwise use default
     let fullPrompt = '';
+    let ragContextBlock = '';
+    let ragContextSnapshotId: string | undefined;
+
+    if (ragEnabled) {
+      try {
+        const retrievalService = new RetrievalService(db);
+        const retrievalStart = Date.now();
+        const retrieval = await retrievalService.retrieve(
+          userObjectId,
+          `Generate tailored resume for ${job_title || ''} at ${company || ''}\n${typeof job_details === 'string' ? job_details : JSON.stringify(job_details)}`,
+          {
+            profileId,
+            jobId: effectiveJobId,
+            topK: retrievalConfig?.topK,
+            initialK: retrievalConfig?.initialK,
+            maxContextTokens: retrievalConfig?.maxContextTokens
+          }
+        );
+
+        ragContextBlock = retrieval.chunks
+          .map((c, index) => `[${index + 1}] (score=${c.score.toFixed(3)}, docType=${c.docType})\n${c.text}`)
+          .join('\n\n');
+        evidence = retrieval.chunks.map((c) => ({
+          chunkId: c.chunkId,
+          docId: c.docId,
+          type: 'rag_chunk',
+          score: Number(c.score.toFixed(4)),
+          snippet: c.text.length > 280 ? `${c.text.slice(0, 280)}...` : c.text,
+          reason: 'Retrieved for resume tailoring',
+          docType: c.docType
+        }));
+        retrievalStats = {
+          ...retrieval.stats,
+          elapsedMsTotal: Date.now() - retrievalStart,
+          topK: retrievalConfig?.topK ?? RAG_CONFIG.topK
+        };
+        ragContextSnapshotId = crypto
+          .createHash('sha256')
+          .update(JSON.stringify({ questionHash, profileId, profileVersion, ragContextBlock }))
+          .digest('hex');
+
+        if (!ragContextBlock.trim()) {
+          warning = 'RAG enabled but no indexed chunks found. Falling back to full-context prompt.';
+        }
+      } catch (retrievalError) {
+        warning = `RAG retrieval failed, fallback used: ${retrievalError instanceof Error ? retrievalError.message : 'unknown error'}`;
+      }
+    }
 
     if (prompt) {
       // User provided their own prompt - use it as the main instruction
       fullPrompt = `${prompt}
 
+${ragContextBlock ? `RETRIEVED EVIDENCE (USE THIS FIRST):\n${ragContextBlock}\n` : ''}
 JOB DESCRIPTION:
 ${typeof job_details === 'string' ? job_details : JSON.stringify(job_details, null, 2)}`;
     } else {
@@ -86,6 +190,7 @@ Using my background and experience:
 - Keep it concise and impactful
 - Include relevant technical skills and tools
 - Show quantifiable achievements where possible
+${ragContextBlock ? '- Ground claims in retrieved evidence and do not invent facts' : ''}
 
 Please format as a complete resume with sections for:
 - Contact Information (use placeholder data)
@@ -93,15 +198,29 @@ Please format as a complete resume with sections for:
 - Work Experience
 - Skills
 - Education
-- Additional relevant sections as needed`;
+- Additional relevant sections as needed
+
+${ragContextBlock ? `RETRIEVED EVIDENCE:\n${ragContextBlock}` : ''}`;
     }
 
-    // Query the AI provider with resume text
+    // Query the AI provider with RAG context or fallback prompting
+    const useRagPrompt = ragEnabled && ragContextBlock.trim().length > 0;
     const result = await multiProvider.querySingle(
       auth.user.email, // Use actual user email
       fullPrompt,
       useAi,
-      resume_text
+      useRagPrompt ? undefined : resume_text,
+      useRagPrompt
+        ? {
+            prebuiltPrompt: fullPrompt,
+            disableAutoDocuments: true,
+            contextSnapshotId: ragContextSnapshotId,
+            retrievalMetadata: {
+              retrievalStats,
+              evidence
+            }
+          }
+        : undefined
     );
 
     if (!result.success) {
@@ -116,18 +235,17 @@ Please format as a complete resume with sections for:
 
     const processingTime = Date.now() - startTime;
     const meta = result.metadata;
-    const tokensUsed = meta?.tokensUsed ?? result.tokensUsed ?? 0;
+    const tokensUsed = meta?.tokensUsed ?? 0;
     const costUsd = (typeof meta?.cost === 'object' && meta?.cost != null && 'usd' in meta.cost)
       ? (meta.cost as { usd: number }).usd
-      : (typeof result.cost === 'number' ? result.cost : 0);
+      : 0;
     const inputTokens = meta?.inputTokens;
     const outputTokens = meta?.outputTokens;
 
     // Track this job and API call in database
     try {
-      const db = await getDB();
       const jobModel = new JobModel(db);
-      const userId = new ObjectId(auth.user._id);
+      const userId = userObjectId;
 
       let jobRecord = platform_job_id
         ? await jobModel.findByPlatformId(userId, platform, platform_job_id)
@@ -179,7 +297,13 @@ Please format as a complete resume with sections for:
           inputTokens,
           outputTokens,
           cost: costUsd,
-          processingTime
+          processingTime,
+          rag: {
+            enabled: ragEnabled,
+            used: useRagPrompt,
+            retrievalStats,
+            warning
+          }
         };
 
         if (!jobRecord.application) {
@@ -216,7 +340,23 @@ Please format as a complete resume with sections for:
     }
 
     // Get final token balance
-    const finalBalance = await tokenService.getBalance(new ObjectId(auth.user._id));
+    const finalBalance = await tokenService.getBalance(userObjectId);
+
+    if (ragEnabled && result.answer) {
+      await qaCacheModel.upsert({
+        userId: userObjectId,
+        profileId,
+        jobId: effectiveJobId,
+        questionHash,
+        promptVersion,
+        profileVersion,
+        answer: result.answer,
+        retrievalStats,
+        evidence,
+        validationStatus: 'valid',
+        ttlHours: RAG_CONFIG.cacheTtlHours
+      });
+    }
 
     // Return resume, job_id, and token usage info (for clients to save and send to job-applications)
     return json({
@@ -226,7 +366,11 @@ Please format as a complete resume with sections for:
       actualTokensUsed: tokensUsed,
       inputTokens,
       outputTokens,
-      remainingBalance: finalBalance
+      remainingBalance: finalBalance,
+      retrievalStats,
+      evidence,
+      cacheHit: false,
+      warning
     });
 
   } catch (error) {

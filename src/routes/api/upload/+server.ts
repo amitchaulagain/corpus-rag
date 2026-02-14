@@ -1,7 +1,9 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { LocalFileStorage } from '$lib/local-storage';
-import fs from 'fs/promises';
+import { getDB } from '$lib/db/mongodb';
+import { UserModel } from '$lib/models/user';
+import { IngestionService } from '$lib/services/ingestion-service';
 
 const storage = new LocalFileStorage('./data/uploads');
 
@@ -31,11 +33,36 @@ export const POST: RequestHandler = async ({ request }) => {
     const buffer = await file.arrayBuffer();
     const textContent = new TextDecoder().decode(buffer);
 
+    // Async RAG ingestion (non-blocking for upload UX)
+    void (async () => {
+      try {
+        const db = await getDB();
+        const userModel = new UserModel(db);
+        const user = await userModel.findByEmail(userId);
+        if (!user?._id) return;
+
+        const ingestionService = new IngestionService(db);
+        await ingestionService.ingestTextDocument({
+          userId: user._id,
+          profileId: 'default',
+          title: file.name,
+          docType: file.name.toLowerCase().includes('resume') ? 'resume' : 'other',
+          source: 'upload',
+          text: textContent,
+          localPath: filePath,
+          mimeType: file.type || 'text/plain'
+        });
+      } catch (ingestError) {
+        console.error('RAG ingestion failed after upload:', ingestError);
+      }
+    })();
+
     return json({
       success: true,
       filename: file.name,
       path: filePath,
-      content: textContent
+      content: textContent,
+      ragIngestionQueued: true
     });
   } catch (error) {
     return json(

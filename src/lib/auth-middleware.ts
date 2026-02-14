@@ -6,33 +6,68 @@ import type { RequestEvent } from '@sveltejs/kit';
 import { authenticateJwt } from './jwt-middleware';
 import { getDB } from './db/mongodb';
 import { UserModel, type User } from './models/user';
+import { SessionModel } from './models/session';
 
 export interface AuthenticatedUser {
   user: User;
   token: string;
 }
 
-// Wrapper: Converts JWT auth to old session-based auth format
-export async function authenticate(event: RequestEvent): Promise<AuthenticatedUser | null> {
-  const auth = await authenticateJwt(event);
+// Helper: Authenticate using session token (for web UI)
+async function authenticateSession(event: RequestEvent): Promise<AuthenticatedUser | null> {
+  const authHeader = event.request.headers.get('Authorization');
+  const token = authHeader?.replace('Bearer ', '');
 
-  if (auth instanceof Response) {
+  if (!token) {
     return null;
   }
 
-  // Get full user object from database
   const db = await getDB();
+  const sessionModel = new SessionModel(db);
   const userModel = new UserModel(db);
-  const user = await userModel.findById(auth.user.id);
 
+  // Validate session
+  const session = await sessionModel.findByToken(token);
+  if (!session) {
+    return null;
+  }
+
+  // Get user
+  const user = await userModel.findById(session.userId);
   if (!user) {
     return null;
   }
 
   return {
     user,
-    token: 'jwt-token'
+    token
   };
+}
+
+// Wrapper: Converts JWT auth to old session-based auth format
+// Also supports session tokens for web UI compatibility
+export async function authenticate(event: RequestEvent): Promise<AuthenticatedUser | null> {
+  // Try JWT first
+  const jwtAuth = await authenticateJwt(event);
+  
+  if (!(jwtAuth instanceof Response)) {
+    // JWT auth succeeded
+    const db = await getDB();
+    const userModel = new UserModel(db);
+    const user = await userModel.findById(jwtAuth.user.id);
+
+    if (!user) {
+      return null;
+    }
+
+    return {
+      user,
+      token: 'jwt-token'
+    };
+  }
+
+  // JWT failed, try session token
+  return await authenticateSession(event);
 }
 
 export function checkPermission(user: User, endpoint: keyof User['apiPermissions']): boolean {

@@ -1,10 +1,11 @@
 import { writable, get } from 'svelte/store';
 import { browser } from '$app/environment';
+import type { AnswerWithReferences, ParsedAnswer } from '$lib/types/answer-references';
 
 export interface EmployerQuestionsState {
   selectedJobFilename: string | null;
   generatedAnswers: string;
-  parsedAnswers: any[];
+  parsedAnswers: ParsedAnswer[];
   comparisonResults: any | null;
   isGenerating: boolean;
   isComparing: boolean;
@@ -13,18 +14,34 @@ export interface EmployerQuestionsState {
 
 const STORAGE_KEY = 'corpus-rag-employer-questions-state';
 
+/** Only these fields are persisted; comparisonResults is excluded to avoid huge localStorage and browser crashes. */
+const PERSISTED_KEYS = ['selectedJobFilename', 'parsedAnswers'] as const;
+
+const MAX_STORED_SIZE = 500 * 1024; // 500KB - avoid parsing huge legacy payloads that can crash the tab
+
 function initializeState(): EmployerQuestionsState {
   if (browser) {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
+      if (stored && stored.length <= MAX_STORED_SIZE) {
+        const parsed = JSON.parse(stored) as Partial<EmployerQuestionsState>;
+        const restored: Partial<EmployerQuestionsState> = {};
+        for (const key of PERSISTED_KEYS) {
+          if (parsed[key] !== undefined) restored[key] = parsed[key];
+        }
         return {
-          ...parsed,
+          selectedJobFilename: null,
+          generatedAnswers: '',
+          parsedAnswers: [],
+          comparisonResults: null,
           isGenerating: false,
           isComparing: false,
-          abortController: null
+          abortController: null,
+          ...restored
         };
+      }
+      if (stored && stored.length > MAX_STORED_SIZE) {
+        localStorage.removeItem(STORAGE_KEY);
       }
     } catch (e) {
       console.error('Failed to load employer questions state from localStorage:', e);
@@ -46,12 +63,31 @@ function createEmployerQuestionsStore() {
   const { subscribe, set, update } = writable<EmployerQuestionsState>(initializeState());
 
   if (browser) {
+    let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+    let pendingPayload: string | null = null;
     subscribe((state) => {
       try {
-        const { abortController, ...saveableState } = state;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(saveableState));
+        // Only persist small fields; never persist comparisonResults (can be huge and cause crashes)
+        const saveableState: Record<string, unknown> = {};
+        for (const key of PERSISTED_KEYS) {
+          saveableState[key] = state[key];
+        }
+        pendingPayload = JSON.stringify(saveableState);
+        // Debounce writes so streaming updates don't hammer localStorage
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+          saveTimeout = null;
+          if (pendingPayload !== null) {
+            try {
+              localStorage.setItem(STORAGE_KEY, pendingPayload);
+            } catch (e) {
+              console.error('Failed to save employer questions state to localStorage:', e);
+            }
+            pendingPayload = null;
+          }
+        }, 300);
       } catch (e) {
-        console.error('Failed to save employer questions state to localStorage:', e);
+        console.error('Failed to prepare employer questions state for localStorage:', e);
       }
     });
   }
@@ -71,7 +107,7 @@ function createEmployerQuestionsStore() {
       }));
     },
 
-    setGeneratedAnswers: (answers: string, parsed: any[]) => {
+    setGeneratedAnswers: (answers: string, parsed: ParsedAnswer[]) => {
       update(state => ({
         ...state,
         generatedAnswers: answers,
@@ -81,12 +117,20 @@ function createEmployerQuestionsStore() {
       }));
     },
 
+    setParsedAnswers: (parsed: ParsedAnswer[]) => {
+      update(state => ({
+        ...state,
+        parsedAnswers: parsed
+      }));
+    },
+
     startComparison: (jobFilename: string) => {
       update(state => ({
         ...state,
         selectedJobFilename: jobFilename,
         isComparing: true,
         comparisonResults: {},
+        parsedAnswers: [], // Clear parsed answers when starting new comparison
         abortController: new AbortController()
       }));
     },
@@ -124,6 +168,17 @@ function createEmployerQuestionsStore() {
           abortController: null
         };
       });
+    },
+
+    /** Switch context to another job: set current job and clear answers so KB reflects the new job. */
+    switchJob: (jobFilename: string) => {
+      update(state => ({
+        ...state,
+        selectedJobFilename: jobFilename,
+        generatedAnswers: '',
+        parsedAnswers: [],
+        comparisonResults: null
+      }));
     },
 
     clearResults: () => {
