@@ -10,6 +10,7 @@ import crypto from 'crypto';
 import { RAG_CONFIG } from '$lib/rag-config';
 import { RetrievalService } from '$lib/services/retrieval-service';
 import { QaCacheModel } from '$lib/models/qa-cache';
+import { validatePayloadGuardrails } from '$lib/services/payload-guardrails';
 
 const multiProvider = new MultiProviderService();
 const TOKEN_COST_RESUME = TokenService.TOKEN_COSTS.resumeTailoring;
@@ -20,6 +21,7 @@ export const POST: RequestHandler = async (event) => {
     const auth = await requirePermission(event, 'resume');
 
     const requestBody = await event.request.json();
+    const resumeSource = String(event.request.headers.get('x-resume-source') || '').trim();
     const {
       job_id,
       job_details,
@@ -36,6 +38,17 @@ export const POST: RequestHandler = async (event) => {
       retrievalConfig
     } = requestBody;
 
+    // FinalBoss manual flows must explicitly declare canonical managed resume source.
+    if (platform === 'manual' && resumeSource !== 'finalboss-managed') {
+      return json(
+        {
+          success: false,
+          error: 'Manual resume requests must use canonical FinalBoss managed resume source'
+        },
+        { status: 400 }
+      );
+    }
+
     // Validate required fields
     if (!job_id || !job_details || !resume_text || !useAi) {
       return json(
@@ -44,6 +57,23 @@ export const POST: RequestHandler = async (event) => {
           error: 'Missing required fields: job_id, job_details, resume_text, useAi are required'
         },
         { status: 400 }
+      );
+    }
+
+    const payloadErrors = validatePayloadGuardrails({
+      body: requestBody,
+      resumeText: resume_text,
+      jobDetails: job_details,
+      prompt
+    });
+    if (payloadErrors.length > 0) {
+      return json(
+        {
+          success: false,
+          error: payloadErrors[0],
+          details: payloadErrors
+        },
+        { status: 413 }
       );
     }
 

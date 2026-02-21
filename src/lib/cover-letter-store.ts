@@ -82,8 +82,16 @@ function createCoverLetterStore() {
         ...state,
         selectedJobFilename: jobFilename,
         isComparing: true,
+        generatedCoverLetter: '',
         comparisonResults: {},
         abortController: new AbortController()
+      }));
+    },
+
+    setGeneratedLetterFromComparison: (letter: string) => {
+      update(state => ({
+        ...state,
+        generatedCoverLetter: letter
       }));
     },
 

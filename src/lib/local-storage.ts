@@ -57,4 +57,9 @@ export class LocalFileStorage {
     const content = await fs.readFile(filePath, 'utf-8');
     return content;
   }
+
+  async getFileBuffer(userId: string, filename: string): Promise<Buffer> {
+    const filePath = this.getFilePath(userId, filename);
+    return fs.readFile(filePath);
+  }
 }

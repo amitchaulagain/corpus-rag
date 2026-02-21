@@ -6,6 +6,7 @@ import { getDB } from '$lib/db/mongodb';
 import { UserModel } from '$lib/models/user';
 import { RetrievalService } from '$lib/services/retrieval-service';
 import crypto from 'crypto';
+import { validatePayloadGuardrails } from '$lib/services/payload-guardrails';
 
 const multiProvider = new MultiProviderService();
 
@@ -22,6 +23,22 @@ export const POST: RequestHandler = async ({ request }) => {
         success: false,
         error: 'Missing userId, prompt, or jobDescription'
       }, { status: 400 });
+    }
+
+    const payloadErrors = validatePayloadGuardrails({
+      body,
+      jobDetails: jobDescription,
+      prompt
+    });
+    if (payloadErrors.length > 0) {
+      return json(
+        {
+          success: false,
+          error: payloadErrors[0],
+          details: payloadErrors
+        },
+        { status: 413 }
+      );
     }
 
     let ragContext = '';

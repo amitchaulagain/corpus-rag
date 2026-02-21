@@ -1,0 +1,2 @@
+declare module 'word-extractor';
+

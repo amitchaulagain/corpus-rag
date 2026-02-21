@@ -276,9 +276,16 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
 
   async function compareCoverLetters() {
     if (!selectedJob || !jobContent) return;
+    if (!providers.length) {
+      alert('No AI providers are enabled. Configure at least one provider in Settings.');
+      return;
+    }
 
     // Start comparison in store
     coverLetterStore.startComparison(selectedJob.filename);
+    let generatedFromFirstSuccess = false;
+    let successfulResults = 0;
+    let firstProviderError = '';
 
     try {
       const abortSignal = coverLetterStore.getAbortSignal();
@@ -297,9 +304,33 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
         signal: abortSignal
       });
 
+      if (!response.ok) {
+        let message = `Request failed (${response.status})`;
+        try {
+          const errorData = await response.json();
+          message = errorData?.error || message;
+        } catch {
+          // Keep default message if response is not JSON
+        }
+        throw new Error(message);
+      }
+
+      const contentType = response.headers.get('content-type') || '';
+      if (!contentType.includes('text/event-stream')) {
+        let message = 'Unexpected response format from compare API';
+        try {
+          const data = await response.json();
+          message = data?.error || message;
+        } catch {
+          // Keep default message if response is not JSON
+        }
+        throw new Error(message);
+      }
+
       // Handle streaming response
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
+      let buffer = '';
 
       if (!reader) {
         throw new Error('No response body');
@@ -310,14 +341,23 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
 
         if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            const data = JSON.parse(line.slice(6));
+            let data;
+            try {
+              data = JSON.parse(line.slice(6));
+            } catch {
+              continue;
+            }
 
             if (data.done) {
+              if (successfulResults === 0) {
+                alert(firstProviderError || 'All providers failed to generate a cover letter. Check provider settings/API keys.');
+              }
               coverLetterStore.finishComparison();
               // Auto-save the comparison results
               await saveComparisonResults($coverLetterStore.comparisonResults);
@@ -333,16 +373,47 @@ Make it authentic, confident, and tailored specifically to this role. Avoid gene
             if (data.providerId && data.result) {
               // Update result in store as it arrives
               coverLetterStore.updateComparisonResult(data.providerId, data.result);
+              if (!generatedFromFirstSuccess && data.result.success && data.result.answer) {
+                coverLetterStore.setGeneratedLetterFromComparison(data.result.answer);
+                generatedFromFirstSuccess = true;
+                successfulResults += 1;
+              } else if (data.result.success) {
+                successfulResults += 1;
+              } else if (!firstProviderError && data.result.error) {
+                firstProviderError = data.result.error;
+              }
             }
           }
         }
       }
+
+      // Flush any remaining partial line after stream completion
+      if (buffer.startsWith('data: ')) {
+        try {
+          const data = JSON.parse(buffer.slice(6));
+          if (data.providerId && data.result) {
+            coverLetterStore.updateComparisonResult(data.providerId, data.result);
+            if (!generatedFromFirstSuccess && data.result.success && data.result.answer) {
+              coverLetterStore.setGeneratedLetterFromComparison(data.result.answer);
+              generatedFromFirstSuccess = true;
+              successfulResults += 1;
+            } else if (data.result.success) {
+              successfulResults += 1;
+            } else if (!firstProviderError && data.result.error) {
+              firstProviderError = data.result.error;
+            }
+          }
+        } catch {
+          // Ignore malformed trailing data
+        }
+      }
     } catch (error) {
-      if (error.name === 'AbortError') {
+      const err = error instanceof Error ? error : new Error('Unknown error');
+      if (err.name === 'AbortError') {
         console.log('Comparison cancelled by user');
       } else {
-        console.error('Failed to compare cover letters:', error);
-        alert('Failed to compare: ' + error.message);
+        console.error('Failed to compare cover letters:', err);
+        alert('Failed to compare: ' + err.message);
       }
       coverLetterStore.finishComparison();
     }

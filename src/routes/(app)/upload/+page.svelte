@@ -7,6 +7,8 @@
   let uploadedFiles: any[] = [];
   let uploading = false;
   let message = '';
+  const LEGACY_UPLOAD_DISABLED_MESSAGE =
+    'Legacy upload is disabled. Use FinalBoss managed storage and /api/extract-document.';
 
   onMount(() => {
     const storedUser = localStorage.getItem('user');
@@ -14,7 +16,7 @@
       user = JSON.parse(storedUser);
       userId = user.email;
       console.log('✓ User loaded:', userId);
-      loadFiles();
+      message = `⚠️ ${LEGACY_UPLOAD_DISABLED_MESSAGE}`;
     } else {
       console.warn('⚠️ No user found in localStorage');
       message = '⚠️ Please log in first';
@@ -29,72 +31,18 @@
   }
 
   async function uploadFile() {
-    if (!selectedFile || !userId) {
-      message = '⚠️ Please log in first';
-      return;
-    }
-
-    uploading = true;
-    message = '';
-
-    try {
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-      formData.append('userId', userId);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        message = `✅ Uploaded: ${data.filename}`;
-        selectedFile = null;
-        await loadFiles();
-      } else {
-        message = `❌ Error: ${data.error}`;
-      }
-    } catch (error: any) {
-      message = `❌ Upload failed: ${error.message}`;
-    } finally {
-      uploading = false;
-    }
+    uploading = false;
+    message = `⚠️ ${LEGACY_UPLOAD_DISABLED_MESSAGE}`;
   }
 
   async function loadFiles() {
-    if (!userId) return;
-
-    try {
-      const response = await fetch(`/api/upload?userId=${encodeURIComponent(userId)}`);
-      const data = await response.json();
-
-      if (data.success) {
-        uploadedFiles = data.files || [];
-        console.log('✓ Files loaded:', uploadedFiles.length);
-      }
-    } catch (error) {
-      console.error('Failed to load files:', error);
-    }
+    uploadedFiles = [];
+    message = `⚠️ ${LEGACY_UPLOAD_DISABLED_MESSAGE}`;
   }
 
   async function deleteFile(filename: string) {
-    if (!userId) return;
-
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, filename })
-      });
-
-      if (response.ok) {
-        await loadFiles();
-      }
-    } catch (error) {
-      console.error('Failed to delete:', error);
-    }
+    void filename;
+    message = `⚠️ ${LEGACY_UPLOAD_DISABLED_MESSAGE}`;
   }
 </script>
 
@@ -112,12 +60,16 @@
   <div class="card bg-base-100 shadow-xl mb-8">
     <div class="card-body">
       <h2 class="card-title">Upload Resume File</h2>
+      <p class="text-sm opacity-80">
+        Supported formats: <code>.doc</code>, <code>.docx</code>, <code>.pdf</code>. Plain text files are no longer supported.
+      </p>
 
       <input
         type="file"
-        accept=".txt,.pdf"
+        accept=".doc,.docx,.pdf"
         on:change={handleFileSelect}
         class="file-input file-input-bordered w-full max-w-xs"
+        disabled
       />
 
       {#if selectedFile}
@@ -127,7 +79,7 @@
       <button
         class="btn btn-primary mt-4"
         on:click={uploadFile}
-        disabled={!selectedFile || uploading}
+        disabled
       >
         {#if uploading}
           <span class="loading loading-spinner"></span>
@@ -138,7 +90,7 @@
       </button>
 
       {#if message}
-        <div class="alert {message.startsWith('✅') ? 'alert-success' : 'alert-error'} mt-4">
+        <div class="alert {message.startsWith('✅') ? 'alert-success' : 'alert-warning'} mt-4">
           {message}
         </div>
       {/if}

@@ -340,35 +340,7 @@ Be honest, specific, and actionable. Include concrete examples from both the job
           // Parse the JSON
           const result = JSON.parse(jsonString);
 
-          // Fetch original resume from local storage
-          try {
-            const storageResponse = await fetch(`/api/upload?userId=${encodeURIComponent(user.email)}`);
-            const storageData = await storageResponse.json();
-
-            if (storageData.success && storageData.files) {
-              const resumeFile = storageData.files.find(f =>
-                f.name === 'resume.txt' || f.name.includes('resume')
-              );
-
-              if (resumeFile) {
-                // Fetch the resume content
-                const resumeResponse = await fetch(`/api/upload?userId=${encodeURIComponent(user.email)}&filename=${resumeFile.name}`);
-                const resumeData = await resumeResponse.json();
-
-                if (resumeData.success && resumeData.content) {
-                  result.original_resume = resumeData.content;
-                } else {
-                  console.error('Resume data missing content:', resumeData);
-                }
-              } else {
-                console.warn('No resume.txt found in storage');
-              }
-            } else {
-              console.warn('Storage list failed or no files:', storageData);
-            }
-          } catch (e) {
-            console.error('Failed to fetch original resume from cloud storage:', e);
-          }
+          // Legacy upload is disabled; original resume must be sourced from FinalBoss managed storage.
 
           // Check if resume fields were truncated (common AI issue)
           if (result.updated_resume && result.updated_resume.length < 100) {

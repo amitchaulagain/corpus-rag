@@ -8,6 +8,8 @@
   let uploadedFiles: any[] = [];
   let attachFile = true;
   let selectedFile: string = '';
+  const LEGACY_UPLOAD_DISABLED_MESSAGE =
+    'Legacy upload is disabled. File attachment from /api/upload is unavailable.';
 
   // Reactive state from store
   $: question = $comparisonStore.question;
@@ -51,16 +53,10 @@
   });
 
   async function loadFiles() {
-    try {
-      const response = await fetch(`/api/upload?userId=${user.email}`);
-      const data = await response.json();
-      if (data.success && data.files.length > 0) {
-        uploadedFiles = data.files;
-        selectedFile = data.files[0].name; // Auto-select first file
-      }
-    } catch (error) {
-      console.error('Failed to load files:', error);
-    }
+    uploadedFiles = [];
+    selectedFile = '';
+    attachFile = false;
+    console.warn(LEGACY_UPLOAD_DISABLED_MESSAGE);
   }
 
   async function handleCompare(event: Event) {
@@ -76,11 +72,8 @@
 
       // Attach file content if enabled
       if (attachFile && selectedFile) {
-        const fileResponse = await fetch(`/api/upload?userId=${user.email}&filename=${selectedFile}`);
-        const fileData = await fileResponse.json();
-        if (fileData.success && fileData.content) {
-          finalQuestion = `Context from ${selectedFile}:\n\n${fileData.content}\n\n---\n\nQuestion: ${finalQuestion}`;
-        }
+        alert(LEGACY_UPLOAD_DISABLED_MESSAGE);
+        attachFile = false;
       }
 
       const abortSignal = comparisonStore.getAbortSignal();
@@ -265,7 +258,7 @@
             </div>
           {:else}
             <div class="alert alert-info mb-4">
-              <span>📄 No files uploaded. <a href="/upload" class="link">Upload a .txt file</a> to provide context.</span>
+              <span>📄 No files uploaded. <a href="/upload" class="link">Upload a .doc, .docx, or .pdf file</a> to provide context.</span>
             </div>
           {/if}
 

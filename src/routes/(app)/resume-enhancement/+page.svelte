@@ -23,6 +23,8 @@
   let availableResumes: any[] = [];
   let selectedResumeFile: string = '';
   let isLoadingResume: boolean = false;
+  const LEGACY_UPLOAD_DISABLED_MESSAGE =
+    'Legacy upload is disabled. Resume sources must come from FinalBoss managed storage.';
   let isEditingJob: boolean = false;
   let editedJobDescription: string = '';
   let editedJobData: any = null;
@@ -65,30 +67,10 @@
     isLoadingResume = true;
     
     try {
-      const url = `/api/upload?userId=${encodeURIComponent(user.email)}`;
-      console.log('Fetching from:', url);
-      
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      console.log('✓ Available resumes response:', data);
-      console.log('✓ Files found:', data.files?.length || 0);
-      
-      if (data.success && data.files && data.files.length > 0) {
-        availableResumes = data.files;
-        selectedResumeFile = data.files[0].name;
-        
-        console.log('✓ Available resumes:', availableResumes);
-        console.log('✓ Auto-selected:', selectedResumeFile);
-        
-        await loadResumeFile(selectedResumeFile);
-      } else {
-        console.warn('⚠️ No resume files found');
-        availableResumes = [];
-      }
-    } catch (error: any) {
-      console.error('❌ Failed to load resume list:', error);
+      console.warn(LEGACY_UPLOAD_DISABLED_MESSAGE);
       availableResumes = [];
+      selectedResumeFile = '';
+      originalResume = '';
     } finally {
       isLoadingResume = false;
       console.log('✓ isLoadingResume set to false');
@@ -101,20 +83,8 @@
     
     isLoadingResume = true;
     try {
-      console.log('Loading resume file:', filename);
-      
-      const response = await fetch(`/api/upload?userId=${encodeURIComponent(user.email)}&filename=${encodeURIComponent(filename)}`);
-      const data = await response.json();
-      
-      console.log('Resume content response:', data.success ? '✓ Success' : '✗ Failed', data.error || '');
-      
-      if (data.success && data.content) {
-        originalResume = data.content;
-        console.log('✅ Resume loaded:', filename, '-', data.content.length, 'characters');
-      } else {
-        console.error('Failed to load resume content:', data.error);
-        alert('Failed to load resume: ' + (data.error || 'Unknown error'));
-      }
+      originalResume = '';
+      alert(LEGACY_UPLOAD_DISABLED_MESSAGE);
     } catch (error: any) {
       console.error('Failed to load resume file:', error);
       alert('Failed to load resume file: ' + error.message);

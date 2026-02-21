@@ -612,34 +612,8 @@ Questions: [Questions List]`;
   }
 
   async function fetchResumeText(): Promise<string | null> {
-    try {
-      if (!user?.email) return null;
-
-      // List files first
-      const listResponse = await fetch(`/api/upload?userId=${encodeURIComponent(user.email)}`);
-      const listData = await listResponse.json();
-
-      if (listData.success && listData.files && listData.files.length > 0) {
-        // Find resume file (prefer resume.txt, otherwise take first .txt file)
-        const resumeFile = listData.files.find((f: any) =>
-          f.name === 'resume.txt' || f.name.toLowerCase().includes('resume')
-        ) || listData.files.find((f: any) => f.name.endsWith('.txt'));
-
-        if (resumeFile) {
-          const contentResponse = await fetch(
-            `/api/upload?userId=${encodeURIComponent(user.email)}&filename=${encodeURIComponent(resumeFile.name)}`
-          );
-          const contentData = await contentResponse.json();
-          if (contentData.success && contentData.content) {
-            return contentData.content;
-          }
-        }
-      }
-      return null;
-    } catch (error) {
-      console.error('Failed to fetch resume text:', error);
-      return null;
-    }
+    console.warn('Legacy upload is disabled. Resume text must come from FinalBoss managed storage.');
+    return null;
   }
 
   function parseAIAnswers(aiResponse: string): (string | number | number[])[] {

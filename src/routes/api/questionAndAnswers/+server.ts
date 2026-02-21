@@ -11,6 +11,7 @@ import { RAG_CONFIG } from '$lib/rag-config';
 import { RetrievalService } from '$lib/services/retrieval-service';
 import { validateQuestionAnswers } from '$lib/services/rag-answer-validator';
 import { QaCacheModel } from '$lib/models/qa-cache';
+import { validatePayloadGuardrails } from '$lib/services/payload-guardrails';
 
 const multiProvider = new MultiProviderService();
 const TOKEN_COST_QA = TokenService.TOKEN_COSTS.qaGeneration;
@@ -46,6 +47,24 @@ export const POST: RequestHandler = async (event) => {
           error: 'Missing required fields: job_id, questions (array), resume_text, useAi are required'
         },
         { status: 400 }
+      );
+    }
+
+    const payloadErrors = validatePayloadGuardrails({
+      body: requestBody,
+      resumeText: resume_text,
+      jobDetails: job_details,
+      prompt,
+      questions
+    });
+    if (payloadErrors.length > 0) {
+      return json(
+        {
+          success: false,
+          error: payloadErrors[0],
+          details: payloadErrors
+        },
+        { status: 413 }
       );
     }
 

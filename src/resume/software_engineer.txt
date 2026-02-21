@@ -12,7 +12,7 @@ Senior Software Engineer | TechCorp Inc. | San Francisco, CA | 2021 - Present
 • Developed and maintained microservices architecture serving 1M+ daily users
 • Implemented CI/CD pipelines using Jenkins and Docker, reducing deployment time by 60%
 • Led a team of 3 junior developers and mentored new hires
-• Technologies: Python, Flask, PostgreSQL, AWS, Docker, Kubernetes
+• Technologies: Java,Python, Flask, PostgreSQL, AWS, Docker, Kubernetes,Spring Framework
 
 Software Engineer | StartupXYZ | Austin, TX | 2019 - 2021
 • Built REST APIs for mobile and web applications using Python and Django

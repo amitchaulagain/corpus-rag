@@ -1,0 +1,147 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 3407 >>
+stream
+BT
+/F1 10 Tf
+50 790 Td
+12 TL
+(AMIT CHAULAGAIN) Tj
+T*
+(Senior Java Developer | Spring Boot | Microservices | AWS) Tj
+T*
+(Email: amit.chaulagain@example.com | Phone: +61 4XX XXX XXX) Tj
+T*
+(Location: Melbourne, VIC | LinkedIn: linkedin.com/in/amit-chaulagain) Tj
+T*
+() Tj
+T*
+(PROFESSIONAL SUMMARY) Tj
+T*
+(Senior Java Developer with 8+ years of experience designing, building, and operating enterprise-grade backend platforms.) Tj
+T*
+(Strong background in Spring Boot, microservices, event-driven architecture, and cloud-native deployment on AWS.) Tj
+T*
+(Delivered high-volume APIs, reduced latency by 35 percent, and improved release reliability through CI/CD automation and test engineering.) Tj
+T*
+() Tj
+T*
+(CORE SKILLS) Tj
+T*
+(Java 8/11/17, Spring Boot, Spring Cloud, Hibernate/JPA, REST APIs, GraphQL) Tj
+T*
+(Microservices, Kafka, RabbitMQ, Redis, Elasticsearch) Tj
+T*
+(PostgreSQL, MySQL, MongoDB) Tj
+T*
+(Docker, Kubernetes, AWS \(EKS, ECS, RDS, S3, CloudWatch\)) Tj
+T*
+(JUnit 5, Mockito, Testcontainers, Pact, WireMock) Tj
+T*
+(Maven, Gradle, GitHub Actions, Jenkins, SonarQube) Tj
+T*
+() Tj
+T*
+(PROFESSIONAL EXPERIENCE) Tj
+T*
+(Senior Java Developer | FinEdge Solutions | Melbourne) Tj
+T*
+(JAN 2022 - Present) Tj
+T*
+(- Led migration from monolith to 14 Spring Boot microservices serving 1.2M monthly users.) Tj
+T*
+(- Improved p95 API latency from 780ms to 510ms through query tuning and caching strategy.) Tj
+T*
+(- Built resilient asynchronous workflows with Kafka and retry/DLQ patterns, reducing processing failures by 42 percent.) Tj
+T*
+(- Introduced integration test suite with Testcontainers and contract tests with Pact; production defects dropped by 30 percent.) Tj
+T*
+(- Mentored 5 engineers on clean architecture, code reviews, and performance observability.) Tj
+T*
+() Tj
+T*
+(Java Developer | NexaTech Systems | Sydney) Tj
+T*
+(AUG 2018 - DEC 2021) Tj
+T*
+(- Developed payment and settlement services using Java 11, Spring Boot, PostgreSQL, and Redis.) Tj
+T*
+(- Implemented OAuth2/JWT-based authentication and role-based authorization for partner APIs.) Tj
+T*
+(- Automated CI/CD pipelines using GitHub Actions and Jenkins, reducing release cycle from biweekly to daily.) Tj
+T*
+(- Collaborated with SRE team to implement structured logging and distributed tracing.) Tj
+T*
+() Tj
+T*
+(Software Engineer | DataBridge Labs | Kathmandu) Tj
+T*
+(JUN 2016 - JUL 2018) Tj
+T*
+(- Built backend modules for HR and ERP platforms using Java, Spring MVC, and MySQL.) Tj
+T*
+(- Created ETL jobs for data reconciliation, improving reporting accuracy and timeliness.) Tj
+T*
+() Tj
+T*
+(EDUCATION) Tj
+T*
+(Bachelor of Computer Engineering) Tj
+T*
+(Tribhuvan University) Tj
+T*
+() Tj
+T*
+(CERTIFICATIONS) Tj
+T*
+(AWS Certified Developer - Associate) Tj
+T*
+(Oracle Certified Professional, Java SE 11 Developer) Tj
+T*
+() Tj
+T*
+(PROJECT HIGHLIGHTS) Tj
+T*
+(Customer Profile Aggregator Platform) Tj
+T*
+(- Designed an event-driven profile enrichment service consuming 25M events/day via Kafka.) Tj
+T*
+(- Achieved 99.95 percent service availability with auto-scaling and robust health checks.) Tj
+T*
+() Tj
+T*
+(QUALITY & TESTING CONTRIBUTIONS) Tj
+T*
+(- Defined backend test pyramid strategy: unit, integration, contract, and end-to-end coverage.) Tj
+T*
+(- Added performance baseline tests for critical endpoints to prevent regressions.) Tj
+T*
+(- Established release readiness checklist and rollback playbook for safer deployments.) Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+3770
+%%EOF

@@ -20,7 +20,8 @@
     "clear-job-analytics": "node --import tsx scripts/clear-job-analytics.ts",
     "migrate-generic-questions": "node --import tsx scripts/migrate-generic-questions.ts",
     "eval:employer-qa-rag": "node --import tsx scripts/evaluate-employer-qa-rag.ts",
-    "migrate:rag-backfill": "node --import tsx scripts/backfill-rag-documents.ts"
+    "migrate:rag-backfill": "node --import tsx scripts/backfill-rag-documents.ts",
+    "migrate:purge-txt-uploads": "node --import tsx scripts/purge-legacy-txt-uploads.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-auto": "^3.0.0",
@@ -59,6 +60,7 @@
     "nodemailer": "^7.0.9",
     "pdf-parse": "^2.1.7",
     "stripe": "^17.7.0",
-    "swagger-ui-dist": "^5.29.4"
+    "swagger-ui-dist": "^5.29.4",
+    "word-extractor": "^1.0.4"
   }
 }

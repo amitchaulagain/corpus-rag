@@ -1,0 +1,47 @@
+AMIT CHAULAGAIN
+Senior Java Developer | Spring Boot | Microservices | AWS
+Email: amit.chaulagain@example.com | Phone: +61 4XX XXX XXX
+Location: Melbourne, VIC | LinkedIn: linkedin.com/in/amit-chaulagain
+PROFESSIONAL SUMMARY
+Senior Java Developer with 8+ years of experience designing, building, and operating enterprise-grade backend platforms.
+Strong background in Spring Boot, microservices, event-driven architecture, and cloud-native deployment on AWS.
+Delivered high-volume APIs, reduced latency by 35 percent, and improved release reliability through CI/CD automation and test
+CORE SKILLS
+Java 8/11/17, Spring Boot, Spring Cloud, Hibernate/JPA, REST APIs, GraphQL
+Microservices, Kafka, RabbitMQ, Redis, Elasticsearch
+PostgreSQL, MySQL, MongoDB
+Docker, Kubernetes, AWS (EKS, ECS, RDS, S3, CloudWatch)
+JUnit 5, Mockito, Testcontainers, Pact, WireMock
+Maven, Gradle, GitHub Actions, Jenkins, SonarQube
+PROFESSIONAL EXPERIENCE
+Senior Java Developer | FinEdge Solutions | Melbourne
+JAN 2022 - Present
+- Led migration from monolith to 14 Spring Boot microservices serving 1.2M monthly users.
+- Improved p95 API latency from 780ms to 510ms through query tuning and caching strategy.
+- Built resilient asynchronous workflows with Kafka and retry/DLQ patterns, reducing processing failures by 42 percent.
+- Introduced integration test suite with Testcontainers and contract tests with Pact; production defects dropped by 30 percent.
+- Mentored 5 engineers on clean architecture, code reviews, and performance observability.
+Java Developer | NexaTech Systems | Sydney
+AUG 2018 - DEC 2021
+- Developed payment and settlement services using Java 11, Spring Boot, PostgreSQL, and Redis.
+- Implemented OAuth2/JWT-based authentication and role-based authorization for partner APIs.
+- Automated CI/CD pipelines using GitHub Actions and Jenkins, reducing release cycle from biweekly to daily.
+- Collaborated with SRE team to implement structured logging and distributed tracing.
+Software Engineer | DataBridge Labs | Kathmandu
+JUN 2016 - JUL 2018
+- Built backend modules for HR and ERP platforms using Java, Spring MVC, and MySQL.
+- Created ETL jobs for data reconciliation, improving reporting accuracy and timeliness.
+EDUCATION
+Bachelor of Computer Engineering
+Tribhuvan University
+CERTIFICATIONS
+AWS Certified Developer - Associate
+Oracle Certified Professional, Java SE 11 Developer
+PROJECT HIGHLIGHTS
+Customer Profile Aggregator Platform
+- Designed an event-driven profile enrichment service consuming 25M events/day via Kafka.
+- Achieved 99.95 percent service availability with auto-scaling and robust health checks.
+QUALITY & TESTING CONTRIBUTIONS
+- Defined backend test pyramid strategy: unit, integration, contract, and end-to-end coverage.
+- Added performance baseline tests for critical endpoints to prevent regressions.
+- Established release readiness checklist and rollback playbook for safer deployments.
