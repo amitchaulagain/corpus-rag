@@ -68,27 +68,30 @@ export const POST: RequestHandler = async (event) => {
       );
     }
 
-    // Check token balance before processing
+    // Check token balance before processing (skip for admin users)
+    const isAdmin = auth.user.userType === 'admin';
     const tokenService = await TokenService.create();
-    const tokenCheck = await tokenService.checkTokens(
-      new ObjectId(auth.user._id),
-      TOKEN_COST_QA
-    );
-
-    if (!tokenCheck.hasEnoughTokens) {
-      return json(
-        {
-          success: false,
-          error: 'Insufficient tokens',
-          tokenInfo: {
-            currentBalance: tokenCheck.currentBalance,
-            requiredTokens: tokenCheck.requiredTokens,
-            remainingAfter: tokenCheck.remainingAfter
-          },
-          purchaseUrl: '/plans'
-        },
-        { status: 402 } // 402 Payment Required
+    if (!isAdmin) {
+      const tokenCheck = await tokenService.checkTokens(
+        new ObjectId(auth.user._id),
+        TOKEN_COST_QA
       );
+
+      if (!tokenCheck.hasEnoughTokens) {
+        return json(
+          {
+            success: false,
+            error: 'Insufficient tokens',
+            tokenInfo: {
+              currentBalance: tokenCheck.currentBalance,
+              requiredTokens: tokenCheck.requiredTokens,
+              remainingAfter: tokenCheck.remainingAfter
+            },
+            purchaseUrl: '/plans'
+          },
+          { status: 402 } // 402 Payment Required
+        );
+      }
     }
 
     const startTime = Date.now();
@@ -355,20 +358,22 @@ Return a corrected JSON array now. Only array, no extra text.`;
       }
 
       if (jobRecord) {
-        // Deduct tokens after successful generation
-        const tokenDeduction = await tokenService.deductTokens(
-          new ObjectId(auth.user._id),
-          TOKEN_COST_QA,
-          {
-            jobId: jobRecord._id,
-            endpoint: '/api/questionAndAnswers',
-            aiProvider: useAi,
-            description: `Q&A generation for ${company || 'job'} - ${job_title || job_id}`
-          }
-        );
+        // Deduct tokens after successful generation (skip for admin users)
+        if (!isAdmin) {
+          const tokenDeduction = await tokenService.deductTokens(
+            new ObjectId(auth.user._id),
+            TOKEN_COST_QA,
+            {
+              jobId: jobRecord._id,
+              endpoint: '/api/questionAndAnswers',
+              aiProvider: useAi,
+              description: `Q&A generation for ${company || 'job'} - ${job_title || job_id}`
+            }
+          );
 
-        if (!tokenDeduction.success) {
-          console.error('Token deduction failed after successful generation:', tokenDeduction);
+          if (!tokenDeduction.success) {
+            console.error('Token deduction failed after successful generation:', tokenDeduction);
+          }
         }
 
         const apiCallRecord = {
@@ -419,19 +424,21 @@ Return a corrected JSON array now. Only array, no extra text.`;
           });
         }
       } else {
-        // Deduct tokens even if no job record
-        const tokenDeduction = await tokenService.deductTokens(
-          new ObjectId(auth.user._id),
-          TOKEN_COST_QA,
-          {
-            endpoint: '/api/questionAndAnswers',
-            aiProvider: useAi,
-            description: `Q&A generation for ${company || 'job'} - ${job_title || job_id}`
-          }
-        );
+        // Deduct tokens even if no job record (skip for admin users)
+        if (!isAdmin) {
+          const tokenDeduction = await tokenService.deductTokens(
+            new ObjectId(auth.user._id),
+            TOKEN_COST_QA,
+            {
+              endpoint: '/api/questionAndAnswers',
+              aiProvider: useAi,
+              description: `Q&A generation for ${company || 'job'} - ${job_title || job_id}`
+            }
+          );
 
-        if (!tokenDeduction.success) {
-          console.error('Token deduction failed after successful generation:', tokenDeduction);
+          if (!tokenDeduction.success) {
+            console.error('Token deduction failed after successful generation:', tokenDeduction);
+          }
         }
       }
     } catch (trackingError) {

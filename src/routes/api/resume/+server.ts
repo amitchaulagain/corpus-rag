@@ -77,27 +77,30 @@ export const POST: RequestHandler = async (event) => {
       );
     }
 
-    // Check token balance before processing
+    // Check token balance before processing (skip for admin users)
+    const isAdmin = auth.user.userType === 'admin';
     const tokenService = await TokenService.create();
-    const tokenCheck = await tokenService.checkTokens(
-      new ObjectId(auth.user._id),
-      TOKEN_COST_RESUME
-    );
-
-    if (!tokenCheck.hasEnoughTokens) {
-      return json(
-        {
-          success: false,
-          error: 'Insufficient tokens',
-          tokenInfo: {
-            currentBalance: tokenCheck.currentBalance,
-            requiredTokens: tokenCheck.requiredTokens,
-            remainingAfter: tokenCheck.remainingAfter
-          },
-          purchaseUrl: '/plans'
-        },
-        { status: 402 } // 402 Payment Required
+    if (!isAdmin) {
+      const tokenCheck = await tokenService.checkTokens(
+        new ObjectId(auth.user._id),
+        TOKEN_COST_RESUME
       );
+
+      if (!tokenCheck.hasEnoughTokens) {
+        return json(
+          {
+            success: false,
+            error: 'Insufficient tokens',
+            tokenInfo: {
+              currentBalance: tokenCheck.currentBalance,
+              requiredTokens: tokenCheck.requiredTokens,
+              remainingAfter: tokenCheck.remainingAfter
+            },
+            purchaseUrl: '/plans'
+          },
+          { status: 402 } // 402 Payment Required
+        );
+      }
     }
 
     const startTime = Date.now();
@@ -294,20 +297,22 @@ ${ragContextBlock ? `RETRIEVED EVIDENCE:\n${ragContextBlock}` : ''}`;
       }
 
       if (jobRecord) {
-        // Deduct tokens after successful generation
-        const tokenDeduction = await tokenService.deductTokens(
-          new ObjectId(auth.user._id),
-          TOKEN_COST_RESUME,
-          {
-            jobId: jobRecord._id,
-            endpoint: '/api/resume',
-            aiProvider: useAi,
-            description: `Resume tailoring for ${company || 'job'} - ${job_title || job_id}`
-          }
-        );
+        // Deduct tokens after successful generation (skip for admin users)
+        if (!isAdmin) {
+          const tokenDeduction = await tokenService.deductTokens(
+            new ObjectId(auth.user._id),
+            TOKEN_COST_RESUME,
+            {
+              jobId: jobRecord._id,
+              endpoint: '/api/resume',
+              aiProvider: useAi,
+              description: `Resume tailoring for ${company || 'job'} - ${job_title || job_id}`
+            }
+          );
 
-        if (!tokenDeduction.success) {
-          console.error('Token deduction failed after successful generation:', tokenDeduction);
+          if (!tokenDeduction.success) {
+            console.error('Token deduction failed after successful generation:', tokenDeduction);
+          }
         }
 
         const apiCallRecord = {
@@ -350,19 +355,21 @@ ${ragContextBlock ? `RETRIEVED EVIDENCE:\n${ragContextBlock}` : ''}`;
           });
         }
       } else {
-        // Deduct tokens even if no job record
-        const tokenDeduction = await tokenService.deductTokens(
-          new ObjectId(auth.user._id),
-          TOKEN_COST_RESUME,
-          {
-            endpoint: '/api/resume',
-            aiProvider: useAi,
-            description: `Resume tailoring for ${company || 'job'} - ${job_title || job_id}`
-          }
-        );
+        // Deduct tokens even if no job record (skip for admin users)
+        if (!isAdmin) {
+          const tokenDeduction = await tokenService.deductTokens(
+            new ObjectId(auth.user._id),
+            TOKEN_COST_RESUME,
+            {
+              endpoint: '/api/resume',
+              aiProvider: useAi,
+              description: `Resume tailoring for ${company || 'job'} - ${job_title || job_id}`
+            }
+          );
 
-        if (!tokenDeduction.success) {
-          console.error('Token deduction failed after successful generation:', tokenDeduction);
+          if (!tokenDeduction.success) {
+            console.error('Token deduction failed after successful generation:', tokenDeduction);
+          }
         }
       }
     } catch (trackingError) {

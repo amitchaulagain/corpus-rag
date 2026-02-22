@@ -509,27 +509,30 @@ export const POST: RequestHandler = async (event) => {
       );
     }
 
-    // Check token balance before processing
+    // Check token balance before processing (skip for admin users)
+    const isAdmin = auth.user.userType === 'admin';
     const tokenService = await TokenService.create();
-    const tokenCheck = await tokenService.checkTokens(
-      new ObjectId(auth.user._id),
-      TOKEN_COST_COVER_LETTER
-    );
-
-    if (!tokenCheck.hasEnoughTokens) {
-      return json(
-        {
-          success: false,
-          error: 'Insufficient tokens',
-          tokenInfo: {
-            currentBalance: tokenCheck.currentBalance,
-            requiredTokens: tokenCheck.requiredTokens,
-            remainingAfter: tokenCheck.remainingAfter
-          },
-          purchaseUrl: '/plans' // Frontend should handle this
-        },
-        { status: 402 } // 402 Payment Required
+    if (!isAdmin) {
+      const tokenCheck = await tokenService.checkTokens(
+        new ObjectId(auth.user._id),
+        TOKEN_COST_COVER_LETTER
       );
+
+      if (!tokenCheck.hasEnoughTokens) {
+        return json(
+          {
+            success: false,
+            error: 'Insufficient tokens',
+            tokenInfo: {
+              currentBalance: tokenCheck.currentBalance,
+              requiredTokens: tokenCheck.requiredTokens,
+              remainingAfter: tokenCheck.remainingAfter
+            },
+            purchaseUrl: '/plans' // Frontend should handle this
+          },
+          { status: 402 } // 402 Payment Required
+        );
+      }
     }
 
     const startTime = Date.now();
@@ -957,21 +960,23 @@ Please format as a professional cover letter with proper greeting and closing.`;
         });
       }
 
-      // Deduct tokens after successful generation (with job record if available)
-      const tokenDeduction = await tokenService.deductTokens(
-        new ObjectId(auth.user._id),
-        TOKEN_COST_COVER_LETTER,
-        {
-          jobId: jobRecord?._id,
-          endpoint: '/api/cover_letter',
-          aiProvider: useAi,
-          description: `Cover letter generation for ${company || 'job'} - ${job_title || job_id}`
-        }
-      );
+      // Deduct tokens after successful generation (skip for admin users)
+      if (!isAdmin) {
+        const tokenDeduction = await tokenService.deductTokens(
+          new ObjectId(auth.user._id),
+          TOKEN_COST_COVER_LETTER,
+          {
+            jobId: jobRecord?._id,
+            endpoint: '/api/cover_letter',
+            aiProvider: useAi,
+            description: `Cover letter generation for ${company || 'job'} - ${job_title || job_id}`
+          }
+        );
 
-      if (!tokenDeduction.success) {
-        // This shouldn't happen since we checked, but handle it gracefully
-        console.error('Token deduction failed after successful generation:', tokenDeduction);
+        if (!tokenDeduction.success) {
+          // This shouldn't happen since we checked, but handle it gracefully
+          console.error('Token deduction failed after successful generation:', tokenDeduction);
+        }
       }
 
       // Create or update job application record (embedded in job)
