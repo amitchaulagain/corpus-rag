@@ -104,7 +104,9 @@ export const POST: RequestHandler = async (event) => {
     const db = await getDB();
     const userObjectId = new ObjectId(auth.user._id);
     const qaCacheModel = new QaCacheModel(db);
-    const effectiveJobId = String(platform_job_id || job_id);
+    // For manual flows, use job_id as platform_job_id so we can persist originalResume in corpus-rag
+    const effectivePlatformJobId = platform_job_id || (platform === 'manual' ? job_id : null);
+    const effectiveJobId = String(effectivePlatformJobId || job_id);
     const promptVersion = crypto.createHash('sha256').update(String(prompt || 'default-resume-prompt')).digest('hex');
     const questionHash = crypto
       .createHash('sha256')
@@ -277,15 +279,15 @@ ${ragContextBlock ? `RETRIEVED EVIDENCE:\n${ragContextBlock}` : ''}`;
       const jobModel = new JobModel(db);
       const userId = userObjectId;
 
-      let jobRecord = platform_job_id
-        ? await jobModel.findByPlatformId(userId, platform, platform_job_id)
+      let jobRecord = effectivePlatformJobId
+        ? await jobModel.findByPlatformId(userId, platform, effectivePlatformJobId)
         : null;
 
-      if (!jobRecord && platform_job_id) {
+      if (!jobRecord && effectivePlatformJobId) {
         jobRecord = await jobModel.create({
           userId,
           platform,
-          platformJobId: platform_job_id,
+          platformJobId: effectivePlatformJobId,
           title: job_title || 'Unknown Position',
           company: company || 'Unknown Company',
           description: typeof job_details === 'string' ? job_details : JSON.stringify(job_details),
@@ -340,13 +342,15 @@ ${ragContextBlock ? `RETRIEVED EVIDENCE:\n${ragContextBlock}` : ''}`;
           await jobModel.createApplication(jobRecord._id!, {
             status: 'pending',
             tailoredResume: result.answer,
+            originalResume: resume_text,
             apiCalls: [apiCallRecord],
             automationLogs: []
           });
         } else {
           await jobModel.addApiCall(jobRecord._id!, apiCallRecord);
           await jobModel.updateApplication(jobRecord._id!, {
-            tailoredResume: result.answer
+            tailoredResume: result.answer,
+            originalResume: resume_text
           });
         }
       } else {
@@ -388,9 +392,10 @@ ${ragContextBlock ? `RETRIEVED EVIDENCE:\n${ragContextBlock}` : ''}`;
       });
     }
 
-    // Return resume, job_id, and token usage info (for clients to save and send to job-applications)
+    // Return resume, original resume, job_id, and token usage info
     return json({
       resume: result.answer,
+      originalResume: resume_text,
       job_id,
       tokensUsed: TOKEN_COST_RESUME,
       actualTokensUsed: tokensUsed,

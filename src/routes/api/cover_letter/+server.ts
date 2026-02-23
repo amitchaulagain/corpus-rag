@@ -1,5 +1,7 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import fs from 'fs';
+import path from 'path';
 import { MultiProviderService } from '$lib/multi-provider-service';
 import { requirePermission } from '$lib/auth-middleware';
 import { getDB } from '$lib/db/mongodb';
@@ -25,6 +27,15 @@ const DEFAULT_STRICT_QUALITY_RETRIES = 1;
 const QUALITY_AGREEMENT_FLOOR = 92;
 const QUALITY_AGREEMENT_MAX_DELTA = 8;
 const MAX_SCORE_WITHOUT_AGREEMENT = 89;
+
+function loadPromptTemplate(name: string, fallback: string): string {
+  try {
+    const p = path.join(process.cwd(), 'src', 'lib', 'prompts', `${name}.txt`);
+    return fs.readFileSync(p, 'utf-8');
+  } catch {
+    return fallback;
+  }
+}
 
 function toPlainText(input: unknown): string {
   if (typeof input === 'string') return input;
@@ -326,10 +337,15 @@ function buildQualityRepairPrompt(
   identityGuardrails: string,
   ragContextBlock: string
 ): string {
-  return `Revise the cover letter below to fix quality defects while preserving factual accuracy.
+  const reasonsText = (reasons.length > 0 ? reasons : ['improve overall quality and alignment'])
+    .map((reason, idx) => `${idx + 1}. ${reason}`)
+    .join('\n');
+  const ragContext = ragContextBlock ? `\nRETRIEVED EVIDENCE:\n${ragContextBlock}\n` : '';
+
+  const fallback = `Revise the cover letter below to fix quality defects while preserving factual accuracy.
 
 Defects to fix:
-${(reasons.length > 0 ? reasons : ['improve overall quality and alignment']).map((reason, idx) => `${idx + 1}. ${reason}`).join('\n')}
+{{REASONS}}
 
 Rules:
 - Keep it plain text and professional.
@@ -338,14 +354,23 @@ Rules:
 - Use a specific greeting and a clear sign-off.
 - Avoid generic AI phrases and placeholders.
 - Do not include contact headers or address blocks.
-- Use candidate name "${candidateName || 'from resume'}" in sign-off.
+- Use candidate name "{{CANDIDATE_NAME}}" in sign-off.
 
 ORIGINAL LETTER:
-${answer}
+{{ANSWER}}
 
-${alignmentGuidance}
-${identityGuardrails}
-${ragContextBlock ? `\nRETRIEVED EVIDENCE:\n${ragContextBlock}\n` : ''}`;
+{{ALIGNMENT_GUIDANCE}}
+{{IDENTITY_GUARDRAILS}}
+{{RAG_CONTEXT}}
+`;
+  const template = loadPromptTemplate('cover-letter-quality-rewrite', fallback);
+  return template
+    .replace('{{REASONS}}', reasonsText)
+    .replace('{{CANDIDATE_NAME}}', candidateName || 'from resume')
+    .replace('{{ANSWER}}', answer)
+    .replace('{{ALIGNMENT_GUIDANCE}}', alignmentGuidance)
+    .replace('{{IDENTITY_GUARDRAILS}}', identityGuardrails)
+    .replace('{{RAG_CONTEXT}}', ragContext);
 }
 
 function extractJsonObject(text: string): string | null {
@@ -401,7 +426,7 @@ function buildCriticPrompt(input: {
     .map((e, i) => `${i + 1}. ${(e.snippet as string) || ''}`)
     .join('\n');
 
-  return `You are a strict cover letter quality auditor.
+  const fallback = `You are a strict cover letter quality auditor.
 Score this letter with strict standards. Be conservative.
 
 Return ONLY valid JSON with this exact schema:
@@ -427,16 +452,23 @@ Scoring guidance:
 - overall: strict weighted summary.
 
 Job requirements:
-${reqBlock || 'None provided'}
+{{REQUIREMENTS_BLOCK}}
 
 Resume proof points:
-${proofBlock || 'None provided'}
+{{PROOF_POINTS_BLOCK}}
 
 Retrieved evidence snippets:
-${evidenceBlock || 'None provided'}
+{{EVIDENCE_BLOCK}}
 
 Letter to evaluate:
-${input.letter}`;
+{{LETTER}}
+`;
+  const template = loadPromptTemplate('cover-letter-quality-critic', fallback);
+  return template
+    .replace('{{REQUIREMENTS_BLOCK}}', reqBlock || 'None provided')
+    .replace('{{PROOF_POINTS_BLOCK}}', proofBlock || 'None provided')
+    .replace('{{EVIDENCE_BLOCK}}', evidenceBlock || 'None provided')
+    .replace('{{LETTER}}', input.letter);
 }
 
 export const POST: RequestHandler = async (event) => {

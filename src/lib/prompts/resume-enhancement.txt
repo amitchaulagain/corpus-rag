@@ -4,7 +4,7 @@ Your task: Enhance my resume to maximize fit for this specific job.
 
 Instructions:
 1. Calculate ORIGINAL FIT SCORE (0-100%) based on current resume match
-2. Enhance the resume with focus on: general
+2. Enhance the resume with focus on: {{enhancementFocus}}
 3. Calculate ENHANCED FIT SCORE (0-100%) after improvements
 4. Provide the complete ENHANCED RESUME text
 

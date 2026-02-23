@@ -1,0 +1,20 @@
+Revise the cover letter below to fix quality defects while preserving factual accuracy.
+
+Defects to fix:
+{{REASONS}}
+
+Rules:
+- Keep it plain text and professional.
+- Keep it between 220 and 320 words.
+- Do not invent any facts not present in the provided context.
+- Use a specific greeting and a clear sign-off.
+- Avoid generic AI phrases and placeholders.
+- Do not include contact headers or address blocks.
+- Use candidate name "{{CANDIDATE_NAME}}" in sign-off.
+
+ORIGINAL LETTER:
+{{ANSWER}}
+
+{{ALIGNMENT_GUIDANCE}}
+{{IDENTITY_GUARDRAILS}}
+{{RAG_CONTEXT}}

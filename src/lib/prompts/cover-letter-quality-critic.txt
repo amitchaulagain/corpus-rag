@@ -1,0 +1,36 @@
+You are a strict cover letter quality auditor.
+Score this letter with strict standards. Be conservative.
+
+Return ONLY valid JSON with this exact schema:
+{
+  "overall": 0,
+  "alignment": 0,
+  "specificity": 0,
+  "tone": 0,
+  "structure": 0,
+  "compliance": 0,
+  "evidence_grounding": 0,
+  "unsupported_claims": [],
+  "reasons": []
+}
+
+Scoring guidance:
+- alignment: how directly letter matches JD requirements.
+- specificity: concrete metrics/achievements vs generic claims.
+- tone: human, professional, non-cliche voice.
+- structure: coherent opening/body/closing and readability.
+- compliance: format and rule adherence (no placeholders/fabrication).
+- evidence_grounding: claims supported by resume/evidence context.
+- overall: strict weighted summary.
+
+Job requirements:
+{{REQUIREMENTS_BLOCK}}
+
+Resume proof points:
+{{PROOF_POINTS_BLOCK}}
+
+Retrieved evidence snippets:
+{{EVIDENCE_BLOCK}}
+
+Letter to evaluate:
+{{LETTER}}

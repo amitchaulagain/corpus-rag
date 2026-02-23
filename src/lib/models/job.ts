@@ -41,6 +41,8 @@ export interface Application {
   appliedAt?: Date;
   coverLetter?: string;
   tailoredResume?: string;
+  /** Original resume text before enhancement (kept in corpus-rag) */
+  originalResume?: string;
   questionAnswers?: Array<{
     question: string;
     answer: string;

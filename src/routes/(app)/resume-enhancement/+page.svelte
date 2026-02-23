@@ -610,9 +610,13 @@ Format your response clearly showing:
     <!-- AI Prompt Section -->
     <div class="prompt-section">
       <div class="prompt-header">
-        <h3 on:click={() => isPromptExpanded = !isPromptExpanded} style="cursor: pointer;">
+        <button
+          type="button"
+          class="flex items-center gap-2 font-semibold text-lg bg-transparent border-none cursor-pointer p-0 hover:opacity-80"
+          on:click={() => isPromptExpanded = !isPromptExpanded}
+        >
           🤖 AI Prompt Editor
-        </h3>
+        </button>
         {#if isPromptModified}
           <div class="prompt-actions">
             <button class="save-btn-small" on:click={savePromptToFile} disabled={isSavingPrompt} title="Save to file">

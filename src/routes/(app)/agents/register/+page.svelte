@@ -208,14 +208,14 @@
             </select>
           </div>
 
-          {(formData.billingMethod === 'percentage' || formData.billingMethod === 'hybrid') && (
+          {#if formData.billingMethod === 'percentage' || formData.billingMethod === 'hybrid'}
             <div class="form-control mb-4">
               <label class="label">
                 <span class="label-text font-semibold">Commission Rate (%) *</span>
               </label>
-              <input 
-                type="number" 
-                class="input input-bordered" 
+              <input
+                type="number"
+                class="input input-bordered"
                 bind:value={formData.commissionRate}
                 min="0"
                 max="100"
@@ -227,16 +227,16 @@
                 <span class="label-text-alt">Percentage of base cost charged as commission</span>
               </label>
             </div>
-          )}
+          {/if}
 
-          {(formData.billingMethod === 'fixed' || formData.billingMethod === 'hybrid') && (
+          {#if formData.billingMethod === 'fixed' || formData.billingMethod === 'hybrid'}
             <div class="form-control mb-4">
               <label class="label">
                 <span class="label-text font-semibold">Fixed Fee (tokens) *</span>
               </label>
-              <input 
-                type="number" 
-                class="input input-bordered" 
+              <input
+                type="number"
+                class="input input-bordered"
                 bind:value={formData.fixedFee}
                 min="0"
                 step="0.01"
@@ -247,7 +247,7 @@
                 <span class="label-text-alt">Fixed amount charged per application</span>
               </label>
             </div>
-          )}
+          {/if}
 
           <div class="alert alert-info mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
@@ -257,15 +257,15 @@
               <h3 class="font-bold">Billing Information</h3>
               <div class="text-xs">
                 <p><strong>Base Cost:</strong> 5 tokens per application (cover letter + resume + Q&A)</p>
-                {formData.billingMethod === 'percentage' && (
+                {#if formData.billingMethod === 'percentage'}
                   <p><strong>Your Commission:</strong> {formData.commissionRate}% of base cost = {(5 * formData.commissionRate / 100).toFixed(2)} tokens</p>
-                )}
-                {formData.billingMethod === 'fixed' && (
+                {/if}
+                {#if formData.billingMethod === 'fixed'}
                   <p><strong>Your Fee:</strong> {formData.fixedFee} tokens per application</p>
-                )}
-                {formData.billingMethod === 'hybrid' && (
+                {/if}
+                {#if formData.billingMethod === 'hybrid'}
                   <p><strong>Your Commission:</strong> {formData.commissionRate}% + {formData.fixedFee} tokens = {((5 * formData.commissionRate / 100) + formData.fixedFee).toFixed(2)} tokens per application</p>
-                )}
+                {/if}
               </div>
             </div>
           </div>
@@ -276,14 +276,12 @@
               type="submit"
               disabled={isSubmitting}
             >
-              {isSubmitting ? (
-                <>
-                  <span class="loading loading-spinner"></span>
-                  Processing...
-                </>
-              ) : (
-                agentProfile ? 'Update Profile' : 'Register as Agent'
-              )}
+              {#if isSubmitting}
+                <span class="loading loading-spinner"></span>
+                Processing...
+              {:else}
+                {agentProfile ? 'Update Profile' : 'Register as Agent'}
+              {/if}
             </button>
           </div>
         </form>

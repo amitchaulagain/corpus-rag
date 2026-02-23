@@ -57,6 +57,7 @@ coverage/
 
 # Optional npm cache directory
 .npm
+.npm-cache/
 
 # Optional eslint cache
 .eslintcache
@@ -77,6 +78,9 @@ coverage/
 tmp/
 temp/
 generated-responses/
+
+# Runtime data (uploads, text-cache)
+data/
 
 # Google Cloud credentials
 service-account.json
