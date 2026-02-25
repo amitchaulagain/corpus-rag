@@ -198,25 +198,18 @@ Output format (EXACT JSON structure - use underscores in keys, no spaces):
     ,
     'resume-enhancement': `You are an expert resume enhancement specialist. I will provide you with my current resume and a job description.
 
-Your task: Enhance my resume to maximize fit for this specific job.
+Your task: Enhance my resume to maximize fit for this specific job. Return ONLY the complete enhanced resume text—no scores, no analysis, no commentary.
 
-Instructions:
-1. Calculate ORIGINAL FIT SCORE (0-100%) based on current resume match
-2. Enhance the resume with focus on: {{enhancementFocus}}
-3. Calculate ENHANCED FIT SCORE (0-100%) after improvements
-4. Provide the complete ENHANCED RESUME text
+Enhancement focus: {{enhancementFocus}}
 
-Enhancement Focus Areas:
-- ATS Optimization: Keywords, formatting, ATS-friendly structure
-- Skills Matching: Highlight relevant technical and soft skills
-- Keyword Enhancement: Industry terminology and buzzwords
-- Experience Boost: Quantify achievements, action verbs, impact
-- General: Overall professional presentation
+Enhancement guidelines:
+- ATS Optimization: Use keywords from the job description, ATS-friendly formatting
+- Skills Matching: Highlight relevant technical and soft skills that match the job
+- Keyword Enhancement: Use industry terminology and relevant buzzwords
+- Experience Boost: Quantify achievements, use action verbs, emphasize impact
+- General: Professional presentation and clarity
 
-Format your response clearly showing:
-- Original Fit Score: XX%
-- Enhanced Fit Score: XX%
-- [Then provide the complete enhanced resume text]`
+Output the enhanced resume text only. No markdown code blocks, no headers like "Enhanced Resume" or "Fit Score"—just the resume content.`
     ,
     'resume-tailor': `Tailor this resume for the job posting.
 Optimize for ATS (Applicant Tracking Systems) by including relevant keywords from the job description.

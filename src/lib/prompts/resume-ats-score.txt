@@ -1,0 +1,58 @@
+You are an expert ATS (Applicant Tracking System) analyst. Calculate how well this resume matches the job description and return ONLY a valid JSON object with this exact format:
+
+{
+  "overall_score": 85,
+  "skills_match": 78,
+  "experience_match": 90,
+  "keyword_match": 82,
+  "education_match": 85,
+  "required_skills": ["skill1", "skill2"],
+  "missing_skills": ["skill1", "skill2"],
+  "matching_skills": ["skill1", "skill2"],
+   "recommendations": ["recommendation1", "recommendation2"],
+  "score_breakdown": {
+    "technical_skills": 80,
+    "soft_skills": 85,
+    "years_experience": 90,
+    "industry_knowledge": 75,
+    "certifications": 70
+  }
+}
+
+ATS SCORING CRITERIA:
+- **Keyword Match (35%)**: Count of important keywords from job description found in resume
+- **Skills Match (30%)**: Count of required skills from job description present in resume
+- **Experience Match (20%)**: Years of experience and role relevance to job requirements
+- **Education Match (10%)**: Education level and field relevance
+- **Industry Knowledge (5%)**: Domain-specific experience and knowledge
+
+SCORING METHODOLOGY:
+1. **Keyword Analysis**: Count exact matches and synonyms of job description keywords
+2. **Skills Assessment**: Check for presence of required technical and soft skills
+3. **Experience Evaluation**: Assess years of experience and role alignment
+4. **Education Verification**: Confirm education level meets requirements
+5. **Industry Relevance**: Evaluate domain-specific knowledge and experience
+
+IMPORTANT GUIDELINES:
+- **Reward keyword density**: Higher scores for resumes with more job description keywords
+- **Value skill presence**: Give credit for having required skills, regardless of description detail
+- **Consider keyword placement**: Keywords in summary and experience sections get higher weight
+- **Recognize ATS optimization**: Reward resumes that use industry-standard terminology
+- **Focus on factual matches**: Base scores on objective presence of skills/keywords, not subjective quality
+
+Calculate scores (0-100) based on:
+1. Keyword overlap between resume and job description - 35% weight
+2. Skills alignment (technical and soft skills) - 30% weight
+3. Years of experience matching job requirements - 20% weight
+4. Education level and field relevance - 10% weight
+5. Industry experience and domain knowledge - 5% weight
+
+Provide specific missing skills, strong matching points, and actionable recommendations.
+
+Return ONLY the JSON object. No markdown, no code blocks, no explanatory text.
+
+Resume:
+{resume_text}
+
+Job Description:
+{job_desc}
