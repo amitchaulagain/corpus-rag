@@ -1,0 +1,33 @@
+# Production compose: corpus-rag API + MongoDB
+# Usage: docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    image: corpus-rag:prod
+    container_name: corpus-rag
+    ports:
+      - "0.0.0.0:3000:3000"
+    env_file:
+      - .env.prod
+    environment:
+      MONGODB_URI: mongodb://mongo:27017
+      MONGODB_DB_NAME: inquisitive_mind
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    container_name: corpus-rag-mongodb
+    # Don't expose 27017 in production; only the app container needs it
+    # ports:
+    #   - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo_data:

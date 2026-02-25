@@ -1,0 +1,35 @@
+# Production multi-stage build for corpus-rag (API + Svelte UI)
+
+# ---- Build ----
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# ---- Production ----
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=3000
+EXPOSE 3000
+
+# Production deps only
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev
+
+# Built app from builder
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/static ./static
+
+# Optional: copy any server-only files if your app needs them at runtime
+# COPY --from=builder /app/scripts ./scripts
+
+CMD ["node", "build"]
