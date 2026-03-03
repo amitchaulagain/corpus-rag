@@ -2,7 +2,7 @@
 import { ObjectId, type Db } from 'mongodb';
 
 export type PlatformType = 'seek' | 'linkedin' | 'indeed' | 'other';
-export type ApplicationStatus = 'pending' | 'applied' | 'rejected' | 'interview' | 'offer' | 'withdrawn';
+export type ApplicationStatus = 'scraped' | 'pending' | 'applied' | 'rejected' | 'interview' | 'offer' | 'withdrawn';
 
 // API call record embedded in application
 export interface ApiCallRecord {
@@ -354,6 +354,76 @@ export class JobModel {
             jobDetails: jobDoc.jobDetails,
             status: jobDoc.status,
             application,
+            lastUpdatedAt: now,
+            ...(jobDoc.rawData ? { rawData: jobDoc.rawData } : {})
+          }
+        }
+      );
+      const updated = await this.findById(existing._id);
+      return { job: updated!, created: false };
+    }
+
+    const result = await this.db.collection<Job>('jobs').insertOne(jobDoc as Job);
+    return {
+      job: { ...jobDoc, _id: result.insertedId } as Job,
+      created: true
+    };
+  }
+
+  /**
+   * Upsert a scraped job from a Harvester bot.
+   * Creates a 'scraped' status record without full application data.
+   */
+  async upsertScrapedJob(
+    userId: string | ObjectId,
+    payload: {
+      platform: PlatformType;
+      platformJobId: string;
+      title: string;
+      company: string;
+      url?: string;
+      location?: string;
+      rawData?: Record<string, any>;
+    }
+  ): Promise<{ job: Job; created: boolean }> {
+    const userObjectId = typeof userId === 'string' ? new ObjectId(userId) : userId;
+    const now = new Date();
+
+    const jobDoc: Omit<Job, '_id'> = {
+      userId: userObjectId,
+      platform: payload.platform,
+      platformJobId: payload.platformJobId,
+      title: payload.title,
+      company: payload.company,
+      url: payload.url,
+      location: payload.location,
+      status: 'scraped',
+      firstSeenAt: now,
+      lastUpdatedAt: now,
+      ...(payload.rawData ? { rawData: payload.rawData } : {})
+    };
+
+    const existing = await this.findByPlatformId(userObjectId, payload.platform, payload.platformJobId);
+
+    if (existing && existing._id) {
+      if (existing.status !== 'scraped') {
+        // If it's already applied/pending, do NOT downgrade the status. Just upate lastUpdatedAt
+        await this.db.collection<Job>('jobs').updateOne(
+          { _id: existing._id },
+          { $set: { lastUpdatedAt: now } }
+        );
+        const updated = await this.findById(existing._id);
+        return { job: updated!, created: false };
+      }
+
+      await this.db.collection<Job>('jobs').updateOne(
+        { _id: existing._id },
+        {
+          $set: {
+            title: jobDoc.title,
+            company: jobDoc.company,
+            url: jobDoc.url,
+            location: jobDoc.location,
             lastUpdatedAt: now,
             ...(jobDoc.rawData ? { rawData: jobDoc.rawData } : {})
           }
