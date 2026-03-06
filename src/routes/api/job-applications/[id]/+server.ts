@@ -37,6 +37,8 @@ export const GET: RequestHandler = async (event) => {
       return json({ success: false, error: 'Forbidden' }, { status: 403 });
     }
 
+    const rd: any = job.rawData || {};
+
     return json({
       success: true,
       data: {
@@ -46,13 +48,15 @@ export const GET: RequestHandler = async (event) => {
         title: job.title,
         company: job.company,
         url: job.url,
-        description: job.description,
-        location: job.location,
-        salary: job.salary,
-        jobType: job.jobType,
-        workMode: job.workMode,
-        postedDate: job.postedDate,
-        closingDate: job.closingDate,
+        // Fall back to rawData equivalents for jobs saved before the payload mapping fix
+        description: job.description || rd.details || rd.description || undefined,
+        location: job.location || rd.location || undefined,
+        salary: job.salary || rd.salary_note || rd.salary || undefined,
+        jobType: job.jobType || rd.category || rd.classification || rd.jobType || undefined,
+        workMode: job.workMode || rd.work_type || rd.workType || undefined,
+        postedDate: job.postedDate || (rd.listedDate ? new Date(rd.listedDate) : undefined),
+        closingDate: job.closingDate || (rd.closingDate ? new Date(rd.closingDate) : undefined),
+        applicationType: rd.applicationType || undefined,
         hrContact: job.hrContact,
         requiredSkills: job.requiredSkills,
         requiredExperience: job.requiredExperience,

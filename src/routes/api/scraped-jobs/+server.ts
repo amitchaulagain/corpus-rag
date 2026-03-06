@@ -28,6 +28,13 @@ export const POST: RequestHandler = async (event) => {
             company,
             url,
             location,
+            salary,
+            description,
+            workMode,
+            jobType,
+            classification,
+            postedDate,
+            closingDate,
             rawData
         } = body;
 
@@ -43,6 +50,15 @@ export const POST: RequestHandler = async (event) => {
             return json({ success: false, error: 'Invalid platform' }, { status: 400 });
         }
 
+        // Merge fields from rawData as fallback (bot may store them there)
+        const rd = rawData || {};
+        const resolvedSalary = salary || rd.salary || undefined;
+        const resolvedDescription = description || rd.description || rd.details || undefined;
+        const resolvedWorkMode = workMode || rd.workType || rd.work_type || undefined;
+        const resolvedJobType = jobType || rd.jobType || rd.classification || rd.category || undefined;
+        const resolvedPostedDate = postedDate || rd.listedDate || rd.posted_date || undefined;
+        const resolvedClosingDate = closingDate || rd.closingDate || rd.closing_date || undefined;
+
         const db = await getDB();
         const jobModel = new JobModel(db);
 
@@ -52,7 +68,13 @@ export const POST: RequestHandler = async (event) => {
             title,
             company,
             url,
-            location,
+            location: location || rd.location,
+            salary: resolvedSalary,
+            description: resolvedDescription,
+            workMode: resolvedWorkMode,
+            jobType: resolvedJobType,
+            postedDate: resolvedPostedDate,
+            closingDate: resolvedClosingDate,
             rawData
         });
 

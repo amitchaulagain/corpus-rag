@@ -105,6 +105,7 @@ export class JobModel {
   async create(jobData: Omit<Job, '_id' | 'firstSeenAt' | 'lastUpdatedAt'>): Promise<Job> {
     const job: Job = {
       ...jobData,
+      status: jobData.status ?? 'pending',
       firstSeenAt: new Date(),
       lastUpdatedAt: new Date()
     };
@@ -383,6 +384,12 @@ export class JobModel {
       company: string;
       url?: string;
       location?: string;
+      salary?: string;
+      description?: string;
+      workMode?: string;
+      jobType?: string;
+      postedDate?: string;
+      closingDate?: string;
       rawData?: Record<string, any>;
     }
   ): Promise<{ job: Job; created: boolean }> {
@@ -397,6 +404,12 @@ export class JobModel {
       company: payload.company,
       url: payload.url,
       location: payload.location,
+      salary: payload.salary,
+      description: payload.description,
+      workMode: payload.workMode,
+      jobType: payload.jobType,
+      postedDate: payload.postedDate ? new Date(payload.postedDate) : undefined,
+      closingDate: payload.closingDate ? new Date(payload.closingDate) : undefined,
       status: 'scraped',
       firstSeenAt: now,
       lastUpdatedAt: now,
@@ -407,7 +420,7 @@ export class JobModel {
 
     if (existing && existing._id) {
       if (existing.status !== 'scraped') {
-        // If it's already applied/pending, do NOT downgrade the status. Just upate lastUpdatedAt
+        // If it's already applied/pending, do NOT downgrade the status. Just update lastUpdatedAt
         await this.db.collection<Job>('jobs').updateOne(
           { _id: existing._id },
           { $set: { lastUpdatedAt: now } }
@@ -424,6 +437,12 @@ export class JobModel {
             company: jobDoc.company,
             url: jobDoc.url,
             location: jobDoc.location,
+            ...(jobDoc.salary !== undefined && { salary: jobDoc.salary }),
+            ...(jobDoc.description !== undefined && { description: jobDoc.description }),
+            ...(jobDoc.workMode !== undefined && { workMode: jobDoc.workMode }),
+            ...(jobDoc.jobType !== undefined && { jobType: jobDoc.jobType }),
+            ...(jobDoc.postedDate !== undefined && { postedDate: jobDoc.postedDate }),
+            ...(jobDoc.closingDate !== undefined && { closingDate: jobDoc.closingDate }),
             lastUpdatedAt: now,
             ...(jobDoc.rawData ? { rawData: jobDoc.rawData } : {})
           }

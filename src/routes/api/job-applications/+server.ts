@@ -120,35 +120,40 @@ export const GET: RequestHandler = async (event) => {
 
     if (from || to) {
       const fromDate = from ? new Date(from) : null;
-      const toDate = to ? new Date(to) : null;
+      const toDate = to ? new Date(to + 'T23:59:59.999Z') : null; // include full last day
       jobs = jobs.filter((j) => {
-        const t = j.application?.appliedAt ?? j.lastUpdatedAt;
+        const t = j.application?.appliedAt ?? j.firstSeenAt ?? j.lastUpdatedAt;
         if (fromDate && t < fromDate) return false;
         if (toDate && t > toDate) return false;
         return true;
       });
     }
 
-    const data = jobs.map((j) => ({
-      _id: j._id?.toString(),
-      platform: j.platform,
-      platformJobId: j.platformJobId,
-      title: j.title,
-      company: j.company,
-      url: j.url,
-      location: j.location,
-      salary: j.salary,
-      jobType: j.jobType,
-      status: j.status,
-      application: j.application
-        ? {
+    const data = jobs.map((j) => {
+      const rd: any = j.rawData || {};
+      return {
+        _id: j._id?.toString(),
+        platform: j.platform,
+        platformJobId: j.platformJobId,
+        title: j.title,
+        company: j.company,
+        url: j.url,
+        location: j.location || rd.location,
+        salary: j.salary || rd.salary_note || rd.salary,
+        jobType: j.jobType || rd.category || rd.classification,
+        status: j.status,
+        applicationType: rd.applicationType,
+        application: j.application
+          ? {
             appliedAt: j.application.appliedAt,
             status: j.application.status,
             questionAnswersCount: j.application.questionAnswers?.length ?? 0
           }
-        : undefined,
-      lastUpdatedAt: j.lastUpdatedAt
-    }));
+          : undefined,
+        firstSeenAt: j.firstSeenAt,
+        lastUpdatedAt: j.lastUpdatedAt
+      };
+    });
 
     return json({ success: true, data });
   } catch (err) {
